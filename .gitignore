@@ -73,6 +73,7 @@ Thumbs.db
 
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
 *.suo
 *.ntvs*
@@ -103,4 +104,9 @@ CLAUDE.md
 harness/
 .cursor/
 .continue/
+.claude/
 2026 관광데이터 활용 공모전 제안서.pdf
+
+# Stitch 디자인 목업 (앱 소스 아님)
+frontend/stitch_vite_react_web_project/
+frontend/stitch_vite_react_web_project (1)/

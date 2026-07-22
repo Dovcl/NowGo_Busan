@@ -1,0 +1,26 @@
+# Python 3.11.x 권장 (현재 로컬: 3.11.4)
+# 설치: python3.11 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+
+# 노트북 / API 탐색
+python-dotenv==1.2.2
+requests==2.34.2
+pandas==3.0.3
+ipykernel==7.3.0
+
+# pandas 의존성 (재현용 pin)
+numpy==2.4.6
+python-dateutil==2.9.0.post0
+six==1.17.0
+
+# requests 의존성 (재현용 pin)
+certifi==2026.6.17
+charset-normalizer==3.4.9
+idna==3.18
+urllib3==2.7.0
+
+# --- 이후 백엔드 스캐폴딩 때 추가 예정 ---
+# fastapi
+# uvicorn
+# sqlalchemy / geoalchemy2
+# redis
+# httpx
