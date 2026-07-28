@@ -20,7 +20,10 @@ urllib3==2.7.0
 
 # --- 이후 백엔드 스캐폴딩 때 추가 예정 ---
 # fastapi
+fastapi==0.115.5
+pydantic-settings==2.6.1
 # uvicorn
+uvicorn==0.32.1
 # sqlalchemy / geoalchemy2
 # redis
 # httpx
