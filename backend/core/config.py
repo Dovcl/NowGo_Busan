@@ -1,4 +1,4 @@
-from pydantic import field_validator
+from pydantic import computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,13 +16,11 @@ class Settings(BaseSettings):
     TOUR_API_KEY_BEACH: str | None = None
     TOUR_API_KEY_IAN: str | None = None
 
-    # DB 세팅 전까지는 Optional. PostGIS 붙일 때 required로 전환
-    DATABASE_URL: str | None = None
-    DATABASE_NAME: str | None = None
-    DATABASE_USER: str | None = None
-    DATABASE_PASSWORD: str | None = None
-    DATABASE_HOST: str | None = None
-    DATABASE_PORT: int | None = None
+    DATABASE_NAME: str
+    DATABASE_USER: str
+    DATABASE_PASSWORD: str
+    DATABASE_HOST: str
+    DATABASE_PORT: int
     DATABASE_SCHEMA: str | None = None
     DATABASE_SCHEMA_TEST: str | None = None
 
@@ -32,6 +30,14 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
+
+    @computed_field
+    @property
+    def DATABASE_URL(self) -> str:
+        return (
+            f"postgresql://{self.DATABASE_USER}:{self.DATABASE_PASSWORD}"
+            f"@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
+        )
 
 
 settings = Settings()

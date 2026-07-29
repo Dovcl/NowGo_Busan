@@ -1,0 +1,9 @@
+contenttypeid,name,name_en,is_env_target,note
+12,관광지,Tourist Spot,True,
+14,문화시설,Cultural Facility,True,
+15,축제/공연/행사,Festival/Performance/Event,True,
+25,여행코스,Travel Course,True,
+28,레포츠,Leisure Sports,True,
+32,숙박,Accommodation,False,환경 신호등 평가 대상 아님(실내 취급)
+38,쇼핑,Shopping,False,환경 신호등 평가 대상 아님(실내 취급)
+39,음식점,Restaurant,False,환경 신호등 평가 대상 아님(실내 취급)
