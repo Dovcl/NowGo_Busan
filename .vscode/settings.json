@@ -1,5 +1,8 @@
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/backend/venv/bin/python",
   "python.terminal.activateEnvironment": true,
-  "notebook.kernelProviderAssociations": []
+  "notebook.defaultKernel": "Python (NowGo Busan venv)",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/backend"
+  ]
 }
