@@ -3,105 +3,228 @@
 // `src/services/scoreService.js` MOCK_MODE branch for a real fetch later
 // requires no changes here or in the page components.
 
+// id는 실제 tour_spot.contentid(숫자 문자열)를 그대로 쓴다 — PlaceDetail이 이 id로
+// mock을 먼저 찾고(큐레이션된 score/tips 등), 못 찾으면 실제 백엔드(/api/places/{id})로
+// 폴백한다. 그래서 여기 없는 실제 관광지를 클릭해도 정상 동작한다.
+// info(이용시간/휴무일/주차)는 backend/etl/seed_tour_spot_intro.py로 시딩된 실제
+// tour_spot_intro 값을 그대로 옮겨적었고, score/breakdown/tips/nearbyFood/forecast24h/
+// alternatives는 NowGo Score 알고리즘이 없어 여전히 임의 큐레이션이다.
 export const topPlaces = [
   {
-    id: "taejongdae",
+    id: "126028",
     rank: 1,
-    name: "태종대",
+    name: "금정산",
     category: "자연 · 전망",
     score: 92,
     status: "safe",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDKVPUitIqBbUh54zj7LBdza91zXoL_iAZ6KkwEYyXKqTMesLgfjjxs5a4aV3aoGUDySx0oE8fBk5cWuKxVpiFH8mMzyKI8_H-bGtYk6XLxhRxeGeTr2ftchO8rOblxhojI7ycQUlByDSP0ur9mtRa2xsn4rlouhbAUqNrTy6q00HUOHvV3PxiAARHtmG_vBkoVmi23RP_hxuKDCg2aQHAcb8ld1Nshr60-lS-oQjUDguhYpkjaFVuQ",
+    image: "http://tong.visitkorea.or.kr/cms/resource/44/3575744_image2_1.jpg",
     breakdown: { air: 90, weather: 92, uv: 80, ripCurrentOrWater: 96, crowd: 88 },
+    envTag: "실외 관광지",
+    info: {
+      usetime: "상시 개방",
+      restdate: "연중무휴",
+      parking: "가능",
+    },
+    tips: [
+      {
+        icon: "directions_walk",
+        label: "Best Course",
+        text: "금강공원 케이블카를 타고 올라가면 체력 부담 없이 고당봉 전망대까지 오를 수 있습니다.",
+      },
+      {
+        icon: "photo_camera",
+        label: "Photography Spot",
+        text: "동문 성곽길에서 내려다보는 부산 시가지와 낙동강 전경이 가장 인상적입니다.",
+      },
+    ],
+    nearbyFood: [
+      { name: "금정산성 막걸리 마을", distance: "도보 10분 · 700m", image: null },
+      { name: "산성마을 흑염소불고기", distance: "도보 12분 · 900m", image: null },
+      { name: "범어사 사하촌 두부요리", distance: "차량 10분 · 3.2km", image: null },
+    ],
+    forecast24h: [
+      { label: "현재", hours: 0, score: 92, status: "safe" },
+      { label: "6h", hours: 6, score: 90, status: "safe" },
+      { label: "12h", hours: 12, score: 85, status: "safe" },
+      { label: "24h", hours: 24, score: 80, status: "safe" },
+    ],
+    alternatives: [
+      { id: "beomeosa", name: "범어사", score: 85, status: "safe" },
+      { id: "busan-citizens-park", name: "부산시민공원", score: 83, status: "safe" },
+    ],
   },
   {
-    id: "gamcheon",
+    id: "1957694",
     rank: 2,
-    name: "감천문화마을",
+    name: "용두산 자갈치 관광특구",
     category: "문화 · 체험",
     score: 88,
     status: "safe",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBwLYSpINcRiqiZVcIZHtgKrhUN5jAiOsR-fBdX9Y1wXcWXGONXx_KcHDFzI_UIzL8qMg10lyFIoFuHiIu5W8ZZrwc1ltirLwFY8gB_genmOj1qGIE66l2rF14cneFSw-Og6kSvQb9oXLs4O8q0DxDcterL-NtK7waSCQaRNL0gnPmJRUGGkhosjPIJDxQuWdh-fP8dbHj6mAiaNotAmr5H8p-aafjZHVCQZOh3711nBYdTckIJk0qL",
+    image: "http://tong.visitkorea.or.kr/cms/resource/46/3049246_image2_1.JPG",
     breakdown: { air: 88, weather: 90, uv: 82, ripCurrentOrWater: 91, crowd: 78 },
+    envTag: "실외 관광지",
+    info: {
+      usetime: "상시 개방",
+      restdate: "연중무휴",
+      parking: "가능",
+    },
+    tips: [
+      {
+        icon: "route",
+        label: "Best Course",
+        text: "용두산공원 부산타워부터 시작해서 국제시장, 보수동 책방골목까지 도보로 이어 걷기 좋습니다.",
+      },
+      {
+        icon: "photo_camera",
+        label: "Photography Spot",
+        text: "자갈치시장 옥상 전망대에서 보는 부산항 전경이 가장 특별합니다.",
+      },
+    ],
+    nearbyFood: [
+      { name: "자갈치시장 회센터", distance: "도보 3분 · 200m", image: null },
+      { name: "40계단 문화관 카페", distance: "도보 6분 · 450m", image: null },
+      { name: "국제시장 씨앗호떡", distance: "도보 5분 · 350m", image: null },
+    ],
+    forecast24h: [
+      { label: "현재", hours: 0, score: 88, status: "safe" },
+      { label: "6h", hours: 6, score: 86, status: "safe" },
+      { label: "12h", hours: 12, score: 80, status: "safe" },
+      { label: "24h", hours: 24, score: 75, status: "caution" },
+    ],
+    alternatives: [
+      { id: "busan-modern-history-museum", name: "부산근대역사관", score: 84, status: "safe" },
+      { id: "bosu-book-street", name: "보수동 책방골목", score: 82, status: "safe" },
+    ],
   },
   {
-    id: "songdo",
+    id: "126122",
     rank: 3,
-    name: "송도해수욕장",
+    name: "부산 송도해수욕장",
     category: "해변 · 산책",
     score: 82,
     status: "safe",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuB6a6EMO3D2rXUMKBcrmmSeR-sjOOIlug8bPCp76BUAbvOw0PzZ0gkcZOXk6477ScPTJ9S8DSGlI34xw5sIjFY2ibg--e-qiHAhVrS4Wq244ANAVBhfnkRHFQDi5zuhzKYm2RR9-Q0lTmCFxuaem319g9krWzMzBChLVGgGdB6U5L_NAGkKVX0b3ttxucQApn1H8iiQoLJorNENxRn-VhHTHVwopoakboQM4nx9xFYP2zakIDDZmrHV",
     breakdown: { air: 84, weather: 87, uv: 75, ripCurrentOrWater: 88, crowd: 74 },
-  },
-  {
-    id: "gwangalli",
-    rank: 4,
-    name: "광안리해수욕장",
-    category: "해변 · 야경",
-    score: 92,
-    status: "safe",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDX8ALYPSeR3UvCxSHaLSfiJiG2g9GapBrX1oOkpIdiuAuiXGtqJ2MksN-vYmxCXQKPyc-nXf0Q-gsXfkp8pPRVYw__-QPNC86OqrK0PvskdsS3P1QZUgFL9Vy-MrWrXZ8VfQhlbyLoVFcFhaqUchoKPBKnsuVk9aVPfXLR2SX4b7reyxjA-mvcu5XhHKOZ39L6QJ_xuAdNsDi-kLfsLA1T5whd8gL206L5lE8DLi0runFCxNmwC6vu",
-    breakdown: { air: 85, weather: 90, uv: 70, ripCurrentOrWater: 95, crowd: 65 },
-    forecast24h: [
-      { label: "현재", hours: 0, score: 92, status: "safe" },
-      { label: "6시간 후", hours: 6, score: 88, status: "safe" },
-      { label: "12시간 후", hours: 12, score: 76, status: "caution" },
-      { label: "24시간 후", hours: 24, score: 48, status: "danger" },
+    envTag: "실외 관광지",
+    info: {
+      usetime: "06:00~23:00",
+      restdate: "연중무휴",
+      parking: "가능",
+    },
+    tips: [
+      {
+        icon: "directions_walk",
+        label: "Best Course",
+        text: "송도구름산책로와 연결되니 해변 산책 후 스카이워크까지 걸어보는 걸 추천합니다.",
+      },
+      {
+        icon: "photo_camera",
+        label: "Photography Spot",
+        text: "송도 해상케이블카에서 내려다보는 암남공원과 해변 전경이 가장 인상적입니다.",
+      },
     ],
-    forecastReasons: [
-      "24시간 후 강수 확률 상승 (70%)",
-      "풍속 증가 예상 (3~5m/s → 8m/s)",
-      "이안류 위험 단계 상승 예상",
-      "PM2.5 소폭 증가 예상",
+    nearbyFood: [
+      { name: "송도해수욕장 회센터", distance: "도보 5분 · 300m", image: null },
+      { name: "암남공원 카페", distance: "도보 15분 · 1.1km", image: null },
+      { name: "송도 베이커리", distance: "도보 7분 · 500m", image: null },
+    ],
+    forecast24h: [
+      { label: "현재", hours: 0, score: 82, status: "safe" },
+      { label: "6h", hours: 6, score: 80, status: "safe" },
+      { label: "12h", hours: 12, score: 73, status: "caution" },
+      { label: "24h", hours: 24, score: 65, status: "caution" },
     ],
     alternatives: [
-      {
-        id: "aquarium",
-        name: "부산아쿠아리움",
-        score: 88,
-        status: "safe",
-        category: "실내 · 체험",
-        distance: "12분 (3.2km)",
-        image:
-          "https://lh3.googleusercontent.com/aida-public/AB6AXuAdO8udTND3GsE4hYu4N3UZqQFHIfXb-OWVlyip0tLBTnjEh01QNcPN0R9HrK5XoPV8Jm4CPVPl-xM0hlWjMAXNtKMz4fnz3YNExrW26f0HcJqxiA95p6aK-Ooz0h5__HuS8pZEbPluf63AlnvVyOV1VHqWGKHvbMgUF58VnyUmI3umyHHdhZizzBxbk7-zIk8T6JHs61Aq7rvK7aHiM-rhUk-F7OybWGycfBojNJcNh9hxxsOQZnVj",
-      },
-      {
-        id: "cinema-center",
-        name: "영화의전당",
-        score: 82,
-        status: "safe",
-        category: "문화 · 전시",
-        distance: "15분 (4.1km)",
-        image:
-          "https://lh3.googleusercontent.com/aida-public/AB6AXuCWeJMmEo5Ny2C6atvIlALE_pREWaHWcjKWL6bKR7Dw3RiMgRllxbMI15RtsgVvrhY9hvi9BvXfvwtV94Xmjsy-gMt6FaNe6CDk4z5WER8PgEtEFAUrxOdS-53rbaAmYitUxFZBNYkDZo60akyrqcfX5mJx7fYx4UFtYctNz8ZlQyK1sxjkhQUVeuBrp3cTfvONfnLVRHasplYA70N9znm2Duq7XPTJAURKq2DEA9-PASvgledJJN7y",
-      },
-      {
-        id: "shinsegae-centumcity",
-        name: "신세계 센텀시티",
-        score: 80,
-        status: "caution",
-        category: "쇼핑 · 실내",
-        distance: "18분 (4.8km)",
-        image:
-          "https://lh3.googleusercontent.com/aida-public/AB6AXuC3dKpQecc4PutF7x0mqX359WvyypddC-0PHOy6IUeZkHwLUdo-dTlw0Uwfz1PibamILmb-csjCVc1TN3UdbS9KHPP2RJ1zbfq2KO_Q3K065snBatoa_VfHHc-gsquBYHqWSk7QShsKIjGvt8UXdRXNlvJcRnJMpAxqjRJzC4nocsBxvZNJld8Yav6LPj4CaQ5PJyzQLQMFwAJrIsiSG6du0Epq3xvac2a0tW04s22lSRO78VCLtgQ8",
-      },
+      { id: "marine-museum-songdo", name: "국립해양박물관", score: 85, status: "safe" },
+      { id: "amnam-park", name: "암남공원 산책로", score: 80, status: "safe" },
     ],
   },
   {
-    id: "haeundae",
-    rank: 5,
-    name: "해운대해수욕장",
+    id: "1277679",
+    rank: 4,
+    name: "부산타워",
     category: "전망 · 도심",
+    score: 85,
+    status: "safe",
+    image: "http://tong.visitkorea.or.kr/cms/resource/40/3494840_image2_1.jpg",
+    breakdown: { air: 85, weather: 90, uv: 70, ripCurrentOrWater: 95, crowd: 65 },
+    envTag: "실외 관광지",
+    info: {
+      usetime: "10:00~22:00 (입장 마감 21:30)",
+      restdate: "연중무휴",
+      parking: "가능",
+    },
+    tips: [
+      {
+        icon: "schedule",
+        label: "Best Visit Time",
+        text: "일몰 30분 전부터 올라가면 노을과 함께 켜지는 야경 조명까지 한번에 볼 수 있습니다.",
+      },
+      {
+        icon: "photo_camera",
+        label: "Photography Spot",
+        text: "전망대 남쪽 창가에서 보는 광안대교와 부산항대교 야경이 가장 웅장합니다.",
+      },
+    ],
+    nearbyFood: [
+      { name: "남포동 씨앗호떡거리", distance: "도보 5분 · 350m", image: null },
+      { name: "용두산공원 카페", distance: "도보 3분 · 200m", image: null },
+      { name: "광복로 밀면골목", distance: "도보 8분 · 600m", image: null },
+    ],
+    forecast24h: [
+      { label: "현재", hours: 0, score: 85, status: "safe" },
+      { label: "6h", hours: 6, score: 80, status: "safe" },
+      { label: "12h", hours: 12, score: 70, status: "caution" },
+      { label: "24h", hours: 24, score: 55, status: "danger" },
+    ],
+    alternatives: [
+      { id: "busan-modern-history-museum-tower", name: "부산근대역사관", score: 84, status: "safe" },
+      { id: "lotte-gwangbok", name: "롯데백화점 광복점", score: 80, status: "caution" },
+    ],
+  },
+  {
+    id: "987810",
+    rank: 5,
+    name: "해운대 동백섬",
+    category: "해변 · 산책",
     score: 68,
     status: "caution",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuD6O6w4axO4zSZFKq25c_POCjwtCtoBd9EmtDWZzrlcMsspV1uQNpuGiqY_cP229yziPo3jOlZFkk93yCiUs1f_tIt2y6tePRsoTEIi3xSw-OnTaiFqNYD0yTptZ2cGLkeMX6mkEUNV-cuWsZ0N3hCtfbz39EmMLx9Hbhc8xVhwzmvA7V9JZ0CFlpis8nXE6wlqHzrqDwAAn_HMhmig3vW7i0CHvexSOHuT_qlWEGsCn9mw1ANjW-iE",
+    image: "http://tong.visitkorea.or.kr/cms/resource/47/3350847_image2_1.jpg",
     breakdown: { air: 70, weather: 74, uv: 60, ripCurrentOrWater: 72, crowd: 55 },
+    envTag: "실외 관광지",
+    info: {
+      usetime: "상시 개방",
+      restdate: "연중무휴",
+      parking: "가능, 요금 (무료)",
+    },
+    tips: [
+      {
+        icon: "schedule",
+        label: "Best Visit Time",
+        text: "오후에는 해수욕장 인파가 동백섬까지 이어지니 오전 산책을 추천합니다.",
+      },
+      {
+        icon: "photo_camera",
+        label: "Photography Spot",
+        text: "누리마루 APEC하우스 앞 해안 산책로에서 보는 광안대교 방향 전경이 아름답습니다.",
+      },
+    ],
+    nearbyFood: [
+      { name: "해운대시장 회센터", distance: "도보 6분 · 400m", image: null },
+      { name: "동백섬 카페거리", distance: "도보 10분 · 750m", image: null },
+      { name: "웨스틴조선 브런치카페", distance: "도보 5분 · 350m", image: null },
+    ],
+    forecast24h: [
+      { label: "현재", hours: 0, score: 68, status: "caution" },
+      { label: "6h", hours: 6, score: 62, status: "caution" },
+      { label: "12h", hours: 12, score: 55, status: "danger" },
+      { label: "24h", hours: 24, score: 50, status: "danger" },
+    ],
+    alternatives: [
+      { id: "sealife-busan-aquarium", name: "씨라이프부산아쿠아리움", score: 88, status: "safe" },
+      { id: "nurimaru-apec-house", name: "누리마루 APEC하우스", score: 84, status: "safe" },
+    ],
   },
 ]
 

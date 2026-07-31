@@ -14,7 +14,8 @@ const LANGUAGES = [
 
 // Demo-only saved places: reuses real TOP10 mock entries so the status
 // badge here matches what Home/PlaceDetail already say about the same place.
-const SAVED_PLACE_IDS = ["haeundae", "gamcheon"]
+// 987810 = 해운대 동백섬, 1957694 = 용두산 자갈치 관광특구 (see mock/places.js)
+const SAVED_PLACE_IDS = ["987810", "1957694"]
 
 export default function Profile() {
   const [loggedIn, setLoggedIn] = useState(true)
