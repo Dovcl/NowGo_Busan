@@ -8,6 +8,7 @@ from sqlalchemy import (
     Integer,
     SmallInteger,
     String,
+    Text,
 )
 from sqlalchemy.orm import relationship
 
@@ -101,3 +102,27 @@ class TourSpotEnvClassification(Base):
     water_quality_zone = Column(Boolean, nullable=False)
 
     tour_spot = relationship("TourSpot", back_populates="env_classification")
+
+
+class TourSpotIntro(Base):
+    """tour_detailCommon2(공통) + tour_detailIntro2(유형별 상세) 조인 결과.
+
+    TourAPI는 contenttypeid별로 "이용시간/휴무일/주차/문의처" 원본 컬럼명이 갈라진다
+    (관광지=usetime, 문화시설=usetimeculture, 레포츠=usetimeleports, 축제=usetimefestival 등).
+    이 테이블은 그 차이를 흡수해서 하나의 정규화된 컬럼셋으로 저장한다
+    (매핑 로직은 etl/seed_tour_spot_intro.py의 FIELD_MAP 참고).
+    """
+
+    __tablename__ = "tour_spot_intro"
+
+    contentid = Column(BigInteger, ForeignKey("tour_spot.contentid"), primary_key=True)
+
+    overview = Column(Text)  # detailCommon2.overview (소개글)
+    homepage = Column(String)  # detailCommon2.homepage에서 <a href> URL만 추출
+    usetime = Column(String)  # 이용시간
+    restdate = Column(String)  # 휴무일
+    parking = Column(String)  # 주차정보
+    infocenter = Column(String)  # 문의처
+    usefee = Column(String)  # 이용요금 (문화시설/레포츠만 채워짐)
+
+    tour_spot = relationship("TourSpot", backref="intro")
