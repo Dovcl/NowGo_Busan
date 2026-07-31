@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import { fetchMapMarkers } from "../services/scoreService"
-import { STATUS } from "../lib/status"
+import { useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import KakaoMap from "../components/KakaoMap"
+import { fetchPlaces } from "../services/placesService"
+import { ENV_GROUP_STYLE } from "../lib/envGroup"
 
 const FILTERS = [
   { icon: "waves", label: "해변", iconClass: "text-primary" },
@@ -18,11 +19,22 @@ const TYPE_FILTERS = [
 ]
 
 export default function MapView() {
-  const [markers, setMarkers] = useState([])
+  const [places, setPlaces] = useState([])
+  const mapRef = useRef(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    fetchMapMarkers().then(setMarkers)
+    fetchPlaces().then(setPlaces)
   }, [])
+
+  const handleSelectPlace = (place) => navigate(`/place/${place.id}`)
+
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition((position) => {
+      mapRef.current?.panTo(position.coords.latitude, position.coords.longitude)
+    })
+  }
 
   return (
     <div className="h-full flex overflow-hidden">
@@ -83,13 +95,7 @@ export default function MapView() {
 
       {/* Map area */}
       <div className="flex-1 relative bg-surface-dim">
-        <div
-          className="absolute inset-0 w-full h-full bg-cover bg-center opacity-80"
-          style={{
-            backgroundImage:
-              "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCloLVo6vz7IOjyOCA9Y2dQj04czeyzpF24hyAL0Y0bMcWI7ecrO2ajWxEj7pcwTB-0H4ZN8g5_uFxilY4Yv15r9NOcB2GmJEqGalnLr5PZ5GWykUCyj5uY6JcZ4OLoJgnj4yTFMtNZjgn-eUFMyc45geMjBTZQLtoAHPtv1oBBDu7X7IzLqRrFGYC42CX1Vj0jk30OUTAwXI8PTtixBH_iLcekMGi2B17zliCDj_wvGYLJz7o-rTzK')",
-          }}
-        />
+        <KakaoMap ref={mapRef} places={places} onSelectPlace={handleSelectPlace} />
 
         <div className="absolute top-4 left-4 flex gap-2 z-10 hide-scrollbar overflow-x-auto max-w-[calc(100%-80px)]">
           <button type="button" className="bg-primary text-white px-4 py-2 rounded-full font-label-sm text-label-sm font-bold shadow-md whitespace-nowrap">
@@ -106,65 +112,39 @@ export default function MapView() {
           ))}
         </div>
 
-        {markers.map((marker) => {
-          const status = STATUS[marker.status]
-          const pin = (
-            <div className={`w-8 h-8 rounded-full ${status.bg} text-white flex items-center justify-center font-bold text-sm border-2 border-white shadow-md z-10 hover:scale-110 transition-transform`}>
-              {marker.id}
-            </div>
-          )
-          const markerClassName =
-            "absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group cursor-pointer"
-          const tooltip = marker.name && (
-            <div className="bg-surface px-2 py-1 rounded shadow-lg text-xs font-bold mb-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-on-surface z-20">
-              {marker.name}
-            </div>
-          )
-          return marker.placeId ? (
-            <Link
-              key={marker.id}
-              to={`/place/${marker.placeId}`}
-              className={markerClassName}
-              style={{ top: marker.top, left: marker.left }}
-            >
-              {tooltip}
-              {pin}
-            </Link>
-          ) : (
-            <div key={marker.id} className={markerClassName} style={{ top: marker.top, left: marker.left }}>
-              {tooltip}
-              {pin}
-            </div>
-          )
-        })}
-
         <div className="absolute right-4 top-4 flex flex-col gap-2 z-10">
           <div className="bg-surface rounded-lg shadow-md border border-outline-variant flex flex-col overflow-hidden">
-            <button type="button" className="w-10 h-10 flex items-center justify-center hover:bg-surface-container-low text-on-surface transition-colors border-b border-outline-variant">
+            <button
+              type="button"
+              onClick={() => mapRef.current?.zoomIn()}
+              className="w-10 h-10 flex items-center justify-center hover:bg-surface-container-low text-on-surface transition-colors border-b border-outline-variant"
+            >
               <span className="material-symbols-outlined">add</span>
             </button>
-            <button type="button" className="w-10 h-10 flex items-center justify-center hover:bg-surface-container-low text-on-surface transition-colors">
+            <button
+              type="button"
+              onClick={() => mapRef.current?.zoomOut()}
+              className="w-10 h-10 flex items-center justify-center hover:bg-surface-container-low text-on-surface transition-colors"
+            >
               <span className="material-symbols-outlined">remove</span>
             </button>
           </div>
-          <button type="button" className="w-10 h-10 bg-surface rounded-lg shadow-md border border-outline-variant flex items-center justify-center hover:bg-surface-container-low text-primary transition-colors">
+          <button
+            type="button"
+            onClick={handleLocateMe}
+            className="w-10 h-10 bg-surface rounded-lg shadow-md border border-outline-variant flex items-center justify-center hover:bg-surface-container-low text-primary transition-colors"
+          >
             <span className="material-symbols-outlined">my_location</span>
           </button>
         </div>
 
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 glass-panel rounded-full px-6 py-3 shadow-lg flex items-center gap-6 z-10 whitespace-nowrap">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-semantic-safe" />
-            <span className="font-label-sm text-label-sm text-on-surface font-bold">좋음 (80~100)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-semantic-caution" />
-            <span className="font-label-sm text-label-sm text-on-surface font-bold">주의 (60~79)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-semantic-danger" />
-            <span className="font-label-sm text-label-sm text-on-surface font-bold">위험 (0~59)</span>
-          </div>
+          {Object.values(ENV_GROUP_STYLE).map((style) => (
+            <div key={style.label} className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: style.color }} />
+              <span className="font-label-sm text-label-sm text-on-surface font-bold">{style.label}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
