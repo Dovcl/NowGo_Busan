@@ -9,6 +9,8 @@ from sqlalchemy import (
     SmallInteger,
     String,
     Text,
+    UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import relationship
 
@@ -126,3 +128,54 @@ class TourSpotIntro(Base):
     usefee = Column(String)  # 이용요금 (문화시설/레포츠만 채워짐)
 
     tour_spot = relationship("TourSpot", backref="intro")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    nickname = Column(String, nullable=False)
+
+    # admin 로그인 전용. 소셜 로그인 유저는 둘 다 null
+    email = Column(String, unique=True)
+    password_hash = Column(String)
+
+    role = Column(String, nullable=False, default="tourist")  # 'tourist' | 'admin'
+
+    terms_agreed_at = Column(DateTime, nullable=False)
+    privacy_agreed_at = Column(DateTime, nullable=False)
+
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    deleted_at = Column(DateTime)  # soft delete
+
+    social_accounts = relationship("UserSocialAccount", back_populates="user")
+
+
+class UserSocialAccount(Base):
+    __tablename__ = "user_social_accounts"
+    __table_args__ = (UniqueConstraint("provider", "provider_user_id"),)
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    provider = Column(String, nullable=False)  # 'kakao' | 'google'
+    provider_user_id = Column(String, nullable=False)  # 카카오 id / 구글 sub
+    email = Column(String)  # 공급자 프로필 이메일, 병합용으로 안 씀 (참고용)
+
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    user = relationship("User", back_populates="social_accounts")
+
+
+class UserSession(Base):
+    """로그인 세션. id 자체가 쿠키 값(토큰)이라 별도 조회용 id 컬럼을 안 둔다.
+    SQLAlchemy의 Session과 이름이 겹치지 않도록 UserSession으로 명명."""
+
+    __tablename__ = "sessions"
+
+    id = Column(String, primary_key=True)  # secrets.token_urlsafe로 생성한 랜덤 문자열
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    user = relationship("User")
