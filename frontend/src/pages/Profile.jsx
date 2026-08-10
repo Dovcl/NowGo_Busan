@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { topPlaces } from "../mock/places"
 import { STATUS } from "../lib/status"
 import Toggle from "../components/Toggle"
+import { useAuth } from "../context/AuthContext"
 
 const PERSONAS = ["20대", "30대", "40대+"]
 const LANGUAGES = [
@@ -18,7 +19,7 @@ const LANGUAGES = [
 const SAVED_PLACE_IDS = ["987810", "1957694"]
 
 export default function Profile() {
-  const [loggedIn, setLoggedIn] = useState(true)
+  const { user, isLoggedIn, openLoginModal, logout } = useAuth()
   const [respiratoryMode, setRespiratoryMode] = useState(true)
   const [persona, setPersona] = useState("20대")
   const [withChildren, setWithChildren] = useState(false)
@@ -41,18 +42,16 @@ export default function Profile() {
         <section className="bg-gradient-to-r from-primary-container to-primary rounded-xl p-card-padding shadow-[0_4px_20px_rgba(0,0,0,0.05)] text-on-primary relative overflow-hidden flex flex-col gap-stack-gap min-h-[192px] justify-center items-center">
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-2xl" />
           <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-secondary-fixed-dim/20 rounded-full blur-xl" />
-          {loggedIn ? (
+          {isLoggedIn ? (
             <div className="flex flex-col items-center gap-stack-gap relative z-10 w-full">
-              <div className="w-20 h-20 rounded-full border-4 border-white shadow-lg overflow-hidden bg-surface shrink-0">
-                <img
-                  className="w-full h-full object-cover"
-                  alt="프로필 사진"
-                  src="https://item.kakaocdn.net/do/891da869d3fd03218bf08a5c948a088ed0bbab1214a29e381afae56101ded106"
-                />
+              <div className="w-20 h-20 rounded-full border-4 border-white shadow-lg overflow-hidden bg-surface shrink-0 flex items-center justify-center">
+                <span className="material-symbols-outlined text-4xl text-primary">person</span>
               </div>
               <div className="text-center">
-                <h2 className="font-headline-lg-mobile text-headline-lg-mobile">김도현</h2>
-                <p className="font-body-md text-body-md text-on-primary-container">도현님, 안전한 부산 여행 하고 계세요!</p>
+                <h2 className="font-headline-lg-mobile text-headline-lg-mobile">{user.nickname}</h2>
+                <p className="font-body-md text-body-md text-on-primary-container">
+                  {user.nickname}님, 안전한 부산 여행 하고 계세요!
+                </p>
               </div>
             </div>
           ) : (
@@ -63,11 +62,11 @@ export default function Profile() {
               </p>
               <button
                 type="button"
-                onClick={() => setLoggedIn(true)}
+                onClick={openLoginModal}
                 className="bg-[#FEE500] text-black font-body-md text-body-md rounded-lg px-6 py-3 font-bold flex items-center gap-2 shadow-lg hover:bg-[#E5CD00] transition-colors"
               >
                 <span className="material-symbols-outlined filled-icon">chat_bubble</span>
-                카카오로 로그인
+                로그인하기
               </button>
             </div>
           )}
@@ -191,7 +190,7 @@ export default function Profile() {
               <div className="mt-4 pt-4 border-t border-outline-variant/30 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => setLoggedIn(false)}
+                  onClick={logout}
                   className="font-body-md text-body-md text-error font-bold hover:bg-error-container/20 px-4 py-2 rounded-lg transition-colors"
                 >
                   로그아웃

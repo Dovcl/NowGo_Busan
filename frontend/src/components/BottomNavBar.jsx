@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
 
 const NAV_ITEMS = [
   { to: "/", label: "Home", icon: "home" },
@@ -9,6 +10,8 @@ const NAV_ITEMS = [
 ]
 
 export default function BottomNavBar() {
+  const { isLoggedIn, openLoginModal } = useAuth()
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center h-16 px-4 pb-safe bg-surface-container-lowest shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-xl z-50 border-t border-outline-variant/20 shrink-0">
       {NAV_ITEMS.map((item) => (
@@ -16,6 +19,12 @@ export default function BottomNavBar() {
           key={item.to}
           to={item.to}
           end={item.to === "/"}
+          onClick={(e) => {
+            if (item.to === "/profile" && !isLoggedIn) {
+              e.preventDefault()
+              openLoginModal()
+            }
+          }}
           className={({ isActive }) =>
             `flex flex-col items-center justify-center transition-transform active:scale-95 ${
               isActive

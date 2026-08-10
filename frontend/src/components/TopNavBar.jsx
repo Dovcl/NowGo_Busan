@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
 
 const NAV_ITEMS = [
   { to: "/", label: "홈" },
@@ -9,6 +10,16 @@ const NAV_ITEMS = [
 ]
 
 export default function TopNavBar() {
+  const { isLoggedIn, openLoginModal } = useAuth()
+  const navigate = useNavigate()
+
+  const handleProfileClick = (e) => {
+    if (!isLoggedIn) {
+      e.preventDefault()
+      openLoginModal()
+    }
+  }
+
   return (
     <header className="hidden md:flex bg-surface/80 backdrop-blur-md border-b border-outline-variant justify-between items-center px-container-margin h-16 w-full shrink-0 sticky top-0 z-50">
       <div className="flex items-center gap-8">
@@ -22,6 +33,7 @@ export default function TopNavBar() {
               key={item.to}
               to={item.to}
               end={item.to === "/"}
+              onClick={item.to === "/profile" ? handleProfileClick : undefined}
               className={({ isActive }) =>
                 `font-body-md text-body-md py-1 cursor-pointer duration-200 transition-colors ${
                   isActive
@@ -42,7 +54,11 @@ export default function TopNavBar() {
         <button className="p-2 hover:bg-surface-container-low rounded-full transition-colors" type="button">
           <span className="material-symbols-outlined">notifications</span>
         </button>
-        <button className="p-2 hover:bg-surface-container-low rounded-full transition-colors" type="button">
+        <button
+          type="button"
+          onClick={() => (isLoggedIn ? navigate("/profile") : openLoginModal())}
+          className="p-2 hover:bg-surface-container-low rounded-full transition-colors"
+        >
           <span className="material-symbols-outlined">account_circle</span>
         </button>
       </div>
