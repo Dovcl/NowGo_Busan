@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     TOUR_API_KEY_BEACH: str | None = None
     TOUR_API_KEY_IAN: str | None = None
     KAKAO_REST_API_KEY: str | None = None
+    KAKAO_CLIENT_SECRET: str | None = None
+    KAKAO_REDIRECT_URI: str = "http://localhost:8080/auth/kakao/callback"
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8080/auth/google/callback"
+    WEATHER_API_KEY: str | None = None
 
     DATABASE_NAME: str
     DATABASE_USER: str
