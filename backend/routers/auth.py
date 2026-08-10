@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 import requests
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -156,3 +156,13 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
 @router.get("/me", response_model=UserOut)
 def get_me(user: User = Depends(get_current_user)):
     return user
+
+
+@router.post("/logout")
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    session_id = request.cookies.get(SESSION_COOKIE)
+    if session_id:
+        db.query(UserSession).filter(UserSession.id == session_id).delete()
+        db.commit()
+    response.delete_cookie(SESSION_COOKIE)
+    return {"ok": True}
