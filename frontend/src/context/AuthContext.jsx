@@ -24,12 +24,21 @@ export function AuthProvider({ children }) {
     setUser(null)
   }, [])
 
+  // admin 로그인은 OAuth와 달리 페이지 리다이렉트 없이 fetch로 끝나서,
+  // 로그인 성공 후 이걸 불러 AuthContext의 user 상태를 직접 갱신해줘야 한다.
+  const refreshUser = useCallback(async () => {
+    const me = await fetchMe()
+    setUser(me)
+    return me
+  }, [])
+
   const value = {
     user,
     isLoggedIn: Boolean(user),
     loading,
     openLoginModal,
     logout,
+    refreshUser,
   }
 
   return (

@@ -22,3 +22,19 @@ export async function fetchMe() {
 export async function logout() {
   await fetch(`${API_BASE_URL}/auth/logout`, { method: "POST", credentials: "include" })
 }
+
+// 실패 시(이메일/비번 불일치) 401이 오는데, 에러 메시지는 서버가 이미
+// "이메일 또는 비밀번호가 올바르지 않습니다"로 통일해뒀으므로 그대로 올린다.
+export async function adminLogin(email, password) {
+  const res = await fetch(`${API_BASE_URL}/auth/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ email, password }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.detail ?? "로그인에 실패했습니다")
+  }
+  return res.json()
+}
