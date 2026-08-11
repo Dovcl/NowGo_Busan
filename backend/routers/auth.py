@@ -8,9 +8,10 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from core.config import settings
+from core.security import verify_password
 from db.models import User, UserSession, UserSocialAccount
 from db.session import get_db
-from schemas.auth import UserOut
+from schemas.auth import AdminLoginRequest, UserOut
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -99,6 +100,18 @@ def google_callback(code: str, db: Session = Depends(get_db)):
     return _issue_session(db, user)
 
 
+@router.post("/admin/login", response_model=UserOut)
+def admin_login(body: AdminLoginRequest, response: Response, db: Session = Depends(get_db)):
+    """관리자 전용 이메일/비밀번호 로그인. 공개 가입 경로는 없고 계정은 수동 시딩된다."""
+    user = db.query(User).filter(User.email == body.email, User.role == "admin").first()
+    # 이메일이 없는 경우와 비밀번호가 틀린 경우를 구분해서 알려주지 않는다 (계정 존재 여부 노출 방지)
+    if user is None or user.password_hash is None or not verify_password(body.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 올바르지 않습니다")
+
+    _set_session_cookie(response, _create_session(db, user.id))
+    return user
+
+
 def _find_or_create_user(db: Session, provider: str, provider_user_id: str, nickname: str) -> User:
     """provider(kakao/google) + provider_user_id로 기존 유저를 찾고, 없으면 새로 만든다."""
     social_account = db.query(UserSocialAccount).filter(
@@ -124,13 +137,15 @@ def _find_or_create_user(db: Session, provider: str, provider_user_id: str, nick
     return user
 
 
-def _issue_session(db: Session, user: User) -> RedirectResponse:
-    """세션 발급 + 쿠키 설정 + 프론트로 리다이렉트."""
+def _create_session(db: Session, user_id: int) -> str:
+    """sessions 테이블에 세션 행을 만들고 토큰(=행의 id)을 반환."""
     session_id = secrets.token_urlsafe(32)
-    db.add(UserSession(id=session_id, user_id=user.id, expires_at=datetime.utcnow() + SESSION_TTL))
+    db.add(UserSession(id=session_id, user_id=user_id, expires_at=datetime.utcnow() + SESSION_TTL))
     db.commit()
+    return session_id
 
-    response = RedirectResponse(settings.FRONTEND_ORIGINS[0])
+
+def _set_session_cookie(response: Response, session_id: str) -> None:
     response.set_cookie(
         SESSION_COOKIE,
         session_id,
@@ -139,6 +154,12 @@ def _issue_session(db: Session, user: User) -> RedirectResponse:
         samesite="lax",
         max_age=int(SESSION_TTL.total_seconds()),
     )
+
+
+def _issue_session(db: Session, user: User) -> RedirectResponse:
+    """소셜 로그인 콜백 전용: 세션 발급 + 쿠키 설정 + 프론트로 리다이렉트."""
+    response = RedirectResponse(settings.FRONTEND_ORIGINS[0])
+    _set_session_cookie(response, _create_session(db, user.id))
     return response
 
 

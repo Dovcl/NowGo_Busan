@@ -7,3 +7,8 @@ class UserOut(BaseModel):
     id: int
     nickname: str
     role: str
+
+
+class AdminLoginRequest(BaseModel):
+    email: str
+    password: str
