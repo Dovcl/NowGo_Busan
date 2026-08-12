@@ -36,6 +36,9 @@ const ENV_ROWS = [
   { label: "미세먼지", icon: "blur_on", get: (e) => fmt(e.airQuality?.pm10, "㎍/㎥") },
   { label: "초미세먼지", icon: "grain", get: (e) => fmt(e.airQuality?.pm25, "㎍/㎥") },
   { label: "자외선지수", icon: "wb_sunny", get: (e) => fmt(e.uvIndex, "") },
+  // 해운대/송정/임랑 반경 5km 안일 때만 값이 있음(services/environment 참고) — 그 밖엔
+  // e.ripCurrent 자체가 null이라 자동으로 안 뜬다.
+  { label: "이안류 위험도", icon: "warning", get: (e) => fmt(e.ripCurrent?.riskLevel, "") },
 ]
 
 function fmt(value, unit) {

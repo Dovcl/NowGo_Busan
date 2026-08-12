@@ -31,3 +31,11 @@ export function uvToLevel(uv) {
   if (uv < 8) return { label: "높음", status: "caution" }
   return { label: uv < 11 ? "매우높음" : "위험", status: "danger" }
 }
+
+// 국립해양조사원 이안류지수 공식 4단계(관심<주의<경계<위험) -> 이 앱의 3단계 신호등.
+// "경계"부터 위험으로 묶음 — 4단계 중 세 번째라 이미 충분히 심각한 단계라고 판단.
+export function ripLevelToStatus(level) {
+  if (level === "관심") return "safe"
+  if (level === "주의") return "caution"
+  return "danger" // 경계, 위험
+}

@@ -23,6 +23,13 @@ export function adaptEnvironment(data) {
       pm25Grade: data.air_quality.pm25_grade,
     },
     uvIndex: data.uv_index,
+    ripCurrent: data.rip_current && {
+      stationName: data.rip_current.station_name,
+      indexValue: data.rip_current.index_value,
+      riskLevel: data.rip_current.risk_level,
+      waveHeight: data.rip_current.wave_height,
+      waterTemp: data.rip_current.water_temp,
+    },
     updatedAt: data.updated_at,
   }
 }

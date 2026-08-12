@@ -2,11 +2,15 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { fetchHomeSummary, fetchTopPlaces } from "../services/scoreService"
 import { fetchEnvironment } from "../services/environmentService"
-import { STATUS, scoreToStatus, pmGradeToStatus, PM_GRADE_LABEL, uvToLevel } from "../lib/status"
+import { STATUS, scoreToStatus, pmGradeToStatus, PM_GRADE_LABEL, uvToLevel, ripLevelToStatus } from "../lib/status"
 
 // 부산시청 좌표 — 홈 화면 "지금 부산 날씨"는 관광지 하나가 아니라 도시 전체 요약이라
 // 대표 지점 하나를 기준으로 조회한다(대기질은 이 근처 최근접 측정소로 매칭됨).
 const BUSAN_CITY_HALL = { lat: 35.1796, lng: 129.0756 }
+
+// 이안류 카드는 "부산 전체"가 아니라 원래부터 해운대 고정 표시라(mock도 그랬음),
+// 부산시청 좌표로는 반경 5km 밖이라 안 잡혀서 해운대 좌표로 따로 조회한다.
+const HAEUNDAE = { lat: 35.1587, lng: 129.1604 }
 
 // SKY(하늘상태)/PTY(강수형태) 조합 -> 아이콘+텍스트+색. 강수가 있으면 하늘상태보다 우선.
 // 색은 기존 신호등 팔레트(semantic-caution 등)와 안 겹치는 Tailwind 기본 색상을 씀 —
@@ -24,12 +28,14 @@ function weatherCondition(sky, precipitationType) {
 export default function Home() {
   const [summary, setSummary] = useState(null)
   const [environment, setEnvironment] = useState(null)
+  const [haeundae, setHaeundae] = useState(null)
   const [places, setPlaces] = useState([])
 
   useEffect(() => {
     fetchHomeSummary().then(setSummary)
     fetchTopPlaces().then(setPlaces)
     fetchEnvironment(BUSAN_CITY_HALL.lat, BUSAN_CITY_HALL.lng).then(setEnvironment)
+    fetchEnvironment(HAEUNDAE.lat, HAEUNDAE.lng).then(setHaeundae)
   }, [])
 
   return (
@@ -76,6 +82,10 @@ export default function Home() {
           const pmStatus = STATUS[pmGradeToStatus(pmGrade)]
           const uv = uvToLevel(environment.uvIndex)
           const uvStatus = STATUS[uv.status]
+          // 비시즌(10~5월)엔 API 자체가 값을 안 줘서 rip가 null일 수 있음 — 그때는
+          // 색상 없이 "정보 없음"으로 표시(멀쩡한 status를 억지로 끼워맞추지 않음).
+          const rip = haeundae?.ripCurrent
+          const ripStatus = rip ? STATUS[ripLevelToStatus(rip.riskLevel)] : null
 
           return (
           <section className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-gutter">
@@ -115,13 +125,15 @@ export default function Home() {
               </div>
             </StatCard>
 
-            <StatCard label="이안류 위험" sub={`(${summary.ripCurrentRisk.area})`} icon="waves" iconClass="text-primary">
-              <span className="font-headline-lg-mobile text-headline-lg-mobile text-primary leading-none mb-1">
-                {summary.ripCurrentRisk.level}
+            <StatCard label="이안류 위험" sub="(해운대)" icon="waves" iconClass={ripStatus ? ripStatus.text : "text-primary"}>
+              <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none mb-1 ${ripStatus ? ripStatus.text : "text-on-surface-variant"}`}>
+                {rip ? rip.riskLevel : "정보 없음"}
               </span>
-              <span className="w-2 h-2 rounded-full bg-primary inline-block" />
+              {ripStatus && <span className={`w-2 h-2 rounded-full ${ripStatus.bg} inline-block`} />}
               <div className="mt-2 pt-2 border-t border-outline-variant/30">
-                <span className="font-label-sm text-xs text-outline-variant">현재 이안류 발생 위험이 낮습니다.</span>
+                <span className="font-label-sm text-xs text-outline-variant">
+                  {rip ? `파고 ${rip.waveHeight}m · 수온 ${rip.waterTemp}℃` : "관측 시즌(6~9월)에만 제공돼요"}
+                </span>
               </div>
             </StatCard>
 

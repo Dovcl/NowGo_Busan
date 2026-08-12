@@ -181,6 +181,26 @@ class AirQualityCache(Base):
     fetched_at = Column(DateTime, nullable=False)
 
 
+class RipCurrentCache(Base):
+    """국립해양조사원 이안류 지수(GetRipCurrentApiService) 배치 캐시. 매년 6~9월에만
+    운영되는 계절 서비스라(그 외 기간엔 API가 데이터를 안 줌) 비시즌엔 테이블이
+    비어 있는 게 정상 — 그 경우 나머지 환경 데이터 조회에는 지장 없다."""
+
+    __tablename__ = "rip_current_cache"
+
+    station_code = Column(String, primary_key=True)  # obsvtrId, 예: HAE(해운대)
+    station_name = Column(String, nullable=False)
+    geom = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
+
+    index_value = Column(Float)  # lastScr
+    risk_level = Column(String)  # lastScrCn: 관심/주의/경계/위험 4단계
+    wave_height = Column(Float)  # wvhgt, m
+    water_temp = Column(Float)  # wtem, ℃
+    observed_at = Column(DateTime)  # obsrvnDt
+
+    fetched_at = Column(DateTime, nullable=False)
+
+
 class User(Base):
     __tablename__ = "users"
 

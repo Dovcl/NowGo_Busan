@@ -8,8 +8,8 @@
 
 from sqlalchemy.orm import Session
 
-from db.environment_queries import nearest_air_quality_station
-from db.models import AirQualityCache, UvIndexCache, WeatherCache
+from db.environment_queries import nearest_air_quality_station, nearest_rip_current_station
+from db.models import AirQualityCache, RipCurrentCache, UvIndexCache, WeatherCache
 from services.environment.feels_like import feels_like_temperature
 from services.environment.grid import latlon_to_grid
 
@@ -21,15 +21,17 @@ def get_environment(session: Session, lat: float, lon: float) -> dict:
     weather = _nearest_weather(session, nx, ny)
     uv = session.get(UvIndexCache, _BUSAN_AREA_NO)
     air = nearest_air_quality_station(session, lat, lon)
+    rip_current = nearest_rip_current_station(session, lat, lon)
 
-    # 셋 다 배치 주기가 달라 fetched_at이 서로 다를 수 있음 — 실제보다 신선해 보이지
+    # 넷 다 배치 주기가 달라 fetched_at이 서로 다를 수 있음 — 실제보다 신선해 보이지
     # 않도록 그중 가장 오래된 시각을 "기준 시각"으로 보여준다.
-    fetched_ats = [row.fetched_at for row in (weather, uv, air) if row is not None]
+    fetched_ats = [row.fetched_at for row in (weather, uv, air, rip_current) if row is not None]
 
     return {
         "weather": _weather_out(weather),
         "air_quality": _air_out(air),
         "uv_index": uv.uv_index if uv else None,
+        "rip_current": _rip_current_out(rip_current),
         "updated_at": min(fetched_ats) if fetched_ats else None,
     }
 
@@ -67,4 +69,16 @@ def _air_out(a: AirQualityCache | None) -> dict | None:
         "o3": a.o3,
         "pm10_grade": a.pm10_grade,
         "pm25_grade": a.pm25_grade,
+    }
+
+
+def _rip_current_out(r: RipCurrentCache | None) -> dict | None:
+    if r is None:
+        return None
+    return {
+        "station_name": r.station_name,
+        "index_value": r.index_value,
+        "risk_level": r.risk_level,
+        "wave_height": r.wave_height,
+        "water_temp": r.water_temp,
     }

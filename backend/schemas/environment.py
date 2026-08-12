@@ -22,8 +22,17 @@ class AirQualityOut(BaseModel):
     pm25_grade: int | None
 
 
+class RipCurrentOut(BaseModel):
+    station_name: str
+    index_value: float | None
+    risk_level: str | None  # 관심/주의/경계/위험 4단계 (원본 그대로)
+    wave_height: float | None
+    water_temp: float | None
+
+
 class EnvironmentOut(BaseModel):
     weather: WeatherOut | None
     air_quality: AirQualityOut | None
     uv_index: int | None
-    updated_at: datetime | None  # 캐시 3개 중 가장 오래된 fetched_at
+    rip_current: RipCurrentOut | None  # 반경 5km 밖이거나 비시즌(10~5월)이면 null
+    updated_at: datetime | None  # 캐시 4개 중 가장 오래된 fetched_at
