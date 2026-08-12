@@ -4,6 +4,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     SmallInteger,
@@ -128,6 +129,50 @@ class TourSpotIntro(Base):
     usefee = Column(String)  # 이용요금 (문화시설/레포츠만 채워짐)
 
     tour_spot = relationship("TourSpot", backref="intro")
+
+
+class WeatherCache(Base):
+    """기상청 단기예보(getVilageFcst) 배치 캐시. 관광지별이 아니라 격자(nx,ny) 단위로
+    저장 — 좌표 하나가 들어오면 이 중 가장 가까운 셀을 찾아 쓴다(services/environment)."""
+
+    __tablename__ = "weather_cache"
+
+    nx = Column(Integer, primary_key=True)
+    ny = Column(Integer, primary_key=True)
+
+    temperature = Column(Float)  # TMP, ℃
+    humidity = Column(Float)  # REH, %
+    wind_speed = Column(Float)  # WSD, m/s
+    precipitation_prob = Column(Float)  # POP, %
+
+    fetched_at = Column(DateTime, nullable=False)
+
+
+class UvIndexCache(Base):
+    """기상청 생활기상지수(getUVIdxV5) 배치 캐시. 구·군 단위(areaNo)로도 나올 수 있지만
+    MVP는 부산 전체 1행(area_no='2600000000')만 사용."""
+
+    __tablename__ = "uv_index_cache"
+
+    area_no = Column(String, primary_key=True)
+    uv_index = Column(Integer)
+    fetched_at = Column(DateTime, nullable=False)
+
+
+class AirQualityCache(Base):
+    """에어코리아 측정소별 실시간 측정정보 배치 캐시. 좌표는 측정소정보 API로 채워야 하며,
+    그 전까지는 이 테이블이 비어 있어도 나머지 환경 데이터 조회에는 지장 없다."""
+
+    __tablename__ = "air_quality_cache"
+
+    station_name = Column(String, primary_key=True)
+    geom = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
+
+    pm10 = Column(Float)
+    pm25 = Column(Float)
+    o3 = Column(Float)
+
+    fetched_at = Column(DateTime, nullable=False)
 
 
 class User(Base):

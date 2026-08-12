@@ -28,18 +28,21 @@ CONTENT_TYPE_CSV = _SEED_DATA_DIR / "tour_contentTypeId.csv"
 TOUR_SPOT_CSV = _SEED_DATA_DIR / "tour_areaBasedList2_busan_all.csv"
 
 
-def upsert(session, model, records: list[dict], pk_col: str) -> None:
+def upsert(session, model, records: list[dict], pk_cols: str | list[str]) -> None:
     """records를 한 번에 INSERT하되, PK가 이미 있으면 나머지 컬럼을 갱신한다.
-    (재실행해도 에러 없이 최신값으로 덮어써지도록 — 개발 중 스키마/데이터가 자주 바뀌어서 필요)"""
+    (재실행해도 에러 없이 최신값으로 덮어써지도록 — 개발 중 스키마/데이터가 자주 바뀌어서 필요)
+    복합 PK(예: weather_cache의 nx+ny)는 리스트로 넘기면 된다."""
     if not records:
         return
+    if isinstance(pk_cols, str):
+        pk_cols = [pk_cols]
     stmt = pg_insert(model).values(records)
     update_cols = {
         col.name: getattr(stmt.excluded, col.name)
         for col in model.__table__.columns
-        if col.name != pk_col
+        if col.name not in pk_cols
     }
-    stmt = stmt.on_conflict_do_update(index_elements=[pk_col], set_=update_cols)
+    stmt = stmt.on_conflict_do_update(index_elements=pk_cols, set_=update_cols)
     session.execute(stmt)
 
 
