@@ -12,3 +12,22 @@ export function scoreToStatus(score) {
   if (score >= 60) return "caution"
   return "danger"
 }
+
+// 환경부 공식 미세먼지 등급(1=좋음~4=매우나쁨) -> 이 앱의 3단계 신호등으로 축약.
+export const PM_GRADE_LABEL = { 1: "좋음", 2: "보통", 3: "나쁨", 4: "매우나쁨" }
+
+export function pmGradeToStatus(grade) {
+  if (grade == null) return "safe"
+  if (grade <= 2) return "safe"
+  if (grade === 3) return "caution"
+  return "danger"
+}
+
+// 기상청 자외선지수 공식 5단계 기준을 이 앱의 3단계 신호등으로 축약.
+export function uvToLevel(uv) {
+  if (uv == null) return { label: "-", status: "safe" }
+  if (uv < 3) return { label: "낮음", status: "safe" }
+  if (uv < 6) return { label: "보통", status: "safe" }
+  if (uv < 8) return { label: "높음", status: "caution" }
+  return { label: uv < 11 ? "매우높음" : "위험", status: "danger" }
+}

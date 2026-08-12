@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { fetchPlaceById as fetchMockPlaceById } from "../services/scoreService"
 import { fetchPlaceById as fetchRealPlaceById } from "../services/placesService"
+import { fetchEnvironment } from "../services/environmentService"
 import { STATUS, scoreToStatus } from "../lib/status"
 
 // TOP10 목업 항목도 이제 실제 tour_spot.contentid를 id로 쓰므로(mock/places.js 참고),
@@ -22,6 +23,25 @@ const SCORE_ROWS = [
   { key: "crowd", label: "혼잡도" },
 ]
 
+// 실제 기상청/에어코리아 관측값. place.breakdown(NowGo Score 0~100 환산값)과는
+// 다른 데이터라 별도 섹션으로 둔다 — 스코어 알고리즘 미정이어도 이건 항상 보여줄 수 있음.
+// 값이 null이면(측정소가 일시적으로 결측인 경우 등) 각 get()이 null을 반환해야
+// 아래 렌더링에서 걸러진다 — 문자열로 먼저 합치면 "null㎍/㎥"처럼 찍혀버림.
+const ENV_ROWS = [
+  { label: "기온", icon: "thermostat", get: (e) => fmt(e.weather?.temperature, "℃") },
+  { label: "체감온도", icon: "device_thermostat", get: (e) => fmt(e.weather?.feelsLike, "℃") },
+  { label: "습도", icon: "water_drop", get: (e) => fmt(e.weather?.humidity, "%") },
+  { label: "풍속", icon: "air", get: (e) => fmt(e.weather?.windSpeed, "m/s") },
+  { label: "강수확률", icon: "umbrella", get: (e) => fmt(e.weather?.precipitationProb, "%") },
+  { label: "미세먼지", icon: "blur_on", get: (e) => fmt(e.airQuality?.pm10, "㎍/㎥") },
+  { label: "초미세먼지", icon: "grain", get: (e) => fmt(e.airQuality?.pm25, "㎍/㎥") },
+  { label: "자외선지수", icon: "wb_sunny", get: (e) => fmt(e.uvIndex, "") },
+]
+
+function fmt(value, unit) {
+  return value != null ? `${value}${unit}` : null
+}
+
 const INFO_ROWS = [
   { key: "usetime", icon: "schedule", label: "이용시간" },
   { key: "restdate", icon: "event_busy", label: "휴무일" },
@@ -39,10 +59,17 @@ export default function PlaceDetail() {
 function PlaceDetailView({ placeId }) {
   const navigate = useNavigate()
   const [place, setPlace] = useState(undefined)
+  const [environment, setEnvironment] = useState(undefined)
 
   useEffect(() => {
     fetchPlaceById(placeId).then(setPlace)
   }, [placeId])
+
+  // mock 큐레이션 장소는 좌표가 없어서(mock/places.js 참고) 자연히 스킵됨
+  useEffect(() => {
+    if (place?.lat == null || place?.lng == null) return
+    fetchEnvironment(place.lat, place.lng).then(setEnvironment)
+  }, [place?.lat, place?.lng])
 
   if (place === undefined) return null
   if (place === null) {
@@ -188,6 +215,27 @@ function PlaceDetailView({ placeId }) {
                             <div>
                               <p className="text-label-sm text-on-surface-variant">{row.label}</p>
                               <p className="text-body-md font-bold">{value}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )}
+
+                {environment && (
+                  <section className="border-t border-outline-variant/30 pt-6">
+                    <h2 className="font-body-md font-bold mb-4">현재 날씨 · 대기질</h2>
+                    <div className="grid grid-cols-2 gap-3 bg-surface-container-low p-4 rounded-xl">
+                      {ENV_ROWS.map((row) => {
+                        const value = row.get(environment)
+                        if (!value) return null
+                        return (
+                          <div key={row.label} className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-primary text-[20px]">{row.icon}</span>
+                            <div>
+                              <p className="text-label-sm text-on-surface-variant">{row.label}</p>
+                              <p className="text-sm font-bold">{value}</p>
                             </div>
                           </div>
                         )

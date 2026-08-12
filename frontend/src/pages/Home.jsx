@@ -1,15 +1,35 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { fetchHomeSummary, fetchTopPlaces } from "../services/scoreService"
-import { STATUS, scoreToStatus } from "../lib/status"
+import { fetchEnvironment } from "../services/environmentService"
+import { STATUS, scoreToStatus, pmGradeToStatus, PM_GRADE_LABEL, uvToLevel } from "../lib/status"
+
+// 부산시청 좌표 — 홈 화면 "지금 부산 날씨"는 관광지 하나가 아니라 도시 전체 요약이라
+// 대표 지점 하나를 기준으로 조회한다(대기질은 이 근처 최근접 측정소로 매칭됨).
+const BUSAN_CITY_HALL = { lat: 35.1796, lng: 129.0756 }
+
+// SKY(하늘상태)/PTY(강수형태) 조합 -> 아이콘+텍스트+색. 강수가 있으면 하늘상태보다 우선.
+// 색은 기존 신호등 팔레트(semantic-caution 등)와 안 겹치는 Tailwind 기본 색상을 씀 —
+// 맑음 아이콘이 하필 "주의" 색과 거의 같은 톤이라(#ffb875 vs #ffb36b) 헷갈릴 수 있었음.
+function weatherCondition(sky, precipitationType) {
+  if (precipitationType === 3) return { icon: "weather_snowy", text: "눈", color: "text-sky-400" }
+  if (precipitationType === 2) return { icon: "weather_snowy", text: "비/눈", color: "text-sky-500" }
+  if (precipitationType === 1 || precipitationType === 4) return { icon: "rainy", text: "비", color: "text-blue-500" }
+  if (sky === 1) return { icon: "sunny", text: "맑음", color: "text-amber-500" }
+  if (sky === 3) return { icon: "partly_cloudy_day", text: "구름많음", color: "text-slate-400" }
+  if (sky === 4) return { icon: "cloud", text: "흐림", color: "text-slate-500" }
+  return { icon: "sunny", text: "-", color: "text-slate-400" }
+}
 
 export default function Home() {
   const [summary, setSummary] = useState(null)
+  const [environment, setEnvironment] = useState(null)
   const [places, setPlaces] = useState([])
 
   useEffect(() => {
     fetchHomeSummary().then(setSummary)
     fetchTopPlaces().then(setPlaces)
+    fetchEnvironment(BUSAN_CITY_HALL.lat, BUSAN_CITY_HALL.lng).then(setEnvironment)
   }, [])
 
   return (
@@ -50,40 +70,45 @@ export default function Home() {
         </section>
 
         {/* Status cards */}
-        {summary && (
+        {summary && environment && (() => {
+          const condition = weatherCondition(environment.weather?.sky, environment.weather?.precipitationType)
+          const pmGrade = Math.max(environment.airQuality?.pm10Grade ?? 0, environment.airQuality?.pm25Grade ?? 0) || null
+          const pmStatus = STATUS[pmGradeToStatus(pmGrade)]
+          const uv = uvToLevel(environment.uvIndex)
+          const uvStatus = STATUS[uv.status]
+
+          return (
           <section className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-gutter">
-            <StatCard label="현재 부산 날씨" icon="sunny" iconClass="text-tertiary-fixed-dim">
+            <StatCard label="현재 부산 날씨" icon={condition.icon} iconClass={condition.color}>
               <span className="font-score-display text-score-display text-on-surface leading-none">
-                {summary.currentWeather.tempC}
+                {environment.weather?.temperature}
                 <span className="text-xl">°C</span>
               </span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant mt-1">
-                {summary.currentWeather.condition}
-              </span>
+              <span className="font-label-sm text-label-sm text-on-surface-variant mt-1">{condition.text}</span>
               <StatFooter
-                left={[`체감 ${summary.currentWeather.feelsLikeC}°C`, `바람 ${summary.currentWeather.windMs}m/s`]}
-                right={[`습도 ${summary.currentWeather.humidityPct}%`, `강수확률 ${summary.currentWeather.rainChancePct}%`]}
+                left={[`체감 ${environment.weather?.feelsLike}°C`, `바람 ${environment.weather?.windSpeed}m/s`]}
+                right={[`습도 ${environment.weather?.humidity}%`, `강수확률 ${environment.weather?.precipitationProb}%`]}
               />
             </StatCard>
 
-            <StatCard label="대기질" sub="(부산 평균)" icon="sentiment_satisfied" iconClass="text-on-secondary-container">
-              <span className="font-headline-lg-mobile text-headline-lg-mobile text-on-secondary-container leading-none mb-1">
-                {summary.airQuality.level}
+            <StatCard label="대기질" sub="(부산 평균)" icon="sentiment_satisfied" iconClass={pmStatus.text}>
+              <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none mb-1 ${pmStatus.text}`}>
+                {PM_GRADE_LABEL[pmGrade] ?? "-"}
               </span>
               <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-secondary-container" />
-                <span className="font-label-sm text-[10px] text-outline">PM2.5 {summary.airQuality.pm25}μg/m³</span>
+                <span className={`w-2 h-2 rounded-full ${pmStatus.bg}`} />
+                <span className="font-label-sm text-[10px] text-outline">PM2.5 {environment.airQuality?.pm25}μg/m³</span>
               </div>
-              <StatFooter single={[`PM10 ${summary.airQuality.pm10}μg/m³`, `O3 ${summary.airQuality.o3}ppm`]} />
+              <StatFooter single={[`PM10 ${environment.airQuality?.pm10}μg/m³`, `O3 ${environment.airQuality?.o3}ppm`]} />
             </StatCard>
 
             <StatCard label="자외선 지수" icon="light_mode" iconClass="text-tertiary-container">
-              <span className="font-headline-lg-mobile text-headline-lg-mobile text-tertiary-container leading-none mb-1">
-                {summary.uvIndex.level}
+              <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none mb-1 ${uvStatus.text}`}>
+                {uv.label}
               </span>
               <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-tertiary-fixed-dim" />
-                <span className="font-label-sm text-[10px] text-outline">UV {summary.uvIndex.uv}</span>
+                <span className={`w-2 h-2 rounded-full ${uvStatus.bg}`} />
+                <span className="font-label-sm text-[10px] text-outline">UV {environment.uvIndex}</span>
               </div>
               <div className="mt-2 pt-2 border-t border-outline-variant/30">
                 <span className="font-label-sm text-xs text-outline-variant">외출 시 선크림을 챙기세요!</span>
@@ -114,7 +139,8 @@ export default function Home() {
               <StatFooter left={[`외국인 ${summary.crowdLevel.foreign.toLocaleString()}명`]} right={[`내국인 ${summary.crowdLevel.domestic.toLocaleString()}명`]} />
             </StatCard>
           </section>
-        )}
+          )
+        })()}
 
         {/* TOP 10 */}
         <section className="flex flex-col gap-4">

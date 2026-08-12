@@ -61,6 +61,12 @@ def _num_or_none(value: str | None) -> float | None:
     return float(value)
 
 
+def _int_or_none(value: str | None) -> int | None:
+    if value in (None, "-", ""):
+        return None
+    return int(value)
+
+
 def _fetch_measurements() -> dict[str, dict]:
     """station_name -> {pm10, pm25, o3}."""
     res = requests.get(
@@ -82,6 +88,10 @@ def _fetch_measurements() -> dict[str, dict]:
             "pm10": _num_or_none(item.get("pm10Value")),
             "pm25": _num_or_none(item.get("pm25Value")),
             "o3": _num_or_none(item.get("o3Value")),
+            # 환경부 공식 4단계 등급(1=좋음~4=매우나쁨). 에어코리아가 이미 등급을
+            # 계산해서 주므로 우리가 임의로 기준값을 정하지 않고 그대로 저장한다.
+            "pm10_grade": _int_or_none(item.get("pm10Grade")),
+            "pm25_grade": _int_or_none(item.get("pm25Grade")),
         }
         for item in items
     }

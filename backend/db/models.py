@@ -144,6 +144,8 @@ class WeatherCache(Base):
     humidity = Column(Float)  # REH, %
     wind_speed = Column(Float)  # WSD, m/s
     precipitation_prob = Column(Float)  # POP, %
+    sky = Column(SmallInteger)  # SKY: 1=맑음 3=구름많음 4=흐림
+    precipitation_type = Column(SmallInteger)  # PTY: 0=없음 1=비 2=비/눈 3=눈 4=소나기
 
     fetched_at = Column(DateTime, nullable=False)
 
@@ -171,6 +173,10 @@ class AirQualityCache(Base):
     pm10 = Column(Float)
     pm25 = Column(Float)
     o3 = Column(Float)
+    # 환경부 공식 4단계 등급(1=좋음 2=보통 3=나쁨 4=매우나쁨) — 우리가 기준값을
+    # 새로 정하지 않고 에어코리아 응답의 등급을 그대로 저장해 신뢰도를 유지한다.
+    pm10_grade = Column(SmallInteger)
+    pm25_grade = Column(SmallInteger)
 
     fetched_at = Column(DateTime, nullable=False)
 

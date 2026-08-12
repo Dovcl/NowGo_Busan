@@ -72,6 +72,8 @@ def _fetch_cell(nx: int, ny: int, base_date: str, base_time: str) -> dict | None
         "humidity": float(values["REH"]),
         "wind_speed": float(values["WSD"]),
         "precipitation_prob": float(values["POP"]),
+        "sky": int(values["SKY"]),
+        "precipitation_type": int(values["PTY"]),
         "fetched_at": datetime.now(),
     }
 
