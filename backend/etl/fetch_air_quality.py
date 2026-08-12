@@ -88,10 +88,11 @@ def _fetch_measurements() -> dict[str, dict]:
             "pm10": _num_or_none(item.get("pm10Value")),
             "pm25": _num_or_none(item.get("pm25Value")),
             "o3": _num_or_none(item.get("o3Value")),
-            # 환경부 공식 4단계 등급(1=좋음~4=매우나쁨). 에어코리아가 이미 등급을
-            # 계산해서 주므로 우리가 임의로 기준값을 정하지 않고 그대로 저장한다.
-            "pm10_grade": _int_or_none(item.get("pm10Grade")),
-            "pm25_grade": _int_or_none(item.get("pm25Grade")),
+            # 환경부 공식 4단계 등급(1=좋음~4=매우나쁨). pm10Grade(예보성 등급)는 결측이
+            # 잦아서(실측: 36개 중 5개 null) 더 안정적으로 채워지는 1시간 실시간
+            # 등급(pm10Grade1h)을 쓴다 — "지금 이 시간" 표시 목적에도 이쪽이 더 맞음.
+            "pm10_grade": _int_or_none(item.get("pm10Grade1h")),
+            "pm25_grade": _int_or_none(item.get("pm25Grade1h")),
         }
         for item in items
     }
