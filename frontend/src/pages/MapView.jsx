@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import KakaoMap from "../components/KakaoMap"
 import PlaceDetailPanel from "../components/PlaceDetailPanel"
 import { fetchPlaces } from "../services/placesService"
+import { fetchListItems, fetchMyLists } from "../services/listsService"
 import { ENV_GROUP_STYLE } from "../lib/envGroup"
+import { useAuth } from "../context/AuthContext"
 
 // 사이드바 체크박스용 조금 더 자세한 라벨 — 마커 색상/범례와 같은 env_group4 키를 쓰되
 // 문구만 더 풀어서 쓴다 (top pill·범례는 ENV_GROUP_STYLE의 짧은 라벨을 그대로 씀).
@@ -10,14 +12,36 @@ const SIDEBAR_LABELS = { 해변: "해변", 산: "자연 (산/공원)", 도심: "
 const ALL_GROUPS = Object.keys(ENV_GROUP_STYLE)
 
 export default function MapView() {
+  const { isLoggedIn } = useAuth()
   const [places, setPlaces] = useState([])
   const [selectedPlaceId, setSelectedPlaceId] = useState(null)
   const [activeGroups, setActiveGroups] = useState(() => new Set(ALL_GROUPS))
+  const [savedLists, setSavedLists] = useState([])
+  const [activeRouteListId, setActiveRouteListId] = useState(null)
+  const [routePlaces, setRoutePlaces] = useState(null)
   const mapRef = useRef(null)
 
   useEffect(() => {
     fetchPlaces().then(setPlaces)
   }, [])
+
+  useEffect(() => {
+    if (!isLoggedIn) return setSavedLists([])
+    fetchMyLists().then(setSavedLists)
+  }, [isLoggedIn])
+
+  // 보관함 리스트를 고르면 저장된 순서 그대로 장소를 찾아와 "경로 모드"에 넘긴다.
+  useEffect(() => {
+    if (activeRouteListId == null) return setRoutePlaces(null)
+    fetchListItems(activeRouteListId).then((contentids) => {
+      const byId = new Map(places.map((p) => [p.id, p]))
+      setRoutePlaces(contentids.map((id) => byId.get(String(id))).filter(Boolean))
+    })
+  }, [activeRouteListId, places])
+
+  const toggleRouteList = (listId) => {
+    setActiveRouteListId((prev) => (prev === listId ? null : listId))
+  }
 
   const filteredPlaces = useMemo(
     () => (activeGroups.size === ALL_GROUPS.length ? places : places.filter((p) => activeGroups.has(p.envGroup4))),
@@ -110,6 +134,41 @@ export default function MapView() {
             })}
           </div>
         </div>
+        {isLoggedIn && savedLists.length > 0 && (
+          <div className="p-5 border-b border-outline-variant">
+            <h3 className="font-body-md text-body-md font-bold mb-3 flex items-center justify-between">
+              <span>보관함</span>
+              <span className="material-symbols-outlined text-sm text-outline">bookmark</span>
+            </h3>
+            <div className="flex flex-col gap-1">
+              {savedLists.map((list) => (
+                <button
+                  key={list.id}
+                  type="button"
+                  onClick={() => toggleRouteList(list.id)}
+                  className={`flex items-center gap-3 p-2 rounded-lg transition-colors text-left ${
+                    activeRouteListId === list.id ? "bg-primary-container/10 text-primary" : "hover:bg-surface-container-low text-on-surface"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]" style={list.isDefault ? { fontVariationSettings: "'FILL' 1" } : undefined}>
+                    {list.isDefault ? "favorite" : "list"}
+                  </span>
+                  <span className="font-body-md text-body-md flex-1 truncate">{list.name}</span>
+                  <span className="font-label-sm text-label-sm text-outline">{list.itemCount}</span>
+                </button>
+              ))}
+            </div>
+            {activeRouteListId != null && (
+              <button
+                type="button"
+                onClick={() => setActiveRouteListId(null)}
+                className="mt-3 w-full text-center font-label-sm text-label-sm text-primary font-bold hover:underline"
+              >
+                일반 지도로 돌아가기
+              </button>
+            )}
+          </div>
+        )}
         <div className="p-5">
           <h3 className="font-body-md text-body-md font-bold mb-3">정렬 기준</h3>
           <div className="flex flex-col gap-3">
@@ -132,38 +191,54 @@ export default function MapView() {
 
       {/* Map area */}
       <div className="flex-1 relative bg-surface-dim">
-        <KakaoMap ref={mapRef} places={filteredPlaces} onSelectPlace={handleSelectPlace} />
+        <KakaoMap ref={mapRef} places={filteredPlaces} route={routePlaces} onSelectPlace={handleSelectPlace} />
 
-        <div className="absolute top-4 left-4 flex gap-2 z-10 hide-scrollbar overflow-x-auto max-w-[calc(100%-80px)]">
-          <button
-            type="button"
-            onClick={toggleAll}
-            className={`px-4 py-2 rounded-full font-label-sm text-label-sm font-bold shadow-md whitespace-nowrap transition-colors ${
-              activeGroups.size === ALL_GROUPS.length ? "bg-primary text-white" : "bg-surface text-on-surface border border-outline-variant hover:bg-surface-container-low"
-            }`}
-          >
-            전체
-          </button>
-          {ALL_GROUPS.map((group) => {
-            const style = ENV_GROUP_STYLE[group]
-            const active = activeGroups.has(group) && activeGroups.size !== ALL_GROUPS.length
-            return (
-              <button
-                key={group}
-                type="button"
-                onClick={() => toggleGroup(group)}
-                className={`px-4 py-2 rounded-full font-label-sm text-label-sm shadow-md whitespace-nowrap transition-colors flex items-center gap-1 border ${
-                  active ? "bg-primary text-white border-primary" : "bg-surface text-on-surface border-outline-variant hover:bg-surface-container-low"
-                }`}
-              >
-                <span className="material-symbols-outlined text-[16px]" style={{ color: active ? undefined : style.color }}>
-                  {style.icon}
-                </span>
-                {style.label}
-              </button>
-            )
-          })}
-        </div>
+        {activeRouteListId == null ? (
+          <div className="absolute top-4 left-4 flex gap-2 z-10 hide-scrollbar overflow-x-auto max-w-[calc(100%-80px)]">
+            <button
+              type="button"
+              onClick={toggleAll}
+              className={`px-4 py-2 rounded-full font-label-sm text-label-sm font-bold shadow-md whitespace-nowrap transition-colors ${
+                activeGroups.size === ALL_GROUPS.length ? "bg-primary text-white" : "bg-surface text-on-surface border border-outline-variant hover:bg-surface-container-low"
+              }`}
+            >
+              전체
+            </button>
+            {ALL_GROUPS.map((group) => {
+              const style = ENV_GROUP_STYLE[group]
+              const active = activeGroups.has(group) && activeGroups.size !== ALL_GROUPS.length
+              return (
+                <button
+                  key={group}
+                  type="button"
+                  onClick={() => toggleGroup(group)}
+                  className={`px-4 py-2 rounded-full font-label-sm text-label-sm shadow-md whitespace-nowrap transition-colors flex items-center gap-1 border ${
+                    active ? "bg-primary text-white border-primary" : "bg-surface text-on-surface border-outline-variant hover:bg-surface-container-low"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]" style={{ color: active ? undefined : style.color }}>
+                    {style.icon}
+                  </span>
+                  {style.label}
+                </button>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="absolute top-4 left-4 z-10 bg-surface rounded-full pl-4 pr-2 py-2 shadow-md border border-outline-variant flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[18px]">route</span>
+            <span className="font-label-sm text-label-sm font-bold text-on-surface whitespace-nowrap">
+              {savedLists.find((l) => l.id === activeRouteListId)?.name} 경로 보는 중
+            </span>
+            <button
+              type="button"
+              onClick={() => setActiveRouteListId(null)}
+              className="w-7 h-7 rounded-full hover:bg-surface-container-low flex items-center justify-center shrink-0"
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+        )}
 
         <div className="absolute right-4 top-4 flex flex-col gap-2 z-10">
           <div className="bg-surface rounded-lg shadow-md border border-outline-variant flex flex-col overflow-hidden">
@@ -191,14 +266,16 @@ export default function MapView() {
           </button>
         </div>
 
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 glass-panel rounded-full px-6 py-3 shadow-lg flex items-center gap-6 z-10 whitespace-nowrap">
-          {Object.values(ENV_GROUP_STYLE).map((style) => (
-            <div key={style.label} className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: style.color }} />
-              <span className="font-label-sm text-label-sm text-on-surface font-bold">{style.label}</span>
-            </div>
-          ))}
-        </div>
+        {activeRouteListId == null && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 glass-panel rounded-full px-6 py-3 shadow-lg flex items-center gap-6 z-10 whitespace-nowrap">
+            {Object.values(ENV_GROUP_STYLE).map((style) => (
+              <div key={style.label} className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: style.color }} />
+                <span className="font-label-sm text-label-sm text-on-surface font-bold">{style.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
