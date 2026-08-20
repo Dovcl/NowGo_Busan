@@ -6,11 +6,16 @@
 // draggable은 터치에서 아예 동작하지 않는다. setPointerCapture로 손가락이 카드
 // 밖으로 나가도 move/up 이벤트를 계속 받는다.
 //
-// 드래그 중인 카드는 position:fixed로 완전히 레이아웃 밖으로 빼서 top을 포인터
-// 위치에 그대로 맞춘다 — "몇 칸 밀렸는지"를 계산해서 보정하는 대신 애초에 흐름에서
-// 빼버리니 보정 오차가 생길 여지가 없다. 밀려나는 다른 카드들과, 카드를 집어드는/
-// 내려놓는 순간의 레이아웃 변화는 FLIP 기법(변경 직전 위치를 기억해뒀다가 그 차이만큼
-// 역방향으로 즉시 옮긴 뒤 transition으로 0으로 되돌림)으로 스르륵 처리한다.
+// 잡은 카드는 목록 흐름 안에 그대로 있되 투명해지기만 한다(자리를 계속 차지) —
+// 그래서 잡는 순간엔 아무도 움직이지 않는다. 실제로 손가락을 따라다니는 건 그 카드를
+// cloneNode한 "고스트"로, 화면에 별도로 띄워서 위치만 갱신한다. 드래그가 다른 카드
+// 위치를 넘어서면 그때 비로소 배열을 재정렬하고, 밀려나는 카드들은 FLIP 기법(재정렬
+// 직전 위치를 기억해뒀다가 Web Animations API(el.animate)로 그 차이만큼에서 0으로
+// 애니메이션)으로 스르륵 자리를 비켜준다 — 마치 "여기 놓을래?"하고 자리를 만들어주듯이.
+// CSS transition 토글 대신 animate()를 쓰는 이유: 카드를 여러 칸 빠르게 지나가면 이
+// effect가 짧은 간격으로 연달아 도는데, transition 토글 방식은 브라우저가 이전 스타일
+// 변경을 페인트하기 전에 다음 변경이 들어오면 애니메이션이 통째로 씹히는(끊기는)
+// 경우가 있었다 — animate()는 그 문제 없이 매번 확정적으로 재생을 시작/대체한다.
 import { useLayoutEffect, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { fetchListItems, fetchMyLists, reorderList } from "../services/listsService"
@@ -20,7 +25,6 @@ const GAP_PX = 8 // 컨테이너의 gap-2와 맞춘 값
 const DRAG_THRESHOLD = 6 // 이만큼 움직여야 "탭"이 아니라 "드래그"로 인정
 const SETTLE_MS = 200
 const SETTLE_TRANSITION = `top ${SETTLE_MS}ms cubic-bezier(0.2, 0, 0, 1)`
-const FLIP_TRANSITION = `transform ${SETTLE_MS}ms cubic-bezier(0.2, 0, 0, 1)`
 
 export default function SavedListDetail() {
   const { listId } = useParams()
@@ -30,10 +34,11 @@ export default function SavedListDetail() {
   const [draggingId, setDraggingId] = useState(null)
 
   const placesRef = useRef(null)
-  const containerRef = useRef(null)
   const rowRefs = useRef({}) // placeId -> row DOM node
   const prevRectsRef = useRef({}) // FLIP용: 재정렬 직전 위치 스냅샷
   const gestureRef = useRef(null) // 진행 중인 포인터 제스처 (null이면 없음)
+  const ghostRef = useRef(null) // 드래그 중 화면에 떠서 손가락을 따라다니는 카드 복제본
+  const flipAnimRef = useRef({}) // placeId -> 재생 중인 FLIP Animation (연달아 재정렬될 때 취소용)
 
   placesRef.current = places
 
@@ -48,31 +53,26 @@ export default function SavedListDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listId])
 
-  // 재정렬(setPlaces)로 places가 바뀔 때마다: 드래그 중인 카드를 뺀 나머지가 화면에서
-  // 갑자기 점프해 보이지 않도록, 직전 위치와의 차이만큼 되돌렸다가 애니메이션으로 정리한다.
+  // 재정렬(setPlaces)로 places가 바뀔 때마다: 카드들이 갑자기 점프해 보이지 않도록,
+  // 직전 위치와의 차이만큼 되돌렸다가 애니메이션으로 정리한다(FLIP, 파일 상단 설명 참고).
+  // 드래그 중인 카드(투명)도 같이 흘러가야 "빈 자리가 이동하는" 느낌이 나서 제외하지 않는다.
   useLayoutEffect(() => {
-    animateFlipFromSnapshot(prevRectsRef.current, gestureRef.current?.id)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [places])
-
-  function animateFlipFromSnapshot(prevRects, excludeId) {
-    const excludeStr = excludeId != null ? String(excludeId) : null
+    const prevRects = prevRectsRef.current
     for (const [id, el] of Object.entries(rowRefs.current)) {
-      if (!el || id === excludeStr) continue
+      if (!el) continue
       const prev = prevRects[id]
       if (!prev) continue
       const next = el.getBoundingClientRect()
       const deltaY = prev.top - next.top
       if (Math.abs(deltaY) > 0.5) {
-        el.style.transition = "none"
-        el.style.transform = `translateY(${deltaY}px)`
-        requestAnimationFrame(() => {
-          el.style.transition = FLIP_TRANSITION
-          el.style.transform = ""
-        })
+        flipAnimRef.current[id]?.cancel()
+        flipAnimRef.current[id] = el.animate(
+          [{ transform: `translateY(${deltaY}px)` }, { transform: "translateY(0)" }],
+          { duration: SETTLE_MS, easing: "cubic-bezier(0.2, 0, 0, 1)" }
+        )
       }
     }
-  }
+  }, [places])
 
   function captureRowRects() {
     const rects = {}
@@ -82,21 +82,25 @@ export default function SavedListDetail() {
     return rects
   }
 
-  // 카드를 흐름에서 완전히 빼서(position: fixed) 포인터를 그대로 따라가게 만든다.
-  // 이 순간 나머지 카드들이 빈자리를 메우려고 즉시 당겨지는데, 그 이동도 FLIP으로 감싼다.
-  function liftRowOutOfFlow(placeId, rect) {
-    const before = captureRowRects()
-    const rowEl = rowRefs.current[placeId]
-    if (rowEl) {
-      rowEl.style.position = "fixed"
-      rowEl.style.left = `${rect.left}px`
-      rowEl.style.top = `${rect.top}px`
-      rowEl.style.width = `${rect.width}px`
-      rowEl.style.margin = "0"
-      rowEl.style.zIndex = "50"
-      rowEl.style.transition = "none"
-    }
-    requestAnimationFrame(() => animateFlipFromSnapshot(before, placeId))
+  // rect 위치에 딱 맞춰 카드를 복제해 띄운다 — 원본은 목록 안에서 투명해질 뿐 자리를
+  // 그대로 지키고, 이 복제본만 포인터를 따라 움직인다.
+  function createGhost(rowEl, rect) {
+    const ghost = rowEl.cloneNode(true)
+    ghost.style.position = "fixed"
+    ghost.style.top = `${rect.top}px`
+    ghost.style.left = `${rect.left}px`
+    ghost.style.width = `${rect.width}px`
+    ghost.style.margin = "0"
+    ghost.style.zIndex = "50"
+    ghost.style.pointerEvents = "none"
+    ghost.classList.add("shadow-xl", "scale-[1.02]")
+    document.body.appendChild(ghost)
+    ghostRef.current = ghost
+  }
+
+  function removeGhost() {
+    ghostRef.current?.remove()
+    ghostRef.current = null
   }
 
   const handlePointerDown = (e, placeId) => {
@@ -127,12 +131,13 @@ export default function SavedListDetail() {
       if (Math.abs(deltaY) < DRAG_THRESHOLD && Math.abs(e.clientX - g.startX) < DRAG_THRESHOLD) return
       g.dragging = true
       setDraggingId(g.id)
-      liftRowOutOfFlow(g.id, g.rect)
+      const rowEl = rowRefs.current[g.id]
+      if (rowEl) createGhost(rowEl, g.rect)
     }
 
-    const rowEl = rowRefs.current[g.id]
-    if (rowEl) rowEl.style.top = `${g.rect.top + deltaY}px`
+    if (ghostRef.current) ghostRef.current.style.top = `${g.rect.top + deltaY}px`
 
+    // 다른 카드 자리를 절반 이상 넘어섰을 때만 재정렬 — 그 전까진 다들 제자리.
     const targetIndex = Math.max(0, Math.min(g.itemCount - 1, g.startIndex + Math.round(deltaY / g.rowHeight)))
     if (targetIndex !== g.currentIndex) {
       g.currentIndex = targetIndex
@@ -145,18 +150,11 @@ export default function SavedListDetail() {
         next.splice(targetIndex, 0, moved)
         return next
       })
+      // 고스트는 잡은 순간 그대로 복제된 거라 번호 배지가 안 바뀌는데, 실제 카드가
+      // 몇 번째로 옮겨가는지는 계속 보여줘야 하니 여기서 직접 갱신한다.
+      const badge = ghostRef.current?.querySelector(".rounded-full")
+      if (badge) badge.textContent = String(targetIndex + 1)
     }
-  }
-
-  // 최종적으로 이 카드가 자연스럽게 놓여야 할 위치를 실제 형제 카드 위치를 재서 구한다
-  // (근사 계산이 아니라 실측이라 오차가 쌓이지 않는다).
-  function measureNaturalTop(g) {
-    const order = placesRef.current ?? []
-    if (g.currentIndex === 0) return containerRef.current?.getBoundingClientRect().top ?? g.rect.top
-    const prevPlace = order[g.currentIndex - 1]
-    const prevEl = prevPlace && rowRefs.current[prevPlace.id]
-    if (prevEl) return prevEl.getBoundingClientRect().bottom + GAP_PX
-    return g.rect.top + (g.currentIndex - g.startIndex) * g.rowHeight
   }
 
   // gestureRef.current.id로부터 필요한 걸 다 유도할 수 있어서 인자가 필요 없다 —
@@ -172,22 +170,20 @@ export default function SavedListDetail() {
       return
     }
 
-    setDraggingId(null)
     const rowEl = rowRefs.current[g.id]
-    if (rowEl) {
-      const finalTop = measureNaturalTop(g)
-      rowEl.style.transition = SETTLE_TRANSITION
-      rowEl.style.top = `${finalTop}px`
+    const ghost = ghostRef.current
+    if (ghost && rowEl) {
+      // 카드가 최종적으로 놓일 실제 위치로 고스트를 스르륵 옮긴 뒤, 그때 원본을 다시 보여준다.
+      const finalTop = rowEl.getBoundingClientRect().top
+      ghost.style.transition = SETTLE_TRANSITION
+      ghost.style.top = `${finalTop}px`
       window.setTimeout(() => {
-        if (!rowEl) return
-        rowEl.style.position = ""
-        rowEl.style.left = ""
-        rowEl.style.top = ""
-        rowEl.style.width = ""
-        rowEl.style.margin = ""
-        rowEl.style.zIndex = ""
-        rowEl.style.transition = ""
+        setDraggingId(null)
+        removeGhost()
       }, SETTLE_MS)
+    } else {
+      setDraggingId(null)
+      removeGhost()
     }
     reorderList(listId, (placesRef.current ?? []).map((p) => Number(p.id)))
   }
@@ -197,20 +193,11 @@ export default function SavedListDetail() {
     gestureRef.current = null
     if (!g?.dragging) return
     setDraggingId(null)
-    const rowEl = rowRefs.current[g.id]
-    if (rowEl) {
-      rowEl.style.position = ""
-      rowEl.style.left = ""
-      rowEl.style.top = ""
-      rowEl.style.width = ""
-      rowEl.style.margin = ""
-      rowEl.style.zIndex = ""
-      rowEl.style.transition = ""
-    }
+    removeGhost()
   }
 
   // 안전망: 포인터 캡처가 (드물게) 엉뚱한 요소로 새거나 브라우저가 탭 전환 등으로
-  // 제스처를 끊어버려도, 카드가 fixed 상태로 영영 붙어있지 않도록 window 레벨에서도 감시한다.
+  // 제스처를 끊어버려도, 카드가 계속 투명한 채로 영영 남지 않도록 window에서도 감시한다.
   useLayoutEffect(() => {
     window.addEventListener("pointerup", finishDrag)
     window.addEventListener("pointercancel", cancelDrag)
@@ -256,7 +243,7 @@ export default function SavedListDetail() {
           <p className="font-body-md text-on-surface-variant">아직 이 리스트에 저장한 관광지가 없어요.</p>
         )}
 
-        <div ref={containerRef} className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           {places.map((place, index) => (
             <div
               key={place.id}
@@ -269,7 +256,7 @@ export default function SavedListDetail() {
               onPointerUp={finishDrag}
               onPointerCancel={cancelDrag}
               className={`flex items-center gap-3 bg-surface-container-lowest rounded-xl p-3 border select-none touch-none cursor-grab active:cursor-grabbing ${
-                draggingId === place.id ? "border-primary shadow-xl scale-[1.02]" : "border-outline-variant/30 shadow-sm"
+                draggingId === place.id ? "opacity-0 pointer-events-none" : "border-outline-variant/30 shadow-sm"
               }`}
             >
               <span className="material-symbols-outlined text-outline-variant shrink-0">drag_indicator</span>
