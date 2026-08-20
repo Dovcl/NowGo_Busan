@@ -1,9 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { topPlaces } from "../mock/places"
-import { STATUS } from "../lib/status"
 import Toggle from "../components/Toggle"
 import { useAuth } from "../context/AuthContext"
+import { fetchMyLists, fetchListItems } from "../services/listsService"
+import { fetchPlaceById } from "../services/placesService"
 
 const PERSONAS = ["20대", "30대", "40대+"]
 const LANGUAGES = [
@@ -12,11 +12,6 @@ const LANGUAGES = [
   { code: "zh", flag: "🇨🇳", label: "中文" },
   { code: "ja", flag: "🇯🇵", label: "日本語" },
 ]
-
-// Demo-only saved places: reuses real TOP10 mock entries so the status
-// badge here matches what Home/PlaceDetail already say about the same place.
-// 987810 = 해운대 동백섬, 1957694 = 용두산 자갈치 관광특구 (see mock/places.js)
-const SAVED_PLACE_IDS = ["987810", "1957694"]
 
 export default function Profile() {
   const { user, isLoggedIn, openLoginModal, logout } = useAuth()
@@ -29,7 +24,25 @@ export default function Profile() {
   const [notifDust, setNotifDust] = useState(true)
   const [darkMode, setDarkMode] = useState(false)
 
-  const savedPlaces = SAVED_PLACE_IDS.map((id) => topPlaces.find((p) => p.id === id)).filter(Boolean)
+  // 리스트별로 담긴 장소를 보여준다 ("즐겨찾기" 기본 리스트뿐 아니라 유저가
+  // 직접 만든 리스트도 전부 — SaveToListModal에서 만든 리스트가 여기 안 보이면 안 됨).
+  const [savedLists, setSavedLists] = useState([])
+
+  useEffect(() => {
+    if (!isLoggedIn) return setSavedLists([])
+    fetchMyLists().then(async (lists) => {
+      const withPlaces = await Promise.all(
+        lists
+          .filter((l) => l.itemCount > 0)
+          .map(async (l) => {
+            const contentids = await fetchListItems(l.id)
+            const places = (await Promise.all(contentids.map(fetchPlaceById))).filter(Boolean)
+            return { ...l, places }
+          })
+      )
+      setSavedLists(withPlaces)
+    })
+  }, [isLoggedIn])
 
   return (
     <div className="h-full overflow-y-auto">
@@ -200,63 +213,95 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Saved places */}
-        <section className="flex flex-col gap-gutter">
+        {/* Saved places, grouped by list */}
+        <section className="flex flex-col gap-section-gap">
           <div className="flex justify-between items-center">
             <h2 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-bold text-on-surface flex items-center gap-2">
               <span className="material-symbols-outlined text-error filled-icon">favorite</span>
               찜한 관광지
             </h2>
-            <Link to="/" className="font-body-md text-body-md text-primary font-bold hover:underline">
-              전체보기
-            </Link>
+            {isLoggedIn && savedLists.length > 0 && (
+              <Link to="/saved" className="font-body-md text-body-md text-primary font-bold hover:underline">
+                보관함 전체보기
+              </Link>
+            )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-gutter">
-            {savedPlaces.map((place) => {
-              const status = STATUS[place.status]
-              return (
-                <Link
-                  key={place.id}
-                  to={`/place/${place.id}`}
-                  className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all border border-outline-variant/30 group"
-                >
-                  <div className="h-32 w-full relative">
-                    <img
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      src={place.image}
-                      alt={place.name}
-                    />
-                    <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm p-1.5 rounded-full shadow-sm">
-                      <span className="material-symbols-outlined text-error text-sm filled-icon">favorite</span>
-                    </div>
-                    <div className="absolute bottom-2 left-2">
-                      <span className={`${status.bg} text-white font-label-sm text-label-sm px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1`}>
-                        <span className="w-2 h-2 bg-white rounded-full" /> {status.label}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-4 flex flex-col gap-1">
-                    <h4 className="font-body-md text-body-md font-bold text-on-surface truncate">{place.name}</h4>
-                    <p className="font-label-sm text-label-sm text-on-surface-variant">{place.category}</p>
-                  </div>
-                </Link>
-              )
-            })}
-            <Link
-              to="/recommend"
-              className="hidden md:flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all border border-outline-variant/30"
-            >
-              <div className="h-32 w-full bg-surface-container-low flex items-center justify-center">
-                <span className="material-symbols-outlined text-4xl text-outline-variant">add_location_alt</span>
-              </div>
-              <div className="p-4 flex items-center justify-center h-[68px]">
-                <h4 className="font-body-md text-body-md font-bold text-primary">더 둘러보기</h4>
-              </div>
-            </Link>
-          </div>
+
+          {!isLoggedIn && (
+            <p className="font-body-md text-body-md text-on-surface-variant">로그인하면 저장한 관광지가 여기 모여요.</p>
+          )}
+          {isLoggedIn && savedLists.length === 0 && (
+            <p className="font-body-md text-body-md text-on-surface-variant">
+              아직 저장한 관광지가 없어요. 지도에서 마커를 눌러 저장해보세요.
+            </p>
+          )}
+
+          {savedLists.map((list) => (
+            <SavedListSection key={list.id} list={list} />
+          ))}
         </section>
       </div>
     </div>
+  )
+}
+
+const SAVED_PREVIEW_COUNT = 3
+
+function SavedListSection({ list }) {
+  const [expanded, setExpanded] = useState(false)
+  const visible = expanded ? list.places : list.places.slice(0, SAVED_PREVIEW_COUNT)
+  const hiddenCount = list.places.length - SAVED_PREVIEW_COUNT
+
+  return (
+    <div className="flex flex-col gap-gutter">
+      <h3 className="font-body-md text-body-md font-bold text-on-surface-variant flex items-center gap-2">
+        <span className="material-symbols-outlined text-[18px]" style={list.isDefault ? { fontVariationSettings: "'FILL' 1" } : undefined}>
+          {list.isDefault ? "favorite" : "list"}
+        </span>
+        {list.name}
+        <span className="font-label-sm text-label-sm text-outline">{list.places.length}개</span>
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-gutter">
+        {visible.map((place) => (
+          <SavedPlaceCard key={place.id} place={place} />
+        ))}
+      </div>
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="self-start font-body-md text-body-md text-primary font-bold hover:underline"
+        >
+          {expanded ? "접기" : `더보기 (${hiddenCount}개 더)`}
+        </button>
+      )}
+    </div>
+  )
+}
+
+function SavedPlaceCard({ place }) {
+  return (
+    <Link
+      to={`/place/${place.id}`}
+      className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all border border-outline-variant/30 group"
+    >
+      <div className="h-32 w-full relative">
+        {place.image && (
+          <img
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            src={place.image}
+            alt={place.name}
+          />
+        )}
+        <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm p-1.5 rounded-full shadow-sm">
+          <span className="material-symbols-outlined text-error text-sm filled-icon">favorite</span>
+        </div>
+      </div>
+      <div className="p-4 flex flex-col gap-1">
+        <h4 className="font-body-md text-body-md font-bold text-on-surface truncate">{place.name}</h4>
+        <p className="font-label-sm text-label-sm text-on-surface-variant">{place.category}</p>
+      </div>
+    </Link>
   )
 }
 

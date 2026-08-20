@@ -57,6 +57,15 @@ const KakaoMap = forwardRef(function KakaoMap({ places, onSelectPlace }, ref) {
     })
   }, [kakao])
 
+  // 좌측 패널이 열리고 닫힐 때 지도 컨테이너 너비가 바뀌는데, 카카오맵은 이걸
+  // 자동으로 못 알아채서 relayout()을 직접 호출해줘야 렌더링이 안 깨진다.
+  useEffect(() => {
+    if (!containerRef.current) return
+    const observer = new ResizeObserver(() => mapRef.current?.relayout())
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [kakao])
+
   useEffect(() => {
     if (!kakao || !mapRef.current) return
     const map = mapRef.current

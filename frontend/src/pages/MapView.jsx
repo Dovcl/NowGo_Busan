@@ -1,33 +1,47 @@
-import { useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useMemo, useRef, useState } from "react"
 import KakaoMap from "../components/KakaoMap"
+import PlaceDetailPanel from "../components/PlaceDetailPanel"
 import { fetchPlaces } from "../services/placesService"
 import { ENV_GROUP_STYLE } from "../lib/envGroup"
 
-const FILTERS = [
-  { icon: "waves", label: "해변", iconClass: "text-primary" },
-  { icon: "park", label: "자연", iconClass: "text-secondary" },
-  { icon: "storefront", label: "실내", iconClass: "text-tertiary" },
-  { icon: "palette", label: "문화", iconClass: "text-semantic-caution" },
-]
-
-const TYPE_FILTERS = [
-  { icon: "waves", label: "해변", bg: "bg-primary-fixed-dim/30", text: "text-primary" },
-  { icon: "park", label: "자연 (산/공원)", bg: "bg-secondary-fixed-dim/30", text: "text-secondary" },
-  { icon: "museum", label: "문화/역사", bg: "bg-tertiary-fixed-dim/30", text: "text-tertiary" },
-  { icon: "storefront", label: "실내", bg: "bg-surface-variant", text: "text-on-surface-variant" },
-]
+// 사이드바 체크박스용 조금 더 자세한 라벨 — 마커 색상/범례와 같은 env_group4 키를 쓰되
+// 문구만 더 풀어서 쓴다 (top pill·범례는 ENV_GROUP_STYLE의 짧은 라벨을 그대로 씀).
+const SIDEBAR_LABELS = { 해변: "해변", 산: "자연 (산/공원)", 도심: "문화/역사", 실내: "실내" }
+const ALL_GROUPS = Object.keys(ENV_GROUP_STYLE)
 
 export default function MapView() {
   const [places, setPlaces] = useState([])
+  const [selectedPlaceId, setSelectedPlaceId] = useState(null)
+  const [activeGroups, setActiveGroups] = useState(() => new Set(ALL_GROUPS))
   const mapRef = useRef(null)
-  const navigate = useNavigate()
 
   useEffect(() => {
     fetchPlaces().then(setPlaces)
   }, [])
 
-  const handleSelectPlace = (place) => navigate(`/place/${place.id}`)
+  const filteredPlaces = useMemo(
+    () => (activeGroups.size === ALL_GROUPS.length ? places : places.filter((p) => activeGroups.has(p.envGroup4))),
+    [places, activeGroups]
+  )
+
+  const toggleGroup = (group) => {
+    setActiveGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(group)) next.delete(group)
+      else next.add(group)
+      return next
+    })
+  }
+
+  // 전체 다 켜진 상태에서 "전체"를 또 누르면 전부 끄고, 아니면 전부 켠다.
+  const toggleAll = () => {
+    setActiveGroups((prev) => (prev.size === ALL_GROUPS.length ? new Set() : new Set(ALL_GROUPS)))
+  }
+
+  const handleSelectPlace = (place) => {
+    setSelectedPlaceId(place.id)
+    mapRef.current?.panTo(place.lat, place.lng)
+  }
 
   const handleLocateMe = () => {
     if (!navigator.geolocation) return
@@ -38,7 +52,10 @@ export default function MapView() {
 
   return (
     <div className="h-full flex overflow-hidden">
-      {/* Sidebar */}
+      {/* Sidebar: place detail panel replaces the filter sidebar when a marker is selected */}
+      {selectedPlaceId ? (
+        <PlaceDetailPanel placeId={selectedPlaceId} onClose={() => setSelectedPlaceId(null)} />
+      ) : (
       <aside className="w-80 bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.05)] z-10 flex-col overflow-y-auto border-r border-outline-variant shrink-0 hidden md:flex">
         <div className="p-5 border-b border-outline-variant">
           <h2 className="font-body-md text-body-md font-bold mb-4">관광지 검색</h2>
@@ -60,18 +77,37 @@ export default function MapView() {
           </h3>
           <div className="flex flex-col gap-2">
             <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors group">
-              <input defaultChecked className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
+              <input
+                checked={activeGroups.size === ALL_GROUPS.length}
+                onChange={toggleAll}
+                className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary"
+                type="checkbox"
+              />
               <span className="text-on-surface font-body-md text-body-md group-hover:text-primary">전체</span>
             </label>
-            {TYPE_FILTERS.map((f) => (
-              <label key={f.label} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors group">
-                <input className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
-                <div className={`w-6 h-6 rounded-full ${f.bg} flex items-center justify-center ${f.text}`}>
-                  <span className="material-symbols-outlined text-[14px]">{f.icon}</span>
-                </div>
-                <span className="text-on-surface font-body-md text-body-md group-hover:text-primary">{f.label}</span>
-              </label>
-            ))}
+            {ALL_GROUPS.map((group) => {
+              const style = ENV_GROUP_STYLE[group]
+              return (
+                <label
+                  key={group}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors group"
+                >
+                  <input
+                    checked={activeGroups.has(group)}
+                    onChange={() => toggleGroup(group)}
+                    className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary"
+                    type="checkbox"
+                  />
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: `${style.color}30`, color: style.color }}
+                  >
+                    <span className="material-symbols-outlined text-[14px]">{style.icon}</span>
+                  </div>
+                  <span className="text-on-surface font-body-md text-body-md group-hover:text-primary">{SIDEBAR_LABELS[group]}</span>
+                </label>
+              )
+            })}
           </div>
         </div>
         <div className="p-5">
@@ -92,24 +128,41 @@ export default function MapView() {
           </div>
         </div>
       </aside>
+      )}
 
       {/* Map area */}
       <div className="flex-1 relative bg-surface-dim">
-        <KakaoMap ref={mapRef} places={places} onSelectPlace={handleSelectPlace} />
+        <KakaoMap ref={mapRef} places={filteredPlaces} onSelectPlace={handleSelectPlace} />
 
         <div className="absolute top-4 left-4 flex gap-2 z-10 hide-scrollbar overflow-x-auto max-w-[calc(100%-80px)]">
-          <button type="button" className="bg-primary text-white px-4 py-2 rounded-full font-label-sm text-label-sm font-bold shadow-md whitespace-nowrap">
+          <button
+            type="button"
+            onClick={toggleAll}
+            className={`px-4 py-2 rounded-full font-label-sm text-label-sm font-bold shadow-md whitespace-nowrap transition-colors ${
+              activeGroups.size === ALL_GROUPS.length ? "bg-primary text-white" : "bg-surface text-on-surface border border-outline-variant hover:bg-surface-container-low"
+            }`}
+          >
             전체
           </button>
-          {FILTERS.map((f) => (
-            <button
-              key={f.label}
-              type="button"
-              className="bg-surface text-on-surface px-4 py-2 rounded-full font-label-sm text-label-sm shadow-md whitespace-nowrap hover:bg-surface-container-low transition-colors flex items-center gap-1 border border-outline-variant"
-            >
-              <span className={`material-symbols-outlined text-[16px] ${f.iconClass}`}>{f.icon}</span> {f.label}
-            </button>
-          ))}
+          {ALL_GROUPS.map((group) => {
+            const style = ENV_GROUP_STYLE[group]
+            const active = activeGroups.has(group) && activeGroups.size !== ALL_GROUPS.length
+            return (
+              <button
+                key={group}
+                type="button"
+                onClick={() => toggleGroup(group)}
+                className={`px-4 py-2 rounded-full font-label-sm text-label-sm shadow-md whitespace-nowrap transition-colors flex items-center gap-1 border ${
+                  active ? "bg-primary text-white border-primary" : "bg-surface text-on-surface border-outline-variant hover:bg-surface-container-low"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]" style={{ color: active ? undefined : style.color }}>
+                  {style.icon}
+                </span>
+                {style.label}
+              </button>
+            )
+          })}
         </div>
 
         <div className="absolute right-4 top-4 flex flex-col gap-2 z-10">

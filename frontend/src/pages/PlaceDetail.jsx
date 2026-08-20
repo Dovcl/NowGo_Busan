@@ -1,19 +1,9 @@
-import { useEffect, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { fetchPlaceById as fetchMockPlaceById } from "../services/scoreService"
-import { fetchPlaceById as fetchRealPlaceById } from "../services/placesService"
-import { fetchEnvironment } from "../services/environmentService"
+import { usePlaceDetail } from "../hooks/usePlaceDetail"
+import { useSaveButton } from "../hooks/useSaveButton"
+import { ENV_ROWS } from "../lib/envRows"
 import { STATUS, scoreToStatus } from "../lib/status"
-
-// TOP10 목업 항목도 이제 실제 tour_spot.contentid를 id로 쓰므로(mock/places.js 참고),
-// mock을 먼저 찾아서 큐레이션된 score/tips/forecast 등을 우선 쓴다. mock에 없는
-// contentid(지도에서 클릭한 일반 관광지 등)는 실제 백엔드로 폴백 — 거긴 NowGo Score
-// 알고리즘이 없어 score/breakdown 관련 섹션이 자연히 비게 된다.
-async function fetchPlaceById(placeId) {
-  const mockPlace = await fetchMockPlaceById(placeId)
-  if (mockPlace) return mockPlace
-  return /^\d+$/.test(placeId) ? fetchRealPlaceById(placeId) : null
-}
+import SaveToListModal from "../components/SaveToListModal"
 
 const SCORE_ROWS = [
   { key: "air", label: "대기질" },
@@ -22,28 +12,6 @@ const SCORE_ROWS = [
   { key: "ripCurrentOrWater", label: "이안류/수질" },
   { key: "crowd", label: "혼잡도" },
 ]
-
-// 실제 기상청/에어코리아 관측값. place.breakdown(NowGo Score 0~100 환산값)과는
-// 다른 데이터라 별도 섹션으로 둔다 — 스코어 알고리즘 미정이어도 이건 항상 보여줄 수 있음.
-// 값이 null이면(측정소가 일시적으로 결측인 경우 등) 각 get()이 null을 반환해야
-// 아래 렌더링에서 걸러진다 — 문자열로 먼저 합치면 "null㎍/㎥"처럼 찍혀버림.
-const ENV_ROWS = [
-  { label: "기온", icon: "thermostat", get: (e) => fmt(e.weather?.temperature, "℃") },
-  { label: "체감온도", icon: "device_thermostat", get: (e) => fmt(e.weather?.feelsLike, "℃") },
-  { label: "습도", icon: "water_drop", get: (e) => fmt(e.weather?.humidity, "%") },
-  { label: "풍속", icon: "air", get: (e) => fmt(e.weather?.windSpeed, "m/s") },
-  { label: "강수확률", icon: "umbrella", get: (e) => fmt(e.weather?.precipitationProb, "%") },
-  { label: "미세먼지", icon: "blur_on", get: (e) => fmt(e.airQuality?.pm10, "㎍/㎥") },
-  { label: "초미세먼지", icon: "grain", get: (e) => fmt(e.airQuality?.pm25, "㎍/㎥") },
-  { label: "자외선지수", icon: "wb_sunny", get: (e) => fmt(e.uvIndex, "") },
-  // 해운대/송정/임랑 반경 5km 안일 때만 값이 있음(services/environment 참고) — 그 밖엔
-  // e.ripCurrent 자체가 null이라 자동으로 안 뜬다.
-  { label: "이안류 위험도", icon: "warning", get: (e) => fmt(e.ripCurrent?.riskLevel, "") },
-]
-
-function fmt(value, unit) {
-  return value != null ? `${value}${unit}` : null
-}
 
 const INFO_ROWS = [
   { key: "usetime", icon: "schedule", label: "이용시간" },
@@ -61,18 +29,8 @@ export default function PlaceDetail() {
 
 function PlaceDetailView({ placeId }) {
   const navigate = useNavigate()
-  const [place, setPlace] = useState(undefined)
-  const [environment, setEnvironment] = useState(undefined)
-
-  useEffect(() => {
-    fetchPlaceById(placeId).then(setPlace)
-  }, [placeId])
-
-  // mock 큐레이션 장소는 좌표가 없어서(mock/places.js 참고) 자연히 스킵됨
-  useEffect(() => {
-    if (place?.lat == null || place?.lng == null) return
-    fetchEnvironment(place.lat, place.lng).then(setEnvironment)
-  }, [place?.lat, place?.lng])
+  const { place, environment } = usePlaceDetail(placeId)
+  const { isSaved, showModal, handleClick, closeModal } = useSaveButton(place?.id)
 
   if (place === undefined) return null
   if (place === null) {
@@ -292,9 +250,23 @@ function PlaceDetailView({ placeId }) {
                   </section>
                 )}
 
-                <button type="button" className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary/90 transition-all">
-                  경로보기 (카카오맵)
-                </button>
+                <div className="flex gap-2">
+                  <button type="button" className="flex-1 bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary/90 transition-all">
+                    경로보기 (카카오맵)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClick}
+                    className={`w-12 shrink-0 border rounded-lg flex items-center justify-center transition-colors ${
+                      isSaved ? "border-error bg-error/10 text-error" : "border-outline-variant text-primary hover:bg-surface-container-low"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined" style={isSaved ? { fontVariationSettings: "'FILL' 1" } : undefined}>
+                      {isSaved ? "bookmark" : "bookmark_add"}
+                    </span>
+                  </button>
+                </div>
+                {showModal && <SaveToListModal contentid={place.id} onClose={closeModal} />}
               </div>
             </div>
 

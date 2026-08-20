@@ -238,6 +238,35 @@ class UserSocialAccount(Base):
     user = relationship("User", back_populates="social_accounts")
 
 
+class PlaceList(Base):
+    """구글 지도 "목록에 저장"과 같은 개념 — 유저가 관광지를 담아두는 리스트.
+    is_default=True인 "즐겨찾기" 리스트는 유저별로 하나, 첫 조회 시 자동 생성된다
+    (routers/lists.py)."""
+
+    __tablename__ = "place_lists"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+    is_default = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    items = relationship("PlaceListItem", back_populates="place_list", cascade="all, delete-orphan")
+
+
+class PlaceListItem(Base):
+    __tablename__ = "place_list_items"
+
+    list_id = Column(Integer, ForeignKey("place_lists.id"), primary_key=True)
+    contentid = Column(BigInteger, ForeignKey("tour_spot.contentid"), primary_key=True)
+    added_at = Column(DateTime, nullable=False, server_default=func.now())
+    # 리스트 안에서의 순서 — 사용자가 드래그로 재배열한 결과(routers/lists.py reorder_items).
+    # 추후 지도에 이 순서대로 경로 표시할 때 씀. 새로 추가되는 항목은 맨 뒤로 붙는다.
+    position = Column(Integer, nullable=False, default=0)
+
+    place_list = relationship("PlaceList", back_populates="items")
+
+
 class UserSession(Base):
     """로그인 세션. id 자체가 쿠키 값(토큰)이라 별도 조회용 id 컬럼을 안 둔다.
     SQLAlchemy의 Session과 이름이 겹치지 않도록 UserSession으로 명명."""
