@@ -7,7 +7,7 @@ import PlaceDetail from "./pages/PlaceDetail"
 import Profile from "./pages/Profile"
 import SavedLists from "./pages/SavedLists"
 import SavedListDetail from "./pages/SavedListDetail"
-import ComingSoon from "./pages/ComingSoon"
+import Recommend from "./pages/Recommend"
 import AdminLogin from "./pages/AdminLogin"
 
 function App() {
@@ -18,7 +18,7 @@ function App() {
         <Route path="/map" element={<MapView />} />
         <Route path="/dashboard" element={<PulseDashboard />} />
         <Route path="/place/:placeId" element={<PlaceDetail />} />
-        <Route path="/recommend" element={<ComingSoon title="Recommend" />} />
+        <Route path="/recommend" element={<Recommend />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/saved" element={<SavedLists />} />
         <Route path="/saved/:listId" element={<SavedListDetail />} />

@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     GOOGLE_REDIRECT_URI: str = "http://localhost:8080/auth/google/callback"
     WEATHER_API_KEY: str | None = None
     AIR_KOREA_API_KEY: str | None = None
+    KOPIS_API_KEY: str | None = None
 
     DATABASE_NAME: str
     DATABASE_USER: str

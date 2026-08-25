@@ -3,9 +3,11 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     Column,
+    Date,
     DateTime,
     Float,
     ForeignKey,
+    ForeignKeyConstraint,
     Integer,
     SmallInteger,
     String,
@@ -13,6 +15,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from db.base import Base
@@ -131,6 +134,120 @@ class TourSpotIntro(Base):
     tour_spot = relationship("TourSpot", backref="intro")
 
 
+class EventRaw(Base):
+    """축제·행사 다중 소스(TourAPI/다봄/KOPIS/...) 원본을 그대로 보존하는 테이블.
+
+    harness/DECISIONS.md Phase 0 참고 — contenttypeid=15(축제)는 이제 tour_spot에
+    안 들어가고 여기로 온다(지도에 상시 관광지처럼 뜨던 문제 해결). dedup·정규화는
+    이후 event_normalized/events 단계에서 처리하고, 이 테이블은 수집이 실패해도
+    절대 지우지 않는다 — 원본을 보존해야 나중에 정규화 로직을 바꿔도 재현 가능함.
+    """
+
+    __tablename__ = "event_raw"
+
+    source = Column(String, primary_key=True)  # 'tourapi' / 'dabom' / 'kopis' / ...
+    source_event_id = Column(String, primary_key=True)  # 소스별 원본 id (문자열로 통일)
+
+    raw_payload = Column(JSONB, nullable=False)  # API 응답 그대로
+    fetched_at = Column(DateTime, nullable=False)
+    source_url = Column(String)  # 상세/공식 페이지 URL — 못 구한 항목은 null
+
+
+class EventNormalized(Base):
+    """event_raw 1건을 소스별 정규화 함수(etl/build_events.py)로 공통 필드로 옮긴 것.
+    dedup(candidate blocking·유사도 스코어링)은 전부 이 테이블 기준으로 돈다.
+
+    geom은 nullable — KOPIS는 공연장 좌표를 안 주고 시설명(fcltynm) 텍스트만 준다
+    (실측 확인). 좌표 없는 소스는 venue 유사도를 텍스트 비교로 대체한다."""
+
+    __tablename__ = "event_normalized"
+
+    source = Column(String, primary_key=True)
+    source_event_id = Column(String, primary_key=True)
+
+    title = Column(String, nullable=False)
+    normalized_title = Column(String, nullable=False)  # 연도·"제N회"·괄호·공백 제거
+    start_date = Column(Date)
+    end_date = Column(Date)
+    venue = Column(String)
+    address = Column(String)
+    geom = Column(Geometry(geometry_type="POINT", srid=4326))  # 없는 소스는 null
+    category = Column(String)  # festival / performance 등 — 소스별 원 카테고리 최대한 보존
+    image_url = Column(String)  # TourAPI firstimage / KOPIS poster — 둘 다 원본에 이미 있어서 그대로 씀
+
+    __table_args__ = (
+        ForeignKeyConstraint(["source", "source_event_id"], ["event_raw.source", "event_raw.source_event_id"]),
+    )
+
+
+class Event(Base):
+    """정규화·dedup을 거쳐 확정된 canonical 행사. 프론트 Recommend/캘린더가 보는 건 이 테이블뿐이고,
+    event_raw/event_normalized는 절대 직접 노출하지 않는다(원본 보존용)."""
+
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    title = Column(String, nullable=False)
+    start_date = Column(Date)
+    end_date = Column(Date)
+    venue = Column(String)
+    address = Column(String)
+    geom = Column(Geometry(geometry_type="POINT", srid=4326))
+    category = Column(String)
+    image_url = Column(String)
+
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+
+class EventSourceMap(Base):
+    """canonical event 1건 <-> 원본(event_raw) N건 매핑. 병합해도 원본 연결은 남겨서
+    "왜 이 행사가 이렇게 됐는지"(provenance)를 항상 추적할 수 있게 한다."""
+
+    __tablename__ = "event_source_map"
+
+    event_id = Column(Integer, ForeignKey("events.id"), primary_key=True)
+    source = Column(String, primary_key=True)
+    source_event_id = Column(String, primary_key=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(["source", "source_event_id"], ["event_raw.source", "event_raw.source_event_id"]),
+    )
+
+
+class EventDedupCandidate(Base):
+    """candidate blocking(날짜 겹침)을 통과한 서로 다른 소스 두 건의 중복 여부 판단 큐.
+    AUTO_MERGE는 초기엔 항상 꺼둔다(harness/DECISIONS.md Phase 2) — score가 아무리 높아도
+    decision은 사람이 검토해서 SAME/DIFFERENT로 바꾸기 전까진 PENDING으로 남고, 두 원본은
+    각자 별도 canonical event로 존재한다. 잘못 자동병합된 이벤트가 조용히 쌓이는 것보다
+    "중복인데 따로 보이는" 게 훨씬 덜 나쁨."""
+
+    __tablename__ = "event_dedup_candidates"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    a_source = Column(String, nullable=False)
+    a_source_event_id = Column(String, nullable=False)
+    b_source = Column(String, nullable=False)
+    b_source_event_id = Column(String, nullable=False)
+
+    title_score = Column(Float, nullable=False)
+    date_score = Column(Float, nullable=False)
+    venue_score = Column(Float, nullable=False)
+    total_score = Column(Float, nullable=False)
+
+    decision = Column(String, nullable=False, default="PENDING")  # PENDING / SAME / DIFFERENT
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    reviewed_at = Column(DateTime)
+
+    __table_args__ = (
+        ForeignKeyConstraint(["a_source", "a_source_event_id"], ["event_raw.source", "event_raw.source_event_id"]),
+        ForeignKeyConstraint(["b_source", "b_source_event_id"], ["event_raw.source", "event_raw.source_event_id"]),
+        UniqueConstraint("a_source", "a_source_event_id", "b_source", "b_source_event_id"),
+    )
+
+
 class WeatherCache(Base):
     """기상청 단기예보(getVilageFcst) 배치 캐시. 관광지별이 아니라 격자(nx,ny) 단위로
     저장 — 좌표 하나가 들어오면 이 중 가장 가까운 셀을 찾아 쓴다(services/environment)."""
@@ -199,6 +316,79 @@ class RipCurrentCache(Base):
     observed_at = Column(DateTime)  # obsrvnDt
 
     fetched_at = Column(DateTime, nullable=False)
+
+
+class RoadLinkCache(Base):
+    """국토교통부 표준노드링크 좌표 마스터. 월 1회 정도만 갱신되는 정적 데이터라
+    실시간 속도(RoadLinkTrafficCache)와 테이블을 분리 — 갱신 주기가 완전히 달라서
+    한 테이블에 합치면 서로 다른 스크립트가 upsert할 때 NULL로 덮어쓰는 문제가 생김
+    (harness/DECISIONS.md 2026-08-20, AirQualityCache 때 겪었던 것과 같은 문제).
+
+    link_id는 LINKTrafficList의 lkId와 동일 체계(국가 표준 LINK_ID, 앞 3자리가
+    시군구 권역코드). 좌표는 부산 prefix로 먼저 필터링하지 않고 실시간 링크 9,207개를
+    전국 데이터에서 exact match로 뽑아야 정확함(prefix 필터 시 157개 누락 확인됨)."""
+
+    __tablename__ = "road_link_cache"
+
+    link_id = Column(String, primary_key=True)
+    road_name = Column(String)
+    geom = Column(Geometry(geometry_type="LINESTRING", srid=4326), nullable=False)
+    length_m = Column(Float)
+
+
+class RoadLinkTrafficCache(Base):
+    """부산광역시_링크소통정보(LINKTrafficList) 실시간 스냅샷. 10~15분 주기 ETL이
+    매 사이클 갱신 — 한 사이클(93페이지)이 부분 실패하면 이 테이블을 건드리지 않고
+    스킵해야 함(cycle integrity, harness/DECISIONS.md 참고)."""
+
+    __tablename__ = "road_link_traffic_cache"
+
+    link_id = Column(String, ForeignKey("road_link_cache.link_id"), primary_key=True)
+    current_speed = Column(Float)
+    current_volume = Column(Float)
+    observed_at = Column(DateTime, nullable=False)  # API statsDt — dow/hour 계산 기준
+    fetched_at = Column(DateTime, nullable=False)  # 우리가 실제 호출한 시각
+
+
+class RoadLinkHourlyBuffer(Base):
+    """RoadLinkBaseline에 반영하기 전 시간당 누적 staging 테이블. 15분 주기로 들어오는
+    관측치를 그대로 baseline에 반영하면 같은 날의 4개 샘플이 서로 다른 4번의 관측처럼
+    카운트돼서 sample_count(=관측한 날짜 수) 정의가 깨짐(harness/DECISIONS.md 2026-08-20).
+
+    ETL 사이클마다 speed_sum/volume_sum/observation_count를 누적하다가, 그 시간대가
+    끝나면(observed_at.hour가 바뀌면) 평균을 계산해 RoadLinkBaseline에 딱 한 번 반영하고
+    이 행은 지운다 — 그래서 하루 이상 오래 남아있는 행이 있으면 그 자체가 이상 신호."""
+
+    __tablename__ = "road_link_hourly_buffer"
+
+    link_id = Column(String, ForeignKey("road_link_cache.link_id"), primary_key=True)
+    observed_date = Column(String, primary_key=True)  # YYYY-MM-DD (Asia/Seoul 기준)
+    hour = Column(SmallInteger, primary_key=True)  # 0~23
+
+    speed_sum = Column(Float, nullable=False, default=0)
+    volume_sum = Column(Float, nullable=False, default=0)
+    volume_count = Column(Integer, nullable=False, default=0)  # speed와 별도 카운트 (volume만 결측일 수 있어서)
+    observation_count = Column(Integer, nullable=False, default=0)
+
+
+class RoadLinkBaseline(Base):
+    """링크별 요일×시간대 자체 누적 baseline. 외부 API가 아니라 우리가 직접 쌓음
+    (harness/DECISIONS.md 2026-08-20 — 관광빅데이터/지하철은 단위가 달라 결합에
+    별도 정규화가 필요해서 채택 안 함).
+
+    sample_count는 관측 "횟수"가 아니라 관측한 날짜 수를 의미해야 함 — 같은 날
+    15분 간격으로 들어온 여러 샘플은 서로 독립된 관측이 아니라 그날 하루의 스냅샷일
+    뿐이라, ETL에서 시간당 대표값 1개로 집계한 뒤에만 이 테이블에 반영한다."""
+
+    __tablename__ = "road_link_baseline"
+
+    link_id = Column(String, ForeignKey("road_link_cache.link_id"), primary_key=True)
+    dow = Column(SmallInteger, primary_key=True)  # 0=월 ~ 6=일
+    hour = Column(SmallInteger, primary_key=True)  # 0~23
+
+    avg_speed = Column(Float, nullable=False)
+    avg_volume = Column(Float)
+    sample_count = Column(Integer, nullable=False, default=0)  # 관측한 날짜 수
 
 
 class User(Base):

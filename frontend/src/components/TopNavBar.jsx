@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext"
 const NAV_ITEMS = [
   { to: "/", label: "홈" },
   { to: "/map", label: "지도" },
-  { to: "/recommend", label: "추천" },
+  { to: "/recommend", label: "축제·행사" },
   { to: "/dashboard", label: "대시보드" },
   { to: "/profile", label: "프로필" },
 ]

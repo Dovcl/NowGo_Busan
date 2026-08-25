@@ -14,9 +14,11 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from db.models import (
     CategoryCode,
     ContentType,
+    PlaceListItem,
     SigunguCode,
     TourSpot,
     TourSpotEnvClassification,
+    TourSpotIntro,
 )
 from db.session import SessionLocal
 from etl.classify_tour_type import classify
@@ -82,6 +84,41 @@ def _none_if_nan(value):
 
 def seed_tour_spot_and_classification(session) -> None:
     df = pd.read_csv(TOUR_SPOT_CSV)
+
+    # contenttypeid=15(축제/공연/행사)는 여기서 뺀다 — 상시 존재하는 "장소"가 아니라
+    # 기간이 있는 "행사"라서 NowGo Score를 받는 지도 핀으로 취급하면 안 됨. 실제로
+    # is_env_target=True로 분류돼 지도에 일반 관광지처럼 상시 노출되고 있었음(실측
+    # 확인, 31건). 이제 이 데이터는 etl/fetch_festivals.py가 event_raw로 수집한다
+    # (harness/DECISIONS.md Phase 0).
+    festival_count = int((df["contenttypeid"] == 15).sum())
+    df = df[df["contenttypeid"] != 15].reset_index(drop=True)
+    print(f"tour_spot 시딩 제외(축제, contenttypeid=15): {festival_count}건")
+
+    # 과거에 이미 tour_spot에 들어가 있던 축제 행도 정리한다(위 필터는 "앞으로 안
+    # 들어옴"만 보장하고, 기존 행은 안 지워짐). FK 순서: place_list_items /
+    # tour_spot_env_classification / tour_spot_intro -> tour_spot (실제로 처음엔
+    # tour_spot_intro FK를 놓쳐서 IntegrityError로 한 번 막혔음 — 세 자식 테이블
+    # 전부 먼저 지워야 함).
+    festival_ids = session.query(TourSpot.contentid).filter(TourSpot.contenttypeid == 15).all()
+    festival_ids = [row[0] for row in festival_ids]
+    if festival_ids:
+        removed_saves = (
+            session.query(PlaceListItem)
+            .filter(PlaceListItem.contentid.in_(festival_ids))
+            .delete(synchronize_session=False)
+        )
+        session.query(TourSpotIntro).filter(TourSpotIntro.contentid.in_(festival_ids)).delete(
+            synchronize_session=False
+        )
+        session.query(TourSpotEnvClassification).filter(
+            TourSpotEnvClassification.contentid.in_(festival_ids)
+        ).delete(synchronize_session=False)
+        session.query(TourSpot).filter(TourSpot.contentid.in_(festival_ids)).delete(synchronize_session=False)
+        print(
+            f"tour_spot 기존 축제 행 정리: {len(festival_ids)}건 삭제"
+            + (f" (보관함에서 같이 빠진 항목 {removed_saves}건)" if removed_saves else "")
+        )
+
     classified = classify(df)  # env_type_code, env_group4 등 6개 컬럼 추가됨
 
     tour_spot_records = []
