@@ -4,10 +4,15 @@ harness/DECISIONS.md Phase 2 참고. canonical `events` 테이블을 실제로 �
 확정된 걸 하나로 합치는 것)은 여기서 안 한다 — 그건 Phase 3. 지금은 "정규화하고,
 겹칠 만한 후보를 찾아서 점수 매겨 큐에 쌓아두는 것"까지만 한다.
 
-AUTO_MERGE는 아직 없다: score가 아무리 높아도 여기선 항상 decision=PENDING으로 쌓인다.
-실제 SAME/DIFFERENT 확정은 사람이 검토한 뒤(Phase 3/4) — 이 프로젝트가 s_crowd 등
-cold start 상황에서 반복해온 원칙과 같다(추측으로 자동 확정하지 않고 결측/보류 상태를
-유지). 이미 검토된 쌍은 재실행해도 절대 덮어쓰지 않는다(ON CONFLICT DO NOTHING).
+AUTO_MERGE 도입(2026-08-26, 다봄 연동 후): 다봄+KOPIS를 합쳤더니 후보 1,329건 중
+1,117건이 명백한 노이즈(0.2~0.4점, 그냥 날짜만 우연히 겹친 무관한 것들)였고, 184건은
+title/date/venue가 전부 1.0인 완벽 일치(실측으로 10건 직접 대조 확인 — 전부 진짜
+같은 행사)였음. 이 정도로 점수대가 뚜렷하게 갈리면("0.5~0.7 애매한 28건" 정도만 진짜
+애매함) 검토 없는 자동 확정이 안전하다고 판단 — 처음에 "실제 데이터 없이 임계값 추측
+안 함" 원칙을 세웠던 게 바로 이 순간을 위해서였음. `_AUTO_MERGE_SCORE` 이상은
+decision=SAME으로 바로 확정, 그 아래(`_MIN_QUEUE_SCORE` 이상)는 여전히 PENDING으로
+사람 검토 대기(다만 검토용 관리자 화면은 아직 없음 — DB 직접 확인만 가능).
+이미 검토된(SAME/DIFFERENT로 바뀐) 쌍은 재실행해도 절대 덮어쓰지 않는다(ON CONFLICT DO NOTHING).
 
 실행: backend/ 디렉토리에서 `python -m etl.build_events`
 (event_raw가 먼저 채워져 있어야 함 — fetch_festivals.py / fetch_kopis.py 실행 후)
@@ -31,7 +36,12 @@ _CANDIDATE_WINDOW_DAYS = 3  # 이 안에서 날짜가 겹치는 것만 후보로
 # 22건 전부와 "후보"로 잡혔는데, 점수는 전부 0.09 이하였음(실측 확인). 날짜 신호가
 # 무의미해진 케이스라 title/venue조차 안 맞으면 사람이 볼 필요가 없다고 판단 —
 # 이 점수 미만은 애초에 큐에 안 넣는다(자동판정이 아니라 "명백히 무관"만 거름).
-_MIN_QUEUE_SCORE = 0.2
+# 2026-08-26 다봄 연동 후 실측 재조정: 0.2는 TourAPI+KOPIS 2개 소스일 때 기준이었는데,
+# 다봄까지 3개가 되니 노이즈 덩어리가 0.2~0.4 전체를 차지하는 게 확인돼(1,117건) 0.45로 올림.
+_MIN_QUEUE_SCORE = 0.45
+# 실측(다봄+KOPIS 184건)으로 확인된 "완벽 일치" 구간 — title/date/venue가 전부 1.0이면
+# total=0.85가 나옴. 이 이상은 사람 검토 없이 바로 SAME 확정(AUTO_MERGE).
+_AUTO_MERGE_SCORE = 0.8
 _TITLE_WEIGHT = 0.45
 _DATE_WEIGHT = 0.25
 _VENUE_WEIGHT = 0.15
@@ -75,6 +85,15 @@ def _parse_kopis_date(raw: str | None) -> date | None:
         return None
 
 
+def _parse_dabom_date(raw: str | None) -> date | None:
+    if not raw:
+        return None
+    try:
+        return datetime.strptime(raw, "%Y-%m-%d").date()
+    except ValueError:
+        return None  # "0000-00-00" 같은 결측 더미값
+
+
 def normalize_tourapi(raw: dict) -> dict | None:
     title = raw.get("title")
     if not title:
@@ -110,7 +129,26 @@ def normalize_kopis(raw: dict) -> dict | None:
     }
 
 
-_NORMALIZERS = {"tourapi": normalize_tourapi, "kopis": normalize_kopis}
+def normalize_dabom(raw: dict) -> dict | None:
+    title = raw.get("title")
+    if not title:
+        return None
+    return {
+        "title": title,
+        "start_date": _parse_dabom_date(raw.get("op_st_dt")),
+        "end_date": _parse_dabom_date(raw.get("op_ed_dt")),
+        "venue": raw.get("place_nm"),
+        "address": None,
+        "lat": None,  # 다봄도 좌표를 안 줌(실측 확인) — venue는 텍스트로만 비교
+        "lng": None,
+        # prg_nm이 "전시"면 그대로 전시로 — 5개 카테고리 중 실데이터가 없던 exhibition을
+        # 처음으로 채워줌. 그 외(클래식/연극/뮤지컬/무용/전통예술/대중음악 등)는 performance.
+        "category": "exhibition" if raw.get("prg_nm") == "전시" else "performance",
+        "image_url": None,  # 다봄 응답엔 이미지 필드 자체가 없음(실측 확인) — 정상
+    }
+
+
+_NORMALIZERS = {"tourapi": normalize_tourapi, "kopis": normalize_kopis, "dabom": normalize_dabom}
 
 
 def build_normalized(session) -> list[dict]:
@@ -206,15 +244,16 @@ def find_candidates(records: list[dict]) -> list[dict]:
                     "date_score": round(date_score, 4),
                     "venue_score": round(venue_score, 4),
                     "total_score": round(total, 4),
-                    "decision": "PENDING",
+                    "decision": "SAME" if total >= _AUTO_MERGE_SCORE else "PENDING",
                 }
             )
     return candidates
 
 
 def save_candidates(session, candidates: list[dict]) -> int:
-    """이미 있는 쌍은 절대 안 건드린다 — 사람이 이미 SAME/DIFFERENT로 검토했을 수 있어서
-    ON CONFLICT DO NOTHING으로 새 쌍만 PENDING으로 추가한다."""
+    """이미 있는 쌍은 절대 안 건드린다 — 사람이 이미 SAME/DIFFERENT로 검토했거나
+    이전 실행에서 AUTO_MERGE로 이미 SAME 확정됐을 수 있어서 ON CONFLICT DO NOTHING으로
+    새 쌍만 추가한다(기존 쌍의 decision은 절대 재계산·덮어쓰기 안 함)."""
     if not candidates:
         return 0
     stmt = pg_insert(EventDedupCandidate).values(candidates)
@@ -269,10 +308,15 @@ def promote_events(session) -> int:
     for root, members in groups.items():
         event_id = existing_event_for_root.get(root)
         if event_id is None:
-            # 그룹 안에서 정보(장소·주소·좌표)가 가장 풍부한 항목을 대표값으로 쓴다.
+            # 그룹 안에서 정보(장소·주소·좌표·이미지)가 가장 풍부한 항목을 대표값으로 쓴다.
+            # image_url을 빼먹으면 다봄(이미지 없음)이 KOPIS(포스터 있음)를 대표값으로
+            # 이겨버려서 멀쩡한 이미지가 있는데도 카드가 빈 이미지로 뜨는 문제가 있었음
+            # (실측 확인 — "살로메" 병합 후 image_url이 null로 나옴).
             rep_key = max(
                 members,
-                key=lambda k: sum(v is not None for v in (normalized[k].venue, normalized[k].address, normalized[k].geom)),
+                key=lambda k: sum(
+                    v is not None for v in (normalized[k].venue, normalized[k].address, normalized[k].geom, normalized[k].image_url)
+                ),
             )
             n = normalized[rep_key]
             event = Event(
@@ -308,7 +352,11 @@ def main() -> None:
         candidates = find_candidates(records)
         inserted = save_candidates(session, candidates)
         session.commit()
-        print(f"event_dedup_candidates: 후보 {len(candidates)}건 중 신규 {inserted}건 추가(PENDING)")
+        auto_merged = sum(1 for c in candidates if c["decision"] == "SAME")
+        print(
+            f"event_dedup_candidates: 후보 {len(candidates)}건 중 신규 {inserted}건 추가 "
+            f"(자동 병합 {auto_merged}건, 검토 대기 {len(candidates) - auto_merged}건)"
+        )
 
         promoted = promote_events(session)
         session.commit()
