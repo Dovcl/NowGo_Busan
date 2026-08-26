@@ -1,11 +1,14 @@
 // "축제·행사" 탭 — 부산 축제/공연/전시/스포츠/마켓 정보를 모아 보여주고,
 // 캘린더 팝업에서 담거나(가고싶어요) 직접 개인 일정을 만들 수 있다.
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import EventCalendarModal from "../components/EventCalendarModal"
 import EventDetailModal from "../components/EventDetailModal"
+import { useAuth } from "../context/AuthContext"
 import { useMyEvents } from "../hooks/useMyEvents"
 import { eventStatus, formatDateRange } from "../lib/events"
 import { EVENT_CATEGORIES } from "../mock/events"
+import { fetchDedupCandidates } from "../services/adminService"
 import { fetchAnnouncements, fetchEvents } from "../services/eventsService"
 
 const CATEGORY_ORDER = ["festival", "performance", "exhibition", "sports", "market"]
@@ -22,7 +25,15 @@ function pickNoteworthy(events) {
     .slice(0, NOTEWORTHY_LIMIT)
 }
 
+// 검색용 정규화 — 행사명 공백 위치가 소스마다 제각각이라("부산국제록페스티벌"처럼
+// 붙여쓰기도 흔함) 완전 문자열 일치 대신 양쪽 다 공백을 지우고 비교한다.
+function normalizeForSearch(text) {
+  return text.toLowerCase().replace(/\s+/g, "")
+}
+
 export default function Recommend() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [events, setEvents] = useState([])
   const [announcements, setAnnouncements] = useState([])
   const [category, setCategory] = useState("all")
@@ -30,6 +41,7 @@ export default function Recommend() {
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [calendarInitialDate, setCalendarInitialDate] = useState(null)
   const [detailEventId, setDetailEventId] = useState(null)
+  const [pendingReviewCount, setPendingReviewCount] = useState(0)
 
   const { savedIds, toggleSaved, customEvents, addCustomEvent, removeCustomEvent } = useMyEvents()
 
@@ -38,10 +50,18 @@ export default function Recommend() {
     fetchAnnouncements().then(setAnnouncements)
   }, [])
 
+  // 관리자일 때만 검토 대기 배지를 보여준다 — 버튼을 숨기는 건 UX일 뿐이고, 실제
+  // 접근 차단은 백엔드(require_admin)가 함.
+  useEffect(() => {
+    if (user?.role === "admin") fetchDedupCandidates().then((list) => setPendingReviewCount(list.length))
+  }, [user])
+
   const categoryFiltered = category === "all" ? events : events.filter((e) => e.category === category)
-  const query = search.trim().toLowerCase()
+  // 공백 위치가 제각각인 행사명이 많아서("부산국제록페스티벌" vs 사용자가 "록 페스티벌"로
+  // 검색) 완전 문자열 일치 대신 양쪽 다 공백을 지우고 비교한다.
+  const query = normalizeForSearch(search)
   const filtered = query
-    ? categoryFiltered.filter((e) => e.title.toLowerCase().includes(query) || e.location.toLowerCase().includes(query))
+    ? categoryFiltered.filter((e) => normalizeForSearch(e.title).includes(query) || normalizeForSearch(e.location).includes(query))
     : categoryFiltered
   const noteworthy = pickNoteworthy(events)
 
@@ -125,6 +145,16 @@ export default function Recommend() {
             <div className="flex items-baseline gap-2">
               <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">전체 행사</h2>
               <span className="font-label-sm text-[12px] text-outline">{filtered.length}건</span>
+              {user?.role === "admin" && pendingReviewCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/admin/events/review")}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm text-[11px] font-bold hover:opacity-80 transition-opacity"
+                >
+                  <span className="material-symbols-outlined text-[14px]">rule</span>
+                  검토 대기 {pendingReviewCount}
+                </button>
+              )}
             </div>
             <div className="relative sm:w-64 shrink-0">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">

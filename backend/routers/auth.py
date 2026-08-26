@@ -174,6 +174,14 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     return session.user
 
 
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    """관리자 전용 라우트용 의존성. 프론트에서 버튼을 숨기는 것과 별개로, 이게 실제
+    보안 경계다 — 프론트를 안 거치고 API를 직접 호출해도 여기서 막힌다."""
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근할 수 있습니다")
+    return user
+
+
 @router.get("/me", response_model=UserOut)
 def get_me(user: User = Depends(get_current_user)):
     return user

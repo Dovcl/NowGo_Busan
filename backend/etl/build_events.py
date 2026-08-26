@@ -230,7 +230,10 @@ def find_candidates(records: list[dict]) -> list[dict]:
             title_score = fuzz.token_sort_ratio(normalize_title(a["title"]), normalize_title(b["title"])) / 100
             date_score = _date_overlap_score(a["start_date"], a["end_date"], b["start_date"], b["end_date"])
             venue_score = _venue_score(a["venue"], b["venue"])
-            total = title_score * _TITLE_WEIGHT + date_score * _DATE_WEIGHT + venue_score * _VENUE_WEIGHT
+            # 소수점을 미리 반올림해두고 그 값으로만 비교한다 — 안 그러면 이론상 정확히
+            # 0.8이어야 할 점수가 부동소수점 오차로 0.79999999999999...가 돼서 AUTO_MERGE
+            # 경계에서 멀쩡한 완벽 일치 쌍이 PENDING으로 새는 경우가 실제로 있었음(실측 확인).
+            total = round(title_score * _TITLE_WEIGHT + date_score * _DATE_WEIGHT + venue_score * _VENUE_WEIGHT, 4)
             if total < _MIN_QUEUE_SCORE:
                 continue
 
@@ -243,7 +246,7 @@ def find_candidates(records: list[dict]) -> list[dict]:
                     "title_score": round(title_score, 4),
                     "date_score": round(date_score, 4),
                     "venue_score": round(venue_score, 4),
-                    "total_score": round(total, 4),
+                    "total_score": total,
                     "decision": "SAME" if total >= _AUTO_MERGE_SCORE else "PENDING",
                 }
             )

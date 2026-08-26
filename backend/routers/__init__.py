@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from routers.admin_events import router as admin_events_router
 from routers.auth import router as auth_router
 from routers.environment import router as environment_router
 from routers.events import router as events_router
@@ -11,5 +12,6 @@ api_router.include_router(health_router)
 api_router.include_router(places_router, prefix="/api")
 api_router.include_router(environment_router, prefix="/api")
 api_router.include_router(events_router, prefix="/api")
+api_router.include_router(admin_events_router, prefix="/api")
 api_router.include_router(lists_router, prefix="/api")
 api_router.include_router(auth_router)
