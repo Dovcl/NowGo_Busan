@@ -43,7 +43,7 @@ export default function Recommend() {
   const [detailEventId, setDetailEventId] = useState(null)
   const [pendingReviewCount, setPendingReviewCount] = useState(0)
 
-  const { savedIds, toggleSaved, customEvents, addCustomEvent, removeCustomEvent } = useMyEvents()
+  const { savedIds, toggleSaved, customEvents, addCustomEvent, removeCustomEvent, excludedDates, toggleExcludedDate } = useMyEvents()
 
   useEffect(() => {
     fetchEvents().then(setEvents)
@@ -212,6 +212,8 @@ export default function Recommend() {
           onAddCustomEvent={addCustomEvent}
           onRemoveCustomEvent={removeCustomEvent}
           initialDate={calendarInitialDate}
+          excludedDates={excludedDates}
+          onToggleExcludedDate={toggleExcludedDate}
         />
       )}
 

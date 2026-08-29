@@ -8,9 +8,15 @@ const STORAGE_KEY = "nowgo_myEvents_v1"
 function load() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY))
-    return { savedIds: parsed?.savedIds ?? [], customEvents: parsed?.customEvents ?? [] }
+    return {
+      savedIds: parsed?.savedIds ?? [],
+      customEvents: parsed?.customEvents ?? [],
+      // 다일 행사(예: 3일짜리 축제)를 담아도 실제로는 그중 하루만 갈 수 있어서,
+      // 이벤트 id -> 제외한 날짜(ISO) 배열로 "이 날은 안 감"을 따로 기억한다.
+      excludedDates: parsed?.excludedDates ?? {},
+    }
   } catch {
-    return { savedIds: [], customEvents: [] }
+    return { savedIds: [], customEvents: [], excludedDates: {} }
   }
 }
 
@@ -22,10 +28,25 @@ export function useMyEvents() {
   }, [state])
 
   const toggleSaved = useCallback((id) => {
-    setState((prev) => ({
-      ...prev,
-      savedIds: prev.savedIds.includes(id) ? prev.savedIds.filter((sid) => sid !== id) : [...prev.savedIds, id],
-    }))
+    setState((prev) => {
+      const isSaved = prev.savedIds.includes(id)
+      // 담기 해제하면 그 행사의 날짜별 제외 기록도 같이 정리(다시 담으면 처음부터 전체 기간)
+      const restExcluded = { ...prev.excludedDates }
+      delete restExcluded[id]
+      return {
+        ...prev,
+        savedIds: isSaved ? prev.savedIds.filter((sid) => sid !== id) : [...prev.savedIds, id],
+        excludedDates: isSaved ? restExcluded : prev.excludedDates,
+      }
+    })
+  }, [])
+
+  const toggleExcludedDate = useCallback((eventId, iso) => {
+    setState((prev) => {
+      const current = prev.excludedDates[eventId] ?? []
+      const next = current.includes(iso) ? current.filter((d) => d !== iso) : [...current, iso]
+      return { ...prev, excludedDates: { ...prev.excludedDates, [eventId]: next } }
+    })
   }, [])
 
   const addCustomEvent = useCallback((event) => {
@@ -39,7 +60,9 @@ export function useMyEvents() {
   return {
     savedIds: state.savedIds,
     customEvents: state.customEvents,
+    excludedDates: state.excludedDates,
     toggleSaved,
+    toggleExcludedDate,
     addCustomEvent,
     removeCustomEvent,
   }

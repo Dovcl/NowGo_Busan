@@ -40,7 +40,7 @@ export default function AdminEventReview() {
             축제·행사 중복 검토
           </h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-            자동으로 판단하기 애매한 쌍이에요. 같은 행사면 하나로 합치고, 다른 행사면 각자 그대로 둬요.
+            자동으로 판단하기 애매한 쌍. 같은 행사면 하나로 합치고, 다른 행사면 각자 그대로 두기.
           </p>
         </div>
 

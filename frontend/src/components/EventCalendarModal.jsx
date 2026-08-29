@@ -31,6 +31,8 @@ export default function EventCalendarModal({
   onAddCustomEvent,
   onRemoveCustomEvent,
   initialDate,
+  excludedDates,
+  onToggleExcludedDate,
 }) {
   const today = useMemo(() => new Date(), [])
   const [cursor, setCursor] = useState(() => (initialDate ? parseISODate(initialDate) : today))
@@ -48,7 +50,13 @@ export default function EventCalendarModal({
   // 빈 캘린더로 두고 "가고싶어요"로 담은 것 + 직접 만든 개인 일정만 보여준다.
   // 안 담은 행사를 발견/탐색하는 건 리스트 화면(카테고리 필터·상세 모달) 몫으로 남긴다.
   const allEvents = [...events.filter((ev) => savedIds.includes(ev.id)), ...customEvents]
+  // 다일 행사(예: 3일짜리 축제)를 담아도 실제로는 하루만 갈 수 있어서, 날짜별로 뺄 수
+  // 있게 한다. 월 그리드(색 막대)는 뺀 날짜를 안 보여주고, 날짜를 직접 눌렀을 때 뜨는
+  // 상세 패널은 뺀 날짜여도 그 행사를 계속 보여줘서(흐리게 표시) 되돌릴 수 있게 한다 —
+  // 안 그러면 뺀 날짜는 다시 찾을 방법이 없어짐.
+  const isExcluded = (ev, iso) => (excludedDates[ev.id] ?? []).includes(iso)
   const eventsOnIso = (iso) => allEvents.filter((ev) => eventCoversDate(ev, iso))
+  const eventsOnIsoForGrid = (iso) => eventsOnIso(iso).filter((ev) => !isExcluded(ev, iso))
 
   function goMonth(delta) {
     setCursor(new Date(year, month + delta, 1))
@@ -184,7 +192,7 @@ export default function EventCalendarModal({
               onPointerCancel={handleGridPointerUp}
             >
               {grid.map(({ date, iso, inMonth }) => {
-                const dayEvents = eventsOnIso(iso)
+                const dayEvents = eventsOnIsoForGrid(iso)
                 const isToday = isSameDay(date, today)
                 const isSelected = iso === selectedIso
                 const inDrag = dragRange && iso >= dragRange.startDate && iso <= dragRange.endDate
@@ -254,21 +262,37 @@ export default function EventCalendarModal({
                   const cat = EVENT_CATEGORIES[ev.category]
                   const isCustom = isCustomEventId(ev.id)
                   const isSaved = savedIds.includes(ev.id)
+                  const isMultiDay = ev.startDate !== ev.endDate
+                  const excludedToday = !isCustom && isExcluded(ev, selectedIso)
                   return (
-                    <div key={ev.id} className="flex gap-3 pb-3 md:pb-4 border-b border-outline-variant/20 last:border-0 last:pb-0">
+                    <div
+                      key={ev.id}
+                      className={`flex gap-3 pb-3 md:pb-4 border-b border-outline-variant/20 last:border-0 last:pb-0 ${excludedToday ? "opacity-40" : ""}`}
+                    >
                       <div className="flex-1 min-w-0 flex flex-col gap-1 md:gap-1.5">
                         <span className={`font-label-sm text-[10px] md:text-[11px] font-bold w-fit px-2 md:px-2.5 py-0.5 rounded-full ${cat.badgeBg} ${cat.badgeText}`}>
                           {cat.label}
                         </span>
-                        <span className="font-body-md text-[13.5px] md:text-[16px] font-bold text-on-surface">{ev.title}</span>
+                        <span className={`font-body-md text-[13.5px] md:text-[16px] font-bold text-on-surface ${excludedToday ? "line-through" : ""}`}>
+                          {ev.title}
+                        </span>
                         {ev.location && (
                           <span className="font-label-sm text-[11.5px] md:text-[13px] text-on-surface-variant flex items-center gap-1">
                             <span className="material-symbols-outlined text-[13px] md:text-[15px]">location_on</span>
                             {ev.location}
                           </span>
                         )}
-                        {ev.startDate !== ev.endDate && (
+                        {isMultiDay && (
                           <span className="font-label-sm text-[11px] md:text-[12.5px] text-outline">{formatDateRange(ev.startDate, ev.endDate)}</span>
+                        )}
+                        {isMultiDay && !isCustom && (
+                          <button
+                            type="button"
+                            onClick={() => onToggleExcludedDate(ev.id, selectedIso)}
+                            className="w-fit font-label-sm text-[11px] md:text-[12px] text-primary hover:underline mt-0.5"
+                          >
+                            {excludedToday ? "이 날짜 다시 담기" : "이 날짜만 빼기"}
+                          </button>
                         )}
                       </div>
                       {isCustom ? (
