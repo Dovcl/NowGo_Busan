@@ -59,18 +59,3 @@ services:
     dependsOn:
       - nowgo-busan-db
 
-  # Frontend (React + Vite)
-  - type: static_site
-    name: nowgo-busan-frontend
-    plan: free
-    region: singapore
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    envVars:
-      - key: VITE_API_BASE_URL
-        value: http://localhost:8080
-      - key: VITE_MOCK_MODE
-        value: "false"
-      - key: VITE_KAKAO_JS_API_KEY
-        sync: false
