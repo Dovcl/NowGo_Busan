@@ -12,3 +12,9 @@ class UserOut(BaseModel):
 class AdminLoginRequest(BaseModel):
     email: str
     password: str
+
+
+class SignupRequest(BaseModel):
+    nickname: str
+    email: str
+    password: str

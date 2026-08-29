@@ -38,3 +38,18 @@ export async function adminLogin(email, password) {
   }
   return res.json()
 }
+
+// NowGo ID 셀프 회원가입. 성공 시 서버가 바로 세션 쿠키를 내려줘서 로그인 상태가 된다.
+export async function signup(nickname, email, password) {
+  const res = await fetch(`${API_BASE_URL}/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ nickname, email, password }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.detail ?? "회원가입에 실패했습니다")
+  }
+  return res.json()
+}

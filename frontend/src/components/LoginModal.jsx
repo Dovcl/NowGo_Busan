@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
-import { goToKakaoLogin, goToGoogleLogin, adminLogin } from "../services/authService"
+import { goToKakaoLogin, goToGoogleLogin, adminLogin, signup } from "../services/authService"
 import { useAuth } from "../context/AuthContext"
 
 export default function LoginModal({ open, onClose }) {
+  const [mode, setMode] = useState("login") // "login" | "signup"
+  const [nickname, setNickname] = useState("")
   const [id, setId] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -13,6 +15,8 @@ export default function LoginModal({ open, onClose }) {
   // 모달 다시 열 때 이전 입력값이 남지 않도록 초기화
   useEffect(() => {
     if (open) {
+      setMode("login")
+      setNickname("")
       setId("")
       setPassword("")
       setShowPassword(false)
@@ -22,12 +26,13 @@ export default function LoginModal({ open, onClose }) {
 
   if (!open) return null
 
-  const handleIdLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
     setLoading(true)
     try {
-      await adminLogin(id, password)
+      if (mode === "signup") await signup(nickname, id, password)
+      else await adminLogin(id, password)
       await refreshUser()
       onClose()
     } catch (err) {
@@ -35,6 +40,12 @@ export default function LoginModal({ open, onClose }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const toggleMode = () => {
+    setMode((m) => (m === "login" ? "signup" : "login"))
+    setPassword("")
+    setError("")
   }
 
   return (
@@ -62,7 +73,22 @@ export default function LoginModal({ open, onClose }) {
             </p>
           </div>
 
-          <form onSubmit={handleIdLogin} className="flex flex-col gap-3">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            {mode === "signup" && (
+              <div className="relative group">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-xl">
+                  person
+                </span>
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  required
+                  placeholder="닉네임"
+                  className="w-full h-12 pl-12 pr-4 bg-surface-container-low rounded-lg font-body-md text-on-surface border border-outline-variant focus:border-primary outline-none transition-colors"
+                />
+              </div>
+            )}
             <div className="relative group">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-xl">
                 mail
@@ -104,7 +130,15 @@ export default function LoginModal({ open, onClose }) {
               disabled={loading}
               className="w-full h-12 bg-primary text-on-primary rounded-lg font-headline-lg-mobile transition-colors hover:bg-primary/90 disabled:opacity-60"
             >
-              {loading ? "로그인 중..." : "NowGo ID 로그인"}
+              {loading ? "처리 중..." : mode === "signup" ? "NowGo ID 회원가입" : "NowGo ID 로그인"}
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleMode}
+              className="text-[12px] text-on-surface-variant hover:text-primary font-medium transition-colors self-center"
+            >
+              {mode === "signup" ? "이미 계정이 있으신가요? 로그인" : "계정이 없으신가요? 회원가입"}
             </button>
           </form>
 

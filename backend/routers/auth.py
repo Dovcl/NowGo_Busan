@@ -8,10 +8,10 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from core.config import settings
-from core.security import verify_password
+from core.security import hash_password, verify_password
 from db.models import User, UserSession, UserSocialAccount
 from db.session import get_db
-from schemas.auth import AdminLoginRequest, UserOut
+from schemas.auth import AdminLoginRequest, SignupRequest, UserOut
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -111,6 +111,29 @@ def admin_login(body: AdminLoginRequest, response: Response, db: Session = Depen
         raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 올바르지 않습니다")
     if user.deleted_at is not None:
         raise HTTPException(status_code=401, detail="탈퇴한 계정입니다")
+
+    _set_session_cookie(response, _create_session(db, user.id))
+    return user
+
+
+@router.post("/signup", response_model=UserOut, status_code=201)
+def signup(body: SignupRequest, response: Response, db: Session = Depends(get_db)):
+    """NowGo ID(이메일/비밀번호) 셀프 회원가입. 카카오/구글 없이도 가입 가능하게
+    해달라는 요청으로 추가됨 — 항상 role=tourist, 가입 즉시 로그인 세션을 발급한다."""
+    if db.query(User).filter(User.email == body.email).first() is not None:
+        raise HTTPException(status_code=409, detail="이미 존재하는 이메일입니다")
+
+    user = User(
+        nickname=body.nickname,
+        email=body.email,
+        password_hash=hash_password(body.password),
+        role="tourist",
+        terms_agreed_at=datetime.now(),
+        privacy_agreed_at=datetime.now(),
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
 
     _set_session_cookie(response, _create_session(db, user.id))
     return user
