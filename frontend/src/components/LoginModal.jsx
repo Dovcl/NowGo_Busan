@@ -1,11 +1,45 @@
-import { goToKakaoLogin, goToGoogleLogin } from "../services/authService"
+import { useEffect, useState } from "react"
+import { goToKakaoLogin, goToGoogleLogin, adminLogin } from "../services/authService"
+import { useAuth } from "../context/AuthContext"
 
 export default function LoginModal({ open, onClose }) {
+  const [id, setId] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+  const { refreshUser } = useAuth()
+
+  // 모달 다시 열 때 이전 입력값이 남지 않도록 초기화
+  useEffect(() => {
+    if (open) {
+      setId("")
+      setPassword("")
+      setShowPassword(false)
+      setError("")
+    }
+  }, [open])
+
   if (!open) return null
+
+  const handleIdLogin = async (e) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+    try {
+      await adminLogin(id, password)
+      await refreshUser()
+      onClose()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-surface-dim/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-[400px] overflow-hidden relative flex flex-col">
+      <div className="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-[400px] max-h-[90vh] overflow-y-auto relative flex flex-col">
         <button
           type="button"
           onClick={onClose}
@@ -20,15 +54,67 @@ export default function LoginModal({ open, onClose }) {
           </div>
         </div>
 
-        <div className="p-8 text-center flex flex-col gap-6">
-          <div className="flex flex-col gap-3">
+        <div className="p-8 flex flex-col gap-6">
+          <div className="text-center flex flex-col gap-3">
             <h2 className="font-headline-lg-mobile text-xl font-bold text-on-surface">로그인이 필요한 기능이에요</h2>
             <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
               즐겨찾기, 리뷰 작성, 맞춤형 추천 기능을 이용하시려면 로그인이 필요합니다.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 mt-2">
+          <form onSubmit={handleIdLogin} className="flex flex-col gap-3">
+            <div className="relative group">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-xl">
+                mail
+              </span>
+              <input
+                type="text"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                required
+                placeholder="NowGo ID"
+                className="w-full h-12 pl-12 pr-4 bg-surface-container-low rounded-lg font-body-md text-on-surface border border-outline-variant focus:border-primary outline-none transition-colors"
+              />
+            </div>
+            <div className="relative group">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-xl">
+                lock
+              </span>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="비밀번호"
+                className="w-full h-12 pl-12 pr-12 bg-surface-container-low rounded-lg font-body-md text-on-surface border border-outline-variant focus:border-primary outline-none transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface-variant transition-colors"
+              >
+                <span className="material-symbols-outlined text-xl">{showPassword ? "visibility_off" : "visibility"}</span>
+              </button>
+            </div>
+
+            {error && <p className="font-label-sm text-label-sm text-error text-left">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 bg-primary text-on-primary rounded-lg font-headline-lg-mobile transition-colors hover:bg-primary/90 disabled:opacity-60"
+            >
+              {loading ? "로그인 중..." : "NowGo ID 로그인"}
+            </button>
+          </form>
+
+          <div className="relative flex items-center">
+            <div className="flex-grow h-px bg-outline-variant" />
+            <span className="px-4 font-label-sm text-label-sm text-outline uppercase tracking-widest">간편하게 시작하기</span>
+            <div className="flex-grow h-px bg-outline-variant" />
+          </div>
+
+          <div className="flex flex-col gap-3">
             <button
               type="button"
               onClick={goToKakaoLogin}
@@ -50,7 +136,7 @@ export default function LoginModal({ open, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="mt-2 text-[13px] text-on-surface-variant hover:text-on-surface font-medium transition-colors"
+            className="text-[13px] text-on-surface-variant hover:text-on-surface font-medium transition-colors self-center"
           >
             나중에 하기
           </button>
