@@ -18,6 +18,7 @@ import requests
 from sqlalchemy import func
 
 from core.config import settings
+from core.timezone import now_kst
 from db.base import Base
 from db.models import TourSpot, WeatherCache
 from db.session import SessionLocal, engine
@@ -142,7 +143,7 @@ def main() -> None:
         cells = _grid_cells(session)
         records = []
         base_date = base_time = None
-        for base_dt in _base_datetime_candidates(datetime.now()):
+        for base_dt in _base_datetime_candidates(now_kst()):
             base_date, base_time = base_dt.strftime("%Y%m%d"), base_dt.strftime("%H%M")
             records = [r for nx, ny in cells if (r := _fetch_cell(nx, ny, base_date, base_time))]
             if records:

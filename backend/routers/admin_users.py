@@ -7,13 +7,14 @@
 tourist 계정도 그 경로로 로그인 가능하다.
 """
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from core.security import hash_password
+from core.timezone import KST, now_kst
 from db.models import User
 from db.session import get_db
 from routers.auth import require_admin
@@ -28,16 +29,14 @@ from schemas.admin import (
 
 router = APIRouter(prefix="/admin/users", tags=["Admin"])
 
-_KST = timezone(timedelta(hours=9))
-
 
 def _kst_midnight_to_utc_naive(d: date) -> datetime:
     """KST 기준 그 날짜 00:00을 created_at(Postgres UTC, tz-naive 컬럼) 비교용으로 변환.
 
     created_at은 DB 서버(UTC)의 func.now()로 채워지는데, 이 코드가 도는 머신의
-    로컬 시간대(맥=KST, Render=싱가포르 UTC+8)로 그냥 datetime.now()를 쓰면 자정
-    근처 가입자가 하루 밀려 잘못 집계된다 — 반드시 KST로 명시 변환 후 비교해야 함."""
-    return datetime(d.year, d.month, d.day, tzinfo=_KST).astimezone(timezone.utc).replace(tzinfo=None)
+    로컬 시간대(맥=KST, Render=UTC)로 그냥 datetime.now()를 쓰면 자정 근처 가입자가
+    하루 밀려 잘못 집계된다 — 반드시 KST로 명시 변환 후 비교해야 함."""
+    return datetime(d.year, d.month, d.day, tzinfo=KST).astimezone(timezone.utc).replace(tzinfo=None)
 
 
 def _base_query(db: Session):
@@ -97,8 +96,7 @@ def list_users(
 
 @router.get("/stats", response_model=AdminUserStatsOut)
 def user_stats(db: Session = Depends(get_db), _: User = Depends(require_admin)):
-    today_kst = datetime.now(timezone.utc).astimezone(_KST).date()
-    today_start = _kst_midnight_to_utc_naive(today_kst)
+    today_start = _kst_midnight_to_utc_naive(now_kst().date())
     total = db.query(func.count(User.id)).filter(User.deleted_at.is_(None)).scalar()
     new_today = db.query(func.count(User.id)).filter(User.created_at >= today_start).scalar()
     return {"total_users": total, "new_today": new_today}

@@ -14,6 +14,7 @@ from urllib.parse import unquote
 import requests
 
 from core.config import settings
+from core.timezone import now_kst
 from db.base import Base
 from db.models import UvIndexCache
 from db.session import SessionLocal, engine
@@ -41,7 +42,7 @@ def main() -> None:
             "numOfRows": 1,
             "pageNo": 1,
             "areaNo": _BUSAN_AREA_NO,
-            "time": _latest_3h_slot(datetime.now()).strftime("%Y%m%d%H"),
+            "time": _latest_3h_slot(now_kst()).strftime("%Y%m%d%H"),
         },
         timeout=5,
     )
