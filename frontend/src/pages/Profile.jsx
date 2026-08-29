@@ -76,9 +76,9 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={openLoginModal}
-                className="bg-[#FEE500] text-black font-body-md text-body-md rounded-lg px-6 py-3 font-bold flex items-center gap-2 shadow-lg hover:bg-[#E5CD00] transition-colors"
+                className="bg-white text-primary font-body-md text-body-md rounded-lg px-6 py-3 font-bold flex items-center gap-2 shadow-lg hover:bg-white/90 transition-colors"
               >
-                <span className="material-symbols-outlined filled-icon">chat_bubble</span>
+                <span className="material-symbols-outlined filled-icon">login</span>
                 로그인하기
               </button>
             </div>
