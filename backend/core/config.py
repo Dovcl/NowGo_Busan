@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import computed_field, field_validator
+from pydantic import computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # 절대경로로 고정: uvicorn을 backend/가 아닌 다른 cwd(--app-dir 등)에서
@@ -16,7 +16,10 @@ class Settings(BaseSettings):
     APP_DESCRIPTION: str = "환경 기반 관광 추천 서비스"
 
     MOCK_MODE: bool = False
-    FRONTEND_ORIGINS: list[str] = []
+    # Render 같은 배포 환경에서는 환경변수를 보통 콤마 구분 문자열로 넣는다.
+    # list[str]로 직접 받으면 pydantic-settings가 JSON 배열로 먼저 해석해 배포가 실패할 수
+    # 있어서 문자열로 받은 뒤 FRONTEND_ORIGINS_LIST에서 앱이 쓸 리스트로 변환한다.
+    FRONTEND_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     TOUR_API_KEY: str | None = None
     TOUR_API_KEY_BEACH: str | None = None
@@ -39,13 +42,6 @@ class Settings(BaseSettings):
     DATABASE_SCHEMA: str | None = None
     DATABASE_SCHEMA_TEST: str | None = None
 
-    @field_validator("FRONTEND_ORIGINS", mode="before")
-    @classmethod
-    def split_origins(cls, v):
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
-
     @computed_field
     @property
     def DATABASE_URL(self) -> str:
@@ -54,7 +50,15 @@ class Settings(BaseSettings):
             f"@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
         )
 
+    @property
+    def FRONTEND_ORIGINS_LIST(self) -> list[str]:
+        value = self.FRONTEND_ORIGINS.strip()
+        if value.startswith("["):
+            import json
+
+            parsed = json.loads(value)
+            return [origin.strip() for origin in parsed if origin.strip()]
+        return [origin.strip() for origin in value.split(",") if origin.strip()]
+
 
 settings = Settings()
-
-
