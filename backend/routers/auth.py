@@ -53,9 +53,12 @@ def kakao_callback(code: str, db: Session = Depends(get_db)):
     profile_res.raise_for_status()
     profile = profile_res.json()
     provider_user_id = str(profile["id"])
-    nickname = profile.get("kakao_account", {}).get("profile", {}).get("nickname", "부산여행자")
+    kakao_account = profile.get("kakao_account", {})
+    nickname = kakao_account.get("profile", {}).get("nickname", "부산여행자")
+    # 이메일 동의항목이 아직 비즈니스 앱 심사 전이라 지금은 항상 없음(harness/DECISIONS.md 참고)
+    email = kakao_account.get("email")
 
-    user = _find_or_create_user(db, "kakao", provider_user_id, nickname)
+    user = _find_or_create_user(db, "kakao", provider_user_id, nickname, email)
     return _issue_session(db, user)
 
 
@@ -95,8 +98,9 @@ def google_callback(code: str, db: Session = Depends(get_db)):
     profile = profile_res.json()
     provider_user_id = profile["sub"]  # 구글의 회원 고유번호 필드명은 sub
     nickname = profile.get("name", "부산여행자")
+    email = profile.get("email")
 
-    user = _find_or_create_user(db, "google", provider_user_id, nickname)
+    user = _find_or_create_user(db, "google", provider_user_id, nickname, email)
     return _issue_session(db, user)
 
 
@@ -139,8 +143,12 @@ def signup(body: SignupRequest, response: Response, db: Session = Depends(get_db
     return user
 
 
-def _find_or_create_user(db: Session, provider: str, provider_user_id: str, nickname: str) -> User:
-    """provider(kakao/google) + provider_user_id로 기존 유저를 찾고, 없으면 새로 만든다."""
+def _find_or_create_user(
+    db: Session, provider: str, provider_user_id: str, nickname: str, email: str | None = None
+) -> User:
+    """provider(kakao/google) + provider_user_id로 기존 유저를 찾고, 없으면 새로 만든다.
+    email은 provider 프로필의 이메일(참고용, 회원관리 화면 표시용) — 카카오는 이메일
+    동의항목이 비즈니스 앱 심사 필요라 지금은 항상 None(harness/DECISIONS.md 참고)."""
     social_account = db.query(UserSocialAccount).filter(
         UserSocialAccount.provider == provider,
         UserSocialAccount.provider_user_id == provider_user_id,
@@ -159,7 +167,7 @@ def _find_or_create_user(db: Session, provider: str, provider_user_id: str, nick
     )
     db.add(user)
     db.flush()  # user.id 확보
-    db.add(UserSocialAccount(user_id=user.id, provider=provider, provider_user_id=provider_user_id))
+    db.add(UserSocialAccount(user_id=user.id, provider=provider, provider_user_id=provider_user_id, email=email))
     db.commit()
     return user
 

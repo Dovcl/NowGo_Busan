@@ -52,11 +52,21 @@ def _signup_source(user: User) -> str:
     return "email"  # 방어적 기본값 — 데이터상 이 분기는 안 나옴
 
 
+def _display_email(user: User) -> str | None:
+    if user.email is not None:
+        return user.email
+    # 소셜 로그인 유저는 users.email이 항상 null이라, 있으면 provider 프로필 이메일로 대체
+    # (카카오는 이메일 동의항목 심사 전이라 지금은 항상 None — harness/DECISIONS.md 참고)
+    if user.social_accounts and user.social_accounts[0].email:
+        return user.social_accounts[0].email
+    return None
+
+
 def _to_out(user: User) -> dict:
     return {
         "id": user.id,
         "nickname": user.nickname,
-        "email": user.email,
+        "email": _display_email(user),
         "role": user.role,
         "signup_source": _signup_source(user),
         "created_at": user.created_at,

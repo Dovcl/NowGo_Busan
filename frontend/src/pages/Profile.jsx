@@ -215,15 +215,17 @@ export default function Profile() {
                 <span className="font-body-md text-body-md text-on-surface">앱 버전</span>
                 <span className="font-label-sm text-label-sm text-on-surface-variant">v0.1.0 (최신 버전)</span>
               </div>
-              <div className="mt-4 pt-4 border-t border-outline-variant/30 flex justify-center">
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="font-body-md text-body-md text-error font-bold hover:bg-error-container/20 px-4 py-2 rounded-lg transition-colors"
-                >
-                  로그아웃
-                </button>
-              </div>
+              {isLoggedIn && (
+                <div className="mt-4 pt-4 border-t border-outline-variant/30 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="font-body-md text-body-md text-error font-bold hover:bg-error-container/20 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              )}
             </SettingsCard>
           </div>
         </div>
