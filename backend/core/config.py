@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
     APP_DESCRIPTION: str = "환경 기반 관광 추천 서비스"
 
+    # "production"으로 배포 시 세션 쿠키를 SameSite=None; Secure로 내림(프론트/백엔드가
+    # 다른 서브도메인이라 cross-site 쿠키 취급됨). 로컬은 기본값(development) 그대로 Lax.
+    ENV: str = "development"
+
     MOCK_MODE: bool = False
     # Render 같은 배포 환경에서는 환경변수를 보통 콤마 구분 문자열로 넣는다.
     # list[str]로 직접 받으면 pydantic-settings가 JSON 배열로 먼저 해석해 배포가 실패할 수
@@ -45,10 +49,14 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def DATABASE_URL(self) -> str:
-        return (
+        url = (
             f"postgresql://{self.DATABASE_USER}:{self.DATABASE_PASSWORD}"
             f"@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
         )
+        # Render 외부 접속은 SSL 필수. 로컬 docker PostGIS는 SSL이 없어서 제외.
+        if self.DATABASE_HOST not in ("localhost", "127.0.0.1"):
+            url += "?sslmode=require"
+        return url
 
     @property
     def FRONTEND_ORIGINS_LIST(self) -> list[str]:

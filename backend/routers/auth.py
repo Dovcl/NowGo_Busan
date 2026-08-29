@@ -146,12 +146,15 @@ def _create_session(db: Session, user_id: int) -> str:
 
 
 def _set_session_cookie(response: Response, session_id: str) -> None:
+    # 배포 환경은 프론트/백엔드가 서로 다른 서브도메인이라 cross-site 쿠키 취급됨 ->
+    # SameSite=None + Secure 필수. 로컬은 둘 다 localhost(same-site)라 Lax로 충분.
+    is_prod = settings.ENV == "production"
     response.set_cookie(
         SESSION_COOKIE,
         session_id,
         httponly=True,
-        secure=False,  # 로컬 http 환경. 배포(https) 시 True로 변경
-        samesite="lax",
+        secure=is_prod,
+        samesite="none" if is_prod else "lax",
         max_age=int(SESSION_TTL.total_seconds()),
     )
 
