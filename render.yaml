@@ -1,14 +1,4 @@
 services:
-  # PostgreSQL Database with PostGIS
-  - type: pserv
-    name: nowgo-busan-db
-    plan: free
-    region: singapore
-    ipAllowList: []
-    postgresDbName: nowgo_busan
-    postgresUsername: nowgo
-    postgresVersion: "16"
-
   # Backend (FastAPI)
   - type: web
     name: nowgo-busan-backend
@@ -19,23 +9,17 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      # Database (will be populated by Render from pserv)
+      # Database credentials (set manually in Render console after creating PostgreSQL)
       - key: DATABASE_NAME
         value: nowgo_busan
       - key: DATABASE_USER
         value: nowgo
       - key: DATABASE_HOST
-        fromDatabase:
-          name: nowgo-busan-db
-          property: host
+        sync: false
       - key: DATABASE_PORT
-        fromDatabase:
-          name: nowgo-busan-db
-          property: port
+        value: "5432"
       - key: DATABASE_PASSWORD
-        fromDatabase:
-          name: nowgo-busan-db
-          property: password
+        sync: false
       # App config
       - key: MOCK_MODE
         value: "false"
@@ -56,4 +40,3 @@ services:
         sync: false
       - key: KOPIS_API_KEY
         sync: false
-
