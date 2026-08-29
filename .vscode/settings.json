@@ -4,5 +4,8 @@
   "notebook.defaultKernel": "Python (NowGo Busan venv)",
   "python.analysis.extraPaths": [
     "${workspaceFolder}/backend"
+  ],
+  "cursorpyright.analysis.extraPaths": [
+    "${workspaceFolder}/backend"
   ]
 }
