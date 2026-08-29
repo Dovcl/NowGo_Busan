@@ -3,6 +3,7 @@ import { usePlaceDetail } from "../hooks/usePlaceDetail"
 import { useSaveButton } from "../hooks/useSaveButton"
 import { ENV_ROWS } from "../lib/envRows"
 import { STATUS, scoreToStatus } from "../lib/status"
+import { weatherCondition } from "../lib/weather"
 import SaveToListModal from "../components/SaveToListModal"
 
 const SCORE_ROWS = [
@@ -227,25 +228,24 @@ function PlaceDetailView({ placeId }) {
                   </section>
                 )}
 
-                {place.forecast24h && (
+                {environment?.weather?.forecast?.length > 0 && (
                   <section className="border-t border-outline-variant/30 pt-6">
-                    <h2 className="font-body-md font-bold mb-2">AI 24시간 예측</h2>
-                    <p className="text-label-sm text-on-surface-variant mb-4">혼잡도 및 안전 지수 통합 예측</p>
-                    <div className="bg-white border border-outline-variant/30 rounded-lg p-4">
-                      <div className="flex justify-between items-end h-20 relative">
-                        <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-                          <path d="M 10 20 L 40 35 L 70 50 L 90 80" fill="none" stroke="#00328a" strokeDasharray="4" strokeWidth="2" />
-                        </svg>
-                        {place.forecast24h.map((point) => {
-                          const pointStatus = STATUS[point.status]
-                          return (
-                            <div key={point.label} className="flex flex-col items-center z-10">
-                              <div className={`w-2 h-2 rounded-full mb-1 ${pointStatus.bg}`} />
-                              <span className="text-[10px]">{point.label}</span>
-                            </div>
-                          )
-                        })}
-                      </div>
+                    <h2 className="font-body-md font-bold mb-2">오늘의 날씨 예보</h2>
+                    <p className="text-label-sm text-on-surface-variant mb-4">기상청 단기예보 · 3시간 간격</p>
+                    <div className="bg-surface-container-low rounded-lg p-4 flex justify-between gap-1 overflow-x-auto">
+                      {environment.weather.forecast.map((slot) => {
+                        const condition = weatherCondition(slot.sky, slot.precipitationType)
+                        return (
+                          <div key={`${slot.hour}`} className="flex flex-col items-center gap-1 shrink-0 w-12">
+                            <span className="text-[11px] text-on-surface-variant">{slot.hour}시</span>
+                            <span className={`material-symbols-outlined text-[20px] ${condition.color}`}>{condition.icon}</span>
+                            <span className="text-sm font-bold">{Math.round(slot.temperature)}°</span>
+                            {slot.precipitationProb > 0 && (
+                              <span className="text-[10px] text-blue-500">{slot.precipitationProb}%</span>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
                   </section>
                 )}

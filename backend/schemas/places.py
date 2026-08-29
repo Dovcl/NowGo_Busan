@@ -18,15 +18,26 @@ class PlaceOut(BaseModel):
     env_type_code: str  # BEACH / MOUNTAIN / WATER / URBAN / INDOOR
     is_env_target: bool  # 환경 신호등 점수 대상 여부 (실내는 항상 false)
 
+    # tour_spot_intro 조인 결과 — 검색결과 카드에 이용시간을 보여주기 위해 목록에도 포함
+    usetime: str | None  # 이용시간
+    restdate: str | None  # 휴무일
+
+
+class NearbyFoodOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    contentid: int
+    title: str
+    firstimage: str | None
+    distance_m: float
+
 
 class PlaceDetailOut(PlaceOut):
-    """/places/{contentid} 전용. tour_spot_intro 조인 결과가 추가된다.
-    목록(/places)은 지도 핀용이라 이 필드들까지 실어보내면 페이로드만 커지므로 싣지 않음."""
+    """/places/{contentid} 전용. tour_spot_intro의 나머지 필드 + 주변 음식점이 추가된다."""
 
     overview: str | None  # 소개글
     homepage: str | None
-    usetime: str | None  # 이용시간
-    restdate: str | None  # 휴무일
     parking: str | None
     infocenter: str | None  # 문의처
     usefee: str | None  # 이용요금 (문화시설/레포츠만 채워짐)
+    nearby_food: list[NearbyFoodOut]  # 가까운 순 최대 3곳 (db/places_queries.py::nearby_food_places)

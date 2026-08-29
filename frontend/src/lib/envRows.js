@@ -6,7 +6,7 @@ export const ENV_ROWS = [
   { label: "체감온도", icon: "device_thermostat", get: (e) => fmt(e.weather?.feelsLike, "℃") },
   { label: "습도", icon: "water_drop", get: (e) => fmt(e.weather?.humidity, "%") },
   { label: "풍속", icon: "air", get: (e) => fmt(e.weather?.windSpeed, "m/s") },
-  { label: "강수확률", icon: "umbrella", get: (e) => fmt(e.weather?.precipitationProb, "%") },
+  { label: "강수형태", icon: "umbrella", get: (e) => precipitationTypeLabel(e.weather?.precipitationType) },
   { label: "미세먼지", icon: "blur_on", get: (e) => fmt(e.airQuality?.pm10, "㎍/㎥") },
   { label: "초미세먼지", icon: "grain", get: (e) => fmt(e.airQuality?.pm25, "㎍/㎥") },
   { label: "자외선지수", icon: "wb_sunny", get: (e) => fmt(e.uvIndex, "") },
@@ -16,4 +16,14 @@ export const ENV_ROWS = [
 
 export function fmt(value, unit) {
   return value != null ? `${value}${unit}` : null
+}
+
+function precipitationTypeLabel(value) {
+  return {
+    0: "없음",
+    1: "비",
+    2: "비/눈",
+    3: "눈",
+    4: "소나기",
+  }[value] ?? null
 }

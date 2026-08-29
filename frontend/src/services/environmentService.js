@@ -13,6 +13,13 @@ export function adaptEnvironment(data) {
       precipitationProb: data.weather.precipitation_prob,
       sky: data.weather.sky,
       precipitationType: data.weather.precipitation_type,
+      forecast: data.weather.forecast.map((slot) => ({
+        hour: Number(slot.fcst_time.slice(0, 2)),
+        temperature: slot.temperature,
+        sky: slot.sky,
+        precipitationType: slot.precipitation_type,
+        precipitationProb: slot.precipitation_prob,
+      })),
     },
     airQuality: data.air_quality && {
       stationName: data.air_quality.station_name,

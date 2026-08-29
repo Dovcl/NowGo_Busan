@@ -3,6 +3,15 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class WeatherForecastSlotOut(BaseModel):
+    fcst_date: str  # YYYYMMDD
+    fcst_time: str  # HHMM
+    temperature: float
+    sky: int
+    precipitation_type: int
+    precipitation_prob: float | None
+
+
 class WeatherOut(BaseModel):
     temperature: float | None
     feels_like: float | None  # 기상청 공식 계산식으로 백엔드에서 산출 (API 미제공)
@@ -11,6 +20,7 @@ class WeatherOut(BaseModel):
     precipitation_prob: float | None
     sky: int | None  # 1=맑음 3=구름많음 4=흐림 (프론트에서 아이콘으로 매핑)
     precipitation_type: int | None  # 0=없음 1=비 2=비/눈 3=눈 4=소나기
+    forecast: list[WeatherForecastSlotOut]  # 다음 24시간, 3시간 간격
 
 
 class AirQualityOut(BaseModel):

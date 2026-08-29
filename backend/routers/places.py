@@ -3,6 +3,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from db.models import CategoryCode, TourSpot, TourSpotEnvClassification, TourSpotIntro
+from db.places_queries import nearby_food_places
 from db.session import get_db
 from schemas.places import PlaceDetailOut, PlaceOut
 
@@ -22,6 +23,8 @@ def _place_query(db: Session):
         TourSpotEnvClassification.env_group4,
         TourSpotEnvClassification.env_type_code,
         TourSpotEnvClassification.is_env_target,
+        TourSpotIntro.usetime,
+        TourSpotIntro.restdate,
     ).join(
         TourSpotEnvClassification,
         TourSpotEnvClassification.contentid == TourSpot.contentid,
@@ -29,6 +32,10 @@ def _place_query(db: Session):
         # cat3가 비어있는 레코드가 있을 수 있어 INNER가 아니라 OUTER JOIN
         CategoryCode,
         CategoryCode.code == TourSpot.cat3,
+    ).outerjoin(
+        # tour_spot_intro는 일부 레코드에 없을 수 있어 INNER가 아니라 OUTER JOIN
+        TourSpotIntro,
+        TourSpotIntro.contentid == TourSpot.contentid,
     )
 
 
@@ -52,17 +59,16 @@ def list_places(
 
 @router.get("/places/{contentid}", response_model=PlaceDetailOut, tags=["Places"])
 def get_place(contentid: int, db: Session = Depends(get_db)):
-    # tour_spot_intro는 일부 레코드에 없을 수 있어 INNER가 아니라 OUTER JOIN
     query = _place_query(db).add_columns(
         TourSpotIntro.overview,
         TourSpotIntro.homepage,
-        TourSpotIntro.usetime,
-        TourSpotIntro.restdate,
         TourSpotIntro.parking,
         TourSpotIntro.infocenter,
         TourSpotIntro.usefee,
-    ).outerjoin(TourSpotIntro, TourSpotIntro.contentid == TourSpot.contentid)
+    )
     row = query.filter(TourSpot.contentid == contentid).first()
     if row is None:
         raise HTTPException(status_code=404, detail="관광지를 찾을 수 없습니다")
-    return PlaceDetailOut.model_validate(row._mapping)
+    data = dict(row._mapping)
+    data["nearby_food"] = [dict(r._mapping) for r in nearby_food_places(db, contentid)]
+    return PlaceDetailOut.model_validate(data)

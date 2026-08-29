@@ -249,7 +249,7 @@ class EventDedupCandidate(Base):
 
 
 class WeatherCache(Base):
-    """기상청 단기예보(getVilageFcst) 배치 캐시. 관광지별이 아니라 격자(nx,ny) 단위로
+    """기상청 초단기예보(getUltraSrtFcst) 배치 캐시. 관광지별이 아니라 격자(nx,ny) 단위로
     저장 — 좌표 하나가 들어오면 이 중 가장 가까운 셀을 찾아 쓴다(services/environment)."""
 
     __tablename__ = "weather_cache"
@@ -257,12 +257,17 @@ class WeatherCache(Base):
     nx = Column(Integer, primary_key=True)
     ny = Column(Integer, primary_key=True)
 
-    temperature = Column(Float)  # TMP, ℃
+    temperature = Column(Float)  # T1H, ℃
     humidity = Column(Float)  # REH, %
     wind_speed = Column(Float)  # WSD, m/s
-    precipitation_prob = Column(Float)  # POP, %
+    precipitation_prob = Column(Float)  # 초단기예보는 POP 미제공이라 null
     sky = Column(SmallInteger)  # SKY: 1=맑음 3=구름많음 4=흐림
     precipitation_type = Column(SmallInteger)  # PTY: 0=없음 1=비 2=비/눈 3=눈 4=소나기
+
+    # 같은 API 응답 안에 이후 시간대 예보도 같이 오길래 버리지 않고 다음 6시간치를
+    # 시간별로 뽑아 통째로 저장 — [{fcst_date, fcst_time, temperature, sky,
+    # precipitation_type, precipitation_prob}, ...] (etl/fetch_weather.py 참고)
+    forecast = Column(JSONB)
 
     fetched_at = Column(DateTime, nullable=False)
 

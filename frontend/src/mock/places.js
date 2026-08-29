@@ -7,8 +7,10 @@
 // mock을 먼저 찾고(큐레이션된 score/tips 등), 못 찾으면 실제 백엔드(/api/places/{id})로
 // 폴백한다. 그래서 여기 없는 실제 관광지를 클릭해도 정상 동작한다.
 // info(이용시간/휴무일/주차)는 backend/etl/seed_tour_spot_intro.py로 시딩된 실제
-// tour_spot_intro 값을 그대로 옮겨적었고, score/breakdown/tips/nearbyFood/forecast24h/
-// alternatives는 NowGo Score 알고리즘이 없어 여전히 임의 큐레이션이다.
+// tour_spot_intro 값을 그대로 옮겨적었고, score/breakdown/tips/nearbyFood/alternatives는
+// NowGo Score 알고리즘이 없어 여전히 임의 큐레이션이다. 여기 없는 실제 관광지는
+// nearbyFood를 실좌표 기반 PostGIS 쿼리로 대신 채운다(backend/db/places_queries.py).
+// 24시간 예보 섹션은 좌표가 있어야 뜨는데 이 mock 장소들은 좌표가 없어 안 뜬다.
 export const topPlaces = [
   {
     id: "126028",
@@ -41,12 +43,6 @@ export const topPlaces = [
       { name: "금정산성 막걸리 마을", distance: "도보 10분 · 700m", image: null },
       { name: "산성마을 흑염소불고기", distance: "도보 12분 · 900m", image: null },
       { name: "범어사 사하촌 두부요리", distance: "차량 10분 · 3.2km", image: null },
-    ],
-    forecast24h: [
-      { label: "현재", hours: 0, score: 92, status: "safe" },
-      { label: "6h", hours: 6, score: 90, status: "safe" },
-      { label: "12h", hours: 12, score: 85, status: "safe" },
-      { label: "24h", hours: 24, score: 80, status: "safe" },
     ],
     alternatives: [
       { id: "beomeosa", name: "범어사", score: 85, status: "safe" },
@@ -84,12 +80,6 @@ export const topPlaces = [
       { name: "자갈치시장 회센터", distance: "도보 3분 · 200m", image: null },
       { name: "40계단 문화관 카페", distance: "도보 6분 · 450m", image: null },
       { name: "국제시장 씨앗호떡", distance: "도보 5분 · 350m", image: null },
-    ],
-    forecast24h: [
-      { label: "현재", hours: 0, score: 88, status: "safe" },
-      { label: "6h", hours: 6, score: 86, status: "safe" },
-      { label: "12h", hours: 12, score: 80, status: "safe" },
-      { label: "24h", hours: 24, score: 75, status: "caution" },
     ],
     alternatives: [
       { id: "busan-modern-history-museum", name: "부산근대역사관", score: 84, status: "safe" },
@@ -129,12 +119,6 @@ export const topPlaces = [
       { name: "암남공원 카페", distance: "도보 15분 · 1.1km", image: null },
       { name: "송도 베이커리", distance: "도보 7분 · 500m", image: null },
     ],
-    forecast24h: [
-      { label: "현재", hours: 0, score: 82, status: "safe" },
-      { label: "6h", hours: 6, score: 80, status: "safe" },
-      { label: "12h", hours: 12, score: 73, status: "caution" },
-      { label: "24h", hours: 24, score: 65, status: "caution" },
-    ],
     alternatives: [
       { id: "marine-museum-songdo", name: "국립해양박물관", score: 85, status: "safe" },
       { id: "amnam-park", name: "암남공원 산책로", score: 80, status: "safe" },
@@ -172,12 +156,6 @@ export const topPlaces = [
       { name: "용두산공원 카페", distance: "도보 3분 · 200m", image: null },
       { name: "광복로 밀면골목", distance: "도보 8분 · 600m", image: null },
     ],
-    forecast24h: [
-      { label: "현재", hours: 0, score: 85, status: "safe" },
-      { label: "6h", hours: 6, score: 80, status: "safe" },
-      { label: "12h", hours: 12, score: 70, status: "caution" },
-      { label: "24h", hours: 24, score: 55, status: "danger" },
-    ],
     alternatives: [
       { id: "busan-modern-history-museum-tower", name: "부산근대역사관", score: 84, status: "safe" },
       { id: "lotte-gwangbok", name: "롯데백화점 광복점", score: 80, status: "caution" },
@@ -214,12 +192,6 @@ export const topPlaces = [
       { name: "해운대시장 회센터", distance: "도보 6분 · 400m", image: null },
       { name: "동백섬 카페거리", distance: "도보 10분 · 750m", image: null },
       { name: "웨스틴조선 브런치카페", distance: "도보 5분 · 350m", image: null },
-    ],
-    forecast24h: [
-      { label: "현재", hours: 0, score: 68, status: "caution" },
-      { label: "6h", hours: 6, score: 62, status: "caution" },
-      { label: "12h", hours: 12, score: 55, status: "danger" },
-      { label: "24h", hours: 24, score: 50, status: "danger" },
     ],
     alternatives: [
       { id: "sealife-busan-aquarium", name: "씨라이프부산아쿠아리움", score: 88, status: "safe" },

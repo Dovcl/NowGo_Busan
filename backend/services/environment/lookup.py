@@ -56,6 +56,7 @@ def _weather_out(w: WeatherCache | None) -> dict | None:
         "precipitation_prob": w.precipitation_prob,
         "sky": w.sky,
         "precipitation_type": w.precipitation_type,
+        "forecast": w.forecast or [],
     }
 
 

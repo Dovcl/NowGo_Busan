@@ -13,6 +13,16 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"
 
+// 도보/차량 여부를 거리로 대략 나누고(1.2km 기준), 각각 평균 속도(도보 4km/h,
+// 도심 주행 30km/h)로 소요 시간을 추정한다 — mock 데이터("도보 10분 · 700m")와
+// 같은 형식으로 보여주기 위한 표시용 근사치일 뿐, 실제 경로 시간이 아니다.
+function formatDistance(meters) {
+  const isWalk = meters <= 1200
+  const minutes = Math.max(1, Math.round(meters / (isWalk ? 67 : 500)))
+  const dist = meters >= 1000 ? `${(meters / 1000).toFixed(1)}km` : `${Math.round(meters)}m`
+  return `${isWalk ? "도보" : "차량"} ${minutes}분 · ${dist}`
+}
+
 export function adaptPlace(place) {
   // usetime/restdate/parking/usefee만 /places/{contentid}(상세)에 있고
   // /places(목록)에는 없어서 전부 undefined일 수 있다 — 하나라도 있을 때만 info를 채운다.
@@ -39,6 +49,14 @@ export function adaptPlace(place) {
     overview: place.overview,
     homepage: place.homepage,
     info: hasInfo ? info : undefined,
+    // nearby_food는 /places/{contentid}(상세)에만 있음
+    nearbyFood: place.nearby_food?.length
+      ? place.nearby_food.map((food) => ({
+          name: food.title,
+          image: food.firstimage || null,
+          distance: formatDistance(food.distance_m),
+        }))
+      : undefined,
     // NowGo Score 필드 — 알고리즘 결정 전까지 placeholder
     score: null,
     status: null,
