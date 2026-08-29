@@ -10,6 +10,7 @@ import SavedListDetail from "./pages/SavedListDetail"
 import Recommend from "./pages/Recommend"
 import AdminLogin from "./pages/AdminLogin"
 import AdminEventReview from "./pages/AdminEventReview"
+import SearchResults from "./pages/SearchResults"
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/place/:placeId" element={<PlaceDetail />} />
         <Route path="/recommend" element={<Recommend />} />
         <Route path="/admin/events/review" element={<AdminEventReview />} />
+        <Route path="/search" element={<SearchResults />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/saved" element={<SavedLists />} />
         <Route path="/saved/:listId" element={<SavedListDetail />} />

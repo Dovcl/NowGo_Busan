@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { fetchHomeSummary, fetchTopPlaces } from "../services/scoreService"
 import { fetchEnvironment } from "../services/environmentService"
 import { STATUS, scoreToStatus, pmGradeToStatus, PM_GRADE_LABEL, uvToLevel, ripLevelToStatus } from "../lib/status"
+import { weatherCondition } from "../lib/weather"
 
 // 부산시청 좌표 — 홈 화면 "지금 부산 날씨"는 관광지 하나가 아니라 도시 전체 요약이라
 // 대표 지점 하나를 기준으로 조회한다(대기질은 이 근처 최근접 측정소로 매칭됨).
@@ -12,24 +13,23 @@ const BUSAN_CITY_HALL = { lat: 35.1796, lng: 129.0756 }
 // 부산시청 좌표로는 반경 5km 밖이라 안 잡혀서 해운대 좌표로 따로 조회한다.
 const HAEUNDAE = { lat: 35.1587, lng: 129.1604 }
 
-// SKY(하늘상태)/PTY(강수형태) 조합 -> 아이콘+텍스트+색. 강수가 있으면 하늘상태보다 우선.
-// 색은 기존 신호등 팔레트(semantic-caution 등)와 안 겹치는 Tailwind 기본 색상을 씀 —
-// 맑음 아이콘이 하필 "주의" 색과 거의 같은 톤이라(#ffb875 vs #ffb36b) 헷갈릴 수 있었음.
-function weatherCondition(sky, precipitationType) {
-  if (precipitationType === 3) return { icon: "weather_snowy", text: "눈", color: "text-sky-400" }
-  if (precipitationType === 2) return { icon: "weather_snowy", text: "비/눈", color: "text-sky-500" }
-  if (precipitationType === 1 || precipitationType === 4) return { icon: "rainy", text: "비", color: "text-blue-500" }
-  if (sky === 1) return { icon: "sunny", text: "맑음", color: "text-amber-500" }
-  if (sky === 3) return { icon: "partly_cloudy_day", text: "구름많음", color: "text-slate-400" }
-  if (sky === 4) return { icon: "cloud", text: "흐림", color: "text-slate-500" }
-  return { icon: "sunny", text: "-", color: "text-slate-400" }
+function fmt(value, unit = "") {
+  return value != null ? `${value}${unit}` : "-"
 }
 
 export default function Home() {
+  const navigate = useNavigate()
   const [summary, setSummary] = useState(null)
   const [environment, setEnvironment] = useState(null)
   const [haeundae, setHaeundae] = useState(null)
   const [places, setPlaces] = useState([])
+  const [searchInput, setSearchInput] = useState("")
+
+  function handleSearch(e) {
+    e.preventDefault()
+    const q = searchInput.trim()
+    if (q) navigate(`/search?q=${encodeURIComponent(q)}`)
+  }
 
   useEffect(() => {
     fetchHomeSummary().then(setSummary)
@@ -58,20 +58,25 @@ export default function Home() {
               <br />
               지금 가기 좋은 관광지를 추천해드려요.
             </p>
-            <div className="w-full relative bg-surface rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] flex items-center p-2 border border-outline-variant/30">
+            <form
+              onSubmit={handleSearch}
+              className="w-full relative bg-surface rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] flex items-center p-2 border border-outline-variant/30"
+            >
               <span className="material-symbols-outlined text-outline ml-3 mr-2">search</span>
               <input
                 className="w-full bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline-variant outline-none font-body-md"
                 placeholder="관광지, 지역, 키워드 검색 (예: 해운대, 광안리, 감천문화마을)"
                 type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
               <button
-                type="button"
+                type="submit"
                 className="bg-primary hover:bg-primary/90 text-white rounded-full w-10 h-10 flex items-center justify-center ml-2 transition-colors flex-shrink-0"
               >
                 <span className="material-symbols-outlined">search</span>
               </button>
-            </div>
+            </form>
           </div>
         </section>
 
@@ -96,8 +101,8 @@ export default function Home() {
               </span>
               <span className="font-label-sm text-label-sm text-on-surface-variant mt-1">{condition.text}</span>
               <StatFooter
-                left={[`체감 ${environment.weather?.feelsLike}°C`, `바람 ${environment.weather?.windSpeed}m/s`]}
-                right={[`습도 ${environment.weather?.humidity}%`, `강수확률 ${environment.weather?.precipitationProb}%`]}
+                left={[`체감 ${fmt(environment.weather?.feelsLike, "°C")}`, `바람 ${fmt(environment.weather?.windSpeed, "m/s")}`]}
+                right={[`습도 ${fmt(environment.weather?.humidity, "%")}`, condition.text]}
               />
             </StatCard>
 
