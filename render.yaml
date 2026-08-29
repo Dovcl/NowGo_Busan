@@ -23,8 +23,6 @@ services:
       # App config
       - key: MOCK_MODE
         value: "false"
-      - key: FRONTEND_ORIGINS
-        value: "http://localhost:5173"
       # API keys (will be filled in Render console)
       - key: TOUR_API_KEY
         sync: false
