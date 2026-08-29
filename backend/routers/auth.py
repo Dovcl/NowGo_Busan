@@ -158,7 +158,7 @@ def _set_session_cookie(response: Response, session_id: str) -> None:
 
 def _issue_session(db: Session, user: User) -> RedirectResponse:
     """소셜 로그인 콜백 전용: 세션 발급 + 쿠키 설정 + 프론트로 리다이렉트."""
-    response = RedirectResponse(settings.FRONTEND_ORIGINS[0])
+    response = RedirectResponse(settings.FRONTEND_ORIGINS_LIST[0])
     _set_session_cookie(response, _create_session(db, user.id))
     return response
 

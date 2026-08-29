@@ -18,7 +18,7 @@ from core.scheduler import start_scheduler, stop_scheduler
 # [요청/응답 흐름]
 # react에서 요청을 보내 -> fetch("http://localhost:8080/") = 브라우저 -> http:localhost:8080으로 get 요청
 # 그럼 fastapi에 도착하면 가장먼저 Middleware를 지남. fastapi 내부에서 요청 -> CORSMIDDLEWARE -> 라우터(@app.get) -> 함수실행
-# 여기서 allow_origins=settings.FRONTEND_ORIGINS 이므로, 그 목록에 있는 origin에서 온 요청만 허용! 판단
+# 여기서 allow_origins=settings.FRONTEND_ORIGINS_LIST 이므로, 그 목록에 있는 origin에서 온 요청만 허용! 판단
 # MIDDLEWARE 통과하면 라우터 실행
 # 그러면 {"message": "Nowgo Busan 서버가 실행 중입니다."} 반환 -> 응답
 # 응답도 middleware를 지나 브라우저로 감 응답 = root() -> Response 생성 -> CORSMIDDLEWARE -> 브라우저
@@ -47,13 +47,13 @@ app = FastAPI(
 )
 
 
-# CORS 설정: settings.FRONTEND_ORIGINS에 등록된 프론트엔드 주소의 요청만 허용한다
+# CORS 설정: settings.FRONTEND_ORIGINS_LIST에 등록된 프론트엔드 주소의 요청만 허용한다
 # React와 FastAPI가 서로 통신하려고 middleware가 있는거임.
 # 최종적으로 frontend 요청 -> middleware -> fastapi 라우트(@app.get) -> middleware -> frontend
 # 요리 비유: 다른 건물(프론트엔드)에서 오는 배달 요청을 허용하는 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.FRONTEND_ORIGINS,
+    allow_origins=settings.FRONTEND_ORIGINS_LIST,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

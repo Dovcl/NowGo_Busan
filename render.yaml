@@ -9,6 +9,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.11"
       # Database credentials (set manually in Render console after creating PostgreSQL)
       - key: DATABASE_NAME
         value: nowgo_busan
@@ -23,6 +25,8 @@ services:
       # App config
       - key: MOCK_MODE
         value: "false"
+      - key: FRONTEND_ORIGINS
+        sync: false
       # API keys (will be filled in Render console)
       - key: TOUR_API_KEY
         sync: false
