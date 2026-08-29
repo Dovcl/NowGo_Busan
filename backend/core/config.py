@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     APP_DESCRIPTION: str = "환경 기반 관광 추천 서비스"
 
     MOCK_MODE: bool = False
-    FRONTEND_ORIGINS: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    FRONTEND_ORIGINS: list[str] = []
 
     TOUR_API_KEY: str | None = None
     TOUR_API_KEY_BEACH: str | None = None
