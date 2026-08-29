@@ -1,7 +1,10 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import api_router
 from core.config import settings
+from core.scheduler import start_scheduler, stop_scheduler
 
 # [설정 로딩 흐름]
 # .env (실제 값) -> core/config.py의 Settings(BaseSettings)가 pydantic-settings로 자동 로딩
@@ -23,6 +26,16 @@ from core.config import settings
 # = 아 이 서버가 settings.FRONTEND_ORIGINS 안에 있는 곳에서 오는 요청을 허용했구나~ 하고 react에게 응답을 넘겨줌
 
 
+# FastAPI lifespan: 앱 시작/종료 훅
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 시작 (startup)
+    start_scheduler()
+    yield
+    # 종료 (shutdown)
+    stop_scheduler()
+
+
 # FastAPI 앱 객체 생성
 # title, description, version은 이제 하드코딩이 아니라 config.py의 settings에서 가져옴
 # (/docs 페이지에 표시되는 값들도 여기서 나옴 -> 앱 메타데이터의 진실 소스는 config.py 하나뿐)
@@ -30,6 +43,7 @@ app = FastAPI(
     title=settings.APP_NAME,
     description=settings.APP_DESCRIPTION,
     version=settings.APP_VERSION,
+    lifespan=lifespan,
 )
 
 

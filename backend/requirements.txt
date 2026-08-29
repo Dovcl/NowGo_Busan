@@ -31,6 +31,7 @@ psycopg2-binary==2.9.10
 bcrypt==5.0.0
 # redis
 # httpx
+apscheduler==3.11.2
 
 # 표준노드링크(SHP) 좌표 마스터 시드용 — etl/seed_road_links.py
 pyshp==3.1.6
