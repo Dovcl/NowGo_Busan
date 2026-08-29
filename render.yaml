@@ -5,8 +5,8 @@ services:
     plan: free
     region: singapore
     ipAllowList: []
-    postgresDatabaseName: nowgo_busan
-    postgresUser: nowgo
+    postgresDbName: nowgo_busan
+    postgresUsername: nowgo
     postgresVersion: "16"
 
   # Backend (FastAPI)
@@ -56,6 +56,4 @@ services:
         sync: false
       - key: KOPIS_API_KEY
         sync: false
-    dependsOn:
-      - nowgo-busan-db
 
