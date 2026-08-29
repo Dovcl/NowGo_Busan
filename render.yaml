@@ -1,0 +1,76 @@
+services:
+  # PostgreSQL Database with PostGIS
+  - type: pserv
+    name: nowgo-busan-db
+    plan: free
+    region: singapore
+    ipAllowList: []
+    postgresDatabaseName: nowgo_busan
+    postgresUser: nowgo
+    postgresVersion: "16"
+
+  # Backend (FastAPI)
+  - type: web
+    name: nowgo-busan-backend
+    plan: free
+    region: singapore
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # Database (will be populated by Render from pserv)
+      - key: DATABASE_NAME
+        value: nowgo_busan
+      - key: DATABASE_USER
+        value: nowgo
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: nowgo-busan-db
+          property: host
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: nowgo-busan-db
+          property: port
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: nowgo-busan-db
+          property: password
+      # App config
+      - key: MOCK_MODE
+        value: "false"
+      - key: FRONTEND_ORIGINS
+        value: "http://localhost:5173"
+      # API keys (will be filled in Render console)
+      - key: TOUR_API_KEY
+        sync: false
+      - key: TOUR_API_KEY_BEACH
+        sync: false
+      - key: TOUR_API_KEY_IAN
+        sync: false
+      - key: KAKAO_REST_API_KEY
+        sync: false
+      - key: WEATHER_API_KEY
+        sync: false
+      - key: AIR_KOREA_API_KEY
+        sync: false
+      - key: KOPIS_API_KEY
+        sync: false
+    dependsOn:
+      - nowgo-busan-db
+
+  # Frontend (React + Vite)
+  - type: static_site
+    name: nowgo-busan-frontend
+    plan: free
+    region: singapore
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: http://localhost:8080
+      - key: VITE_MOCK_MODE
+        value: "false"
+      - key: VITE_KAKAO_JS_API_KEY
+        sync: false
