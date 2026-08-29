@@ -188,6 +188,21 @@ export default function Profile() {
                 <Toggle checked={darkMode} onChange={setDarkMode} activeClass="peer-checked:bg-inverse-surface" />
               </div>
               <Divider />
+              {user?.role === "admin" && (
+                <>
+                  <Link
+                    to="/admin/users"
+                    className="flex justify-between items-center gap-4 py-1 hover:opacity-70 transition-opacity"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary">manage_accounts</span>
+                      <span className="font-body-md text-body-md text-on-surface font-bold">회원 관리</span>
+                    </div>
+                    <span className="material-symbols-outlined text-outline-variant">chevron_right</span>
+                  </Link>
+                  <Divider />
+                </>
+              )}
               <div className="flex justify-between items-center gap-4 py-1">
                 <div className="flex flex-col">
                   <span className="font-body-md text-body-md text-on-surface">데이터 출처</span>

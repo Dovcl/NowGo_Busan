@@ -102,11 +102,15 @@ def google_callback(code: str, db: Session = Depends(get_db)):
 
 @router.post("/admin/login", response_model=UserOut)
 def admin_login(body: AdminLoginRequest, response: Response, db: Session = Depends(get_db)):
-    """관리자 전용 이메일/비밀번호 로그인. 공개 가입 경로는 없고 계정은 수동 시딩된다."""
-    user = db.query(User).filter(User.email == body.email, User.role == "admin").first()
+    """NowGo ID(이메일/비밀번호) 로그인. 공개 가입 경로는 없고 계정은 관리자가 수동
+    생성한다(scripts/create_admin.py 또는 회원관리 화면) — admin뿐 아니라 카카오/구글이
+    안 되는 예외 상황 대비용 일반(tourist) 계정도 이 경로로 로그인한다."""
+    user = db.query(User).filter(User.email == body.email).first()
     # 이메일이 없는 경우와 비밀번호가 틀린 경우를 구분해서 알려주지 않는다 (계정 존재 여부 노출 방지)
     if user is None or user.password_hash is None or not verify_password(body.password, user.password_hash):
         raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 올바르지 않습니다")
+    if user.deleted_at is not None:
+        raise HTTPException(status_code=401, detail="탈퇴한 계정입니다")
 
     _set_session_cookie(response, _create_session(db, user.id))
     return user
