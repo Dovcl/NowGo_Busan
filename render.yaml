@@ -42,3 +42,29 @@ services:
         sync: false
       - key: KOPIS_API_KEY
         sync: false
+
+  # 부산 링크소통정보 매시간 수집 (s_traffic 도로 baseline)
+  - type: cron
+    name: nowgo-busan-fetch-road-traffic
+    plan: starter
+    region: singapore
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    schedule: "10 * * * *"
+    startCommand: python -m etl.fetch_road_traffic
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.11"
+      - key: DATABASE_NAME
+        value: nowgo_busan
+      - key: DATABASE_USER
+        value: nowgo
+      - key: DATABASE_HOST
+        sync: false
+      - key: DATABASE_PORT
+        value: "5432"
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: TOUR_API_KEY
+        sync: false

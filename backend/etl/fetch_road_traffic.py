@@ -26,13 +26,16 @@ from datetime import datetime, timedelta
 from urllib.parse import unquote
 
 import requests
-from sqlalchemy import func
+from sqlalchemy import case, func
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from core.config import settings
 from db.base import Base
 from db.models import RoadLinkBaseline, RoadLinkCache, RoadLinkTrafficCache
 from db.session import SessionLocal, engine
 from etl.seed_tour_spots import upsert
+
+_BASELINE_UPSERT_CHUNK = 2000  # 원격 DB(Render) 왕복을 줄이기 위한 벌크 upsert 배치 크기
 
 _URL = "https://apis.data.go.kr/6260000/BusanITSLINKTraffic/LINKTrafficList"
 _NUM_OF_ROWS = 100
@@ -143,6 +146,11 @@ def update_baseline(session, records: list[dict], observed_date: str) -> int:
 
     관측치가 들어오는 시점의 observed_at.hour 기준으로 1시간 전 데이터를 baseline에 반영
     (예: 15:10 폴링 데이터의 observed_at=14:00 → 14:00의 요일·시간 baseline 갱신).
+
+    링크당 조회 1번씩(레코드당 최대 2회 왕복) 하던 방식은 로컬 DB에선 문제없었지만
+    원격 DB(Render)에서는 8,900여 건 × 네트워크 왕복이 누적돼 실행 시간이 급격히
+    늘어남(harness/DECISIONS.md 참고) — INSERT ... ON CONFLICT DO UPDATE 벌크 upsert로
+    교체해 왕복 횟수를 배치 수만큼으로 줄인다. 가중평균 계산식 자체는 그대로 유지.
     """
     if not records:
         return 0
@@ -156,44 +164,45 @@ def update_baseline(session, records: list[dict], observed_date: str) -> int:
     dow = observed_dt.weekday()  # Monday=0, Sunday=6
     hour = observed_dt.hour
 
-    updated_count = 0
-    for record in records:
-        link_id = record["link_id"]
-        speed = record["current_speed"]
-        volume = record["current_volume"]
+    rows = [
+        {
+            "link_id": r["link_id"],
+            "dow": dow,
+            "hour": hour,
+            "avg_speed": r["current_speed"],
+            "avg_volume": r["current_volume"],
+            "sample_count": 1,
+        }
+        for r in records
+    ]
 
-        # 이미 해당 요일/시간 baseline이 있으면 갱신, 없으면 생성
-        baseline = session.query(RoadLinkBaseline).filter_by(
-            link_id=link_id, dow=dow, hour=hour
-        ).first()
+    for i in range(0, len(rows), _BASELINE_UPSERT_CHUNK):
+        chunk = rows[i : i + _BASELINE_UPSERT_CHUNK]
+        stmt = pg_insert(RoadLinkBaseline).values(chunk)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["link_id", "dow", "hour"],
+            set_={
+                # 기존 값과 새 값의 가중 평균 (이전 표본 count × 이전 평균 + 새 값) / (count+1)
+                "avg_speed": (
+                    RoadLinkBaseline.avg_speed * RoadLinkBaseline.sample_count + stmt.excluded.avg_speed
+                )
+                / (RoadLinkBaseline.sample_count + 1),
+                # volume은 결측일 수 있어 speed와 독립적으로 처리 (기존 Python 분기와 동일한 규칙)
+                "avg_volume": case(
+                    (stmt.excluded.avg_volume.is_(None), None),
+                    (
+                        RoadLinkBaseline.avg_volume.isnot(None),
+                        (RoadLinkBaseline.avg_volume * RoadLinkBaseline.sample_count + stmt.excluded.avg_volume)
+                        / (RoadLinkBaseline.sample_count + 1),
+                    ),
+                    else_=stmt.excluded.avg_volume,
+                ),
+                "sample_count": RoadLinkBaseline.sample_count + 1,
+            },
+        )
+        session.execute(stmt)
 
-        if baseline:
-            # 기존 값과 새 값의 가중 평균 (이전 표본 count × 이전 평균 + 새 값) / (count+1)
-            new_avg_speed = (baseline.avg_speed * baseline.sample_count + speed) / (baseline.sample_count + 1)
-            new_avg_volume = None
-            if baseline.avg_volume is not None and volume is not None:
-                new_avg_volume = (baseline.avg_volume * baseline.sample_count + volume) / (baseline.sample_count + 1)
-            elif volume is not None:
-                new_avg_volume = volume
-
-            baseline.avg_speed = new_avg_speed
-            baseline.avg_volume = new_avg_volume
-            baseline.sample_count += 1
-        else:
-            # 새로 생성 (이 링크의 이 요일/시간은 처음)
-            baseline = RoadLinkBaseline(
-                link_id=link_id,
-                dow=dow,
-                hour=hour,
-                avg_speed=speed,
-                avg_volume=volume,
-                sample_count=1,
-            )
-            session.add(baseline)
-
-        updated_count += 1
-
-    return updated_count
+    return len(rows)
 
 
 def main() -> None:
