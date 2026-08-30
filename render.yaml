@@ -68,3 +68,33 @@ services:
         sync: false
       - key: TOUR_API_KEY
         sync: false
+
+  # 날씨·UV·대기질·이안류 매시간 수집 (개별 Cron Job 4개 대신 하나로 묶어 비용 절감)
+  - type: cron
+    name: nowgo-busan-fetch-environment
+    plan: starter
+    region: singapore
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    schedule: "15 * * * *"
+    startCommand: python -m etl.fetch_environment_batch
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.11"
+      - key: DATABASE_NAME
+        value: nowgo_busan
+      - key: DATABASE_USER
+        value: nowgo
+      - key: DATABASE_HOST
+        sync: false
+      - key: DATABASE_PORT
+        value: "5432"
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: WEATHER_API_KEY
+        sync: false
+      - key: AIR_KOREA_API_KEY
+        sync: false
+      - key: TOUR_API_KEY_IAN
+        sync: false
