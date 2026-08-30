@@ -12,6 +12,7 @@ export const ENV_ROWS = [
   { label: "자외선지수", icon: "wb_sunny", get: (e) => fmt(e.uvIndex, "") },
   // 해운대/송정/임랑 반경 5km 안일 때만 값이 있음 — 그 밖엔 e.ripCurrent 자체가 null
   { label: "이안류 위험도", icon: "warning", get: (e) => fmt(e.ripCurrent?.riskLevel, "") },
+  { label: "주변 혼잡도", icon: "directions_car", get: (e) => trafficCongestionLabel(e.trafficCongestion) },
 ]
 
 export function fmt(value, unit) {
@@ -26,4 +27,16 @@ function precipitationTypeLabel(value) {
     3: "눈",
     4: "소나기",
   }[value] ?? null
+}
+
+function trafficCongestionLabel(traffic) {
+  if (!traffic) return null
+  if (traffic.status === "data_collecting") {
+    return "정보 수집 중"
+  }
+  // s_traffic: 1=원활, 0.5=보통, 0=정체
+  // congestion = 1 - s_traffic으로 역변환
+  const congestion = 1 - (traffic.sTraffic || 0)
+  const label = congestion < 0.33 ? "낮음" : congestion < 0.67 ? "보통" : "높음"
+  return traffic.status === "provisional" ? `${label} (참고용)` : label
 }

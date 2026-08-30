@@ -5,7 +5,7 @@ from geoalchemy2 import Geography
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from db.models import AirQualityCache, RipCurrentCache
+from db.models import AirQualityCache, RipCurrentCache, RoadLinkCache, RoadLinkTrafficCache, RoadLinkBaseline
 
 
 def nearest_air_quality_station(session: Session, lat: float, lon: float) -> AirQualityCache | None:
@@ -35,4 +35,31 @@ def nearest_rip_current_station(
         )
         .order_by(RipCurrentCache.geom.op("<->")(point))
         .first()
+    )
+
+
+def nearest_road_links(
+    session: Session, lat: float, lon: float, limit: int = 10, radius_m: int = 500
+) -> list[RoadLinkCache]:
+    """좌표 반경 내에서 가장 가까운 도로 링크 최대 N개.
+
+    Args:
+        lat, lon: 관광지 좌표 (WGS84)
+        limit: 반환할 최대 링크 개수
+        radius_m: 검색 반경 (미터)
+
+    Returns:
+        거리순 정렬된 링크 리스트 (반경 내 링크가 limit개 미만이면 그만큼만)
+    """
+    point = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+    return (
+        session.query(RoadLinkCache)
+        .filter(
+            func.ST_DWithin(
+                RoadLinkCache.geom.cast(Geography), func.cast(point, Geography), radius_m
+            )
+        )
+        .order_by(RoadLinkCache.geom.op("<->")(point))
+        .limit(limit)
+        .all()
     )

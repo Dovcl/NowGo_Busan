@@ -6,12 +6,15 @@
 (harness/checks/api-quota-check.md) 등 quota를 건드리지 않기 위함.
 """
 
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from db.environment_queries import nearest_air_quality_station, nearest_rip_current_station
-from db.models import AirQualityCache, RipCurrentCache, UvIndexCache, WeatherCache
+from db.models import AirQualityCache, RipCurrentCache, UvIndexCache, WeatherCache, RoadLinkBaseline
 from services.environment.feels_like import feels_like_temperature
 from services.environment.grid import latlon_to_grid
+from services.traffic.calculate import calculate_traffic_congestion
 
 _BUSAN_AREA_NO = "2600000000"  # 생활기상지수 MVP는 부산 전체 1개 값만 사용
 
@@ -22,16 +25,20 @@ def get_environment(session: Session, lat: float, lon: float) -> dict:
     uv = session.get(UvIndexCache, _BUSAN_AREA_NO)
     air = nearest_air_quality_station(session, lat, lon)
     rip_current = nearest_rip_current_station(session, lat, lon)
+    traffic = calculate_traffic_congestion(session, lat, lon)
 
-    # 넷 다 배치 주기가 달라 fetched_at이 서로 다를 수 있음 — 실제보다 신선해 보이지
-    # 않도록 그중 가장 오래된 시각을 "기준 시각"으로 보여준다.
+    # 5개 캐시 중 가장 오래된 fetched_at을 "기준 시각"으로
     fetched_ats = [row.fetched_at for row in (weather, uv, air, rip_current) if row is not None]
+
+    # traffic은 fetched_at이 아니라 baseline 생성 여부로 상태 판정
+    traffic_congestion = _traffic_congestion_out(session, lat, lon, traffic) if traffic is not None else None
 
     return {
         "weather": _weather_out(weather),
         "air_quality": _air_out(air),
         "uv_index": uv.uv_index if uv else None,
         "rip_current": _rip_current_out(rip_current),
+        "traffic_congestion": traffic_congestion,
         "updated_at": min(fetched_ats) if fetched_ats else None,
     }
 
@@ -82,4 +89,52 @@ def _rip_current_out(r: RipCurrentCache | None) -> dict | None:
         "risk_level": r.risk_level,
         "wave_height": r.wave_height,
         "water_temp": r.water_temp,
+    }
+
+
+def _traffic_congestion_out(session: Session, lat: float, lon: float, s_traffic: float | None) -> dict | None:
+    """traffic congestion 상태를 판정. s_traffic 값 없으면 데이터 부족.
+
+    status:
+      - 'data_collecting': 1주 미만 (sample_count < 7일 보수적 기준 미달)
+      - 'provisional': 1~3주 (데이터 있지만 신뢰도 제한)
+      - 'normal': 3주 이상 (정식 표시)
+    """
+    if s_traffic is None:
+        return None
+
+    # 가장 최신 baseline의 sample_count로 수집 기간 판정
+    now = datetime.now()
+    current_dow = now.weekday()
+    current_hour = now.hour
+
+    # 반경 내 링크 중 baseline이 있는 것들의 sample_count 확인
+    from db.environment_queries import nearest_road_links
+
+    nearby_links = nearest_road_links(session, lat, lon, limit=10, radius_m=500)
+    baseline_samples = []
+
+    for link in nearby_links:
+        baseline = (
+            session.query(RoadLinkBaseline)
+            .filter_by(link_id=link.link_id, dow=current_dow, hour=current_hour)
+            .first()
+        )
+        if baseline and baseline.sample_count:
+            baseline_samples.append(baseline.sample_count)
+
+    if not baseline_samples:
+        status = "data_collecting"  # baseline 데이터 없음
+    else:
+        avg_sample_count = sum(baseline_samples) / len(baseline_samples)
+        if avg_sample_count < 7:
+            status = "data_collecting"  # 1주 미만
+        elif avg_sample_count < 21:
+            status = "provisional"  # 1~3주
+        else:
+            status = "normal"  # 3주 이상
+
+    return {
+        "s_traffic": s_traffic,
+        "status": status,
     }

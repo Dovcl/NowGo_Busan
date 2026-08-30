@@ -40,9 +40,15 @@ class RipCurrentOut(BaseModel):
     water_temp: float | None
 
 
+class TrafficCongestionOut(BaseModel):
+    s_traffic: float | None  # 0~1, 높을수록 원활. None이면 데이터 부족(1주 미만 또는 링크 없음)
+    status: str  # 'data_collecting'(1주 미만), 'provisional'(1~3주), 'normal'(3주+)
+
+
 class EnvironmentOut(BaseModel):
     weather: WeatherOut | None
     air_quality: AirQualityOut | None
     uv_index: int | None
     rip_current: RipCurrentOut | None  # 반경 5km 밖이거나 비시즌(10~5월)이면 null
-    updated_at: datetime | None  # 캐시 4개 중 가장 오래된 fetched_at
+    traffic_congestion: TrafficCongestionOut | None  # 도로 교통 혼잡도
+    updated_at: datetime | None  # 캐시 5개 중 가장 오래된 fetched_at

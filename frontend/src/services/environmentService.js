@@ -37,6 +37,10 @@ export function adaptEnvironment(data) {
       waveHeight: data.rip_current.wave_height,
       waterTemp: data.rip_current.water_temp,
     },
+    trafficCongestion: data.traffic_congestion && {
+      sTraffic: data.traffic_congestion.s_traffic,
+      status: data.traffic_congestion.status,
+    },
     updatedAt: data.updated_at,
   }
 }
