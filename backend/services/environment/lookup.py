@@ -25,13 +25,15 @@ def get_environment(session: Session, lat: float, lon: float) -> dict:
     uv = session.get(UvIndexCache, _BUSAN_AREA_NO)
     air = nearest_air_quality_station(session, lat, lon)
     rip_current = nearest_rip_current_station(session, lat, lon)
-    traffic = calculate_traffic_congestion(session, lat, lon)
+    traffic, traffic_source = calculate_traffic_congestion(session, lat, lon)
 
     # 5개 캐시 중 가장 오래된 fetched_at을 "기준 시각"으로
     fetched_ats = [row.fetched_at for row in (weather, uv, air, rip_current) if row is not None]
 
     # traffic은 fetched_at이 아니라 baseline 생성 여부로 상태 판정
-    traffic_congestion = _traffic_congestion_out(session, lat, lon, traffic) if traffic is not None else None
+    traffic_congestion = (
+        _traffic_congestion_out(session, lat, lon, traffic, traffic_source) if traffic is not None else None
+    )
 
     return {
         "weather": _weather_out(weather),
@@ -92,16 +94,22 @@ def _rip_current_out(r: RipCurrentCache | None) -> dict | None:
     }
 
 
-def _traffic_congestion_out(session: Session, lat: float, lon: float, s_traffic: float | None) -> dict | None:
+def _traffic_congestion_out(
+    session: Session, lat: float, lon: float, s_traffic: float | None, source: str | None
+) -> dict | None:
     """traffic congestion 상태를 판정. s_traffic 값 없으면 데이터 부족.
 
     status:
+      - 'district_fallback': 도로 baseline 없이 구·군 방문객수로 대체(cold-start)
       - 'data_collecting': 1주 미만 (sample_count < 7일 보수적 기준 미달)
       - 'provisional': 1~3주 (데이터 있지만 신뢰도 제한)
       - 'normal': 3주 이상 (정식 표시)
     """
     if s_traffic is None:
         return None
+
+    if source == "district_fallback":
+        return {"s_traffic": s_traffic, "status": "district_fallback"}
 
     # 가장 최신 baseline의 sample_count로 수집 기간 판정
     now = datetime.now()

@@ -27,6 +27,9 @@ class SigunguCode(Base):
     # TourAPI areaCode2 sigunguCode (부산 16개 구·군)
     code = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    # 법정동 시군구코드(5자리, 행정표준코드관리시스템 공식값) — TourAPI 체계와 달라 별도 보관.
+    # 한국관광공사 방문자수 API(locgoRegnVisitrDDList)가 이 체계를 쓴다(harness/DECISIONS.md 참고)
+    signgu_code = Column(Integer)
 
 
 class CategoryCode(Base):
@@ -394,6 +397,25 @@ class RoadLinkBaseline(Base):
     avg_speed = Column(Float, nullable=False)
     avg_volume = Column(Float)
     sample_count = Column(Integer, nullable=False, default=0)  # 관측한 날짜 수
+
+
+class DistrictVisitorBaseline(Base):
+    """구·군 요일별 방문객수 패턴(한국관광공사 방문자수 API 기반). RoadLinkBaseline이
+    아직 3일치도 안 쌓인 cold-start 구간에서만 s_traffic 대체 신호로 쓴다 — 실시간
+    도로 baseline과 합산·보정하지 않음(단위가 달라 결합 안 한다는 기존 결정은 유지,
+    harness/DECISIONS.md 2026-08-20). 이 테이블은 그 결정과 별개로, road baseline이
+    없는 짧은 초기 구간을 메우는 임시 대체용으로만 존재한다.
+
+    visitor_ratio = 그 요일 평균 방문객수 / 그 구 전체 평균 방문객수(현지인 제외,
+    외지인+외국인만). 1.0이면 평소와 같은 요일, 1.5면 평소보다 50% 더 붐비는 요일."""
+
+    __tablename__ = "district_visitor_baseline"
+
+    sigungu_code = Column(Integer, ForeignKey("sigungu_code.code"), primary_key=True)
+    dow = Column(SmallInteger, primary_key=True)  # 0=월 ~ 6=일
+
+    visitor_ratio = Column(Float, nullable=False)
+    sample_count = Column(Integer, nullable=False, default=0)  # 집계에 쓰인 날짜 수
 
 
 class User(Base):

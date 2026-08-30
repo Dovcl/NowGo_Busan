@@ -38,5 +38,7 @@ function trafficCongestionLabel(traffic) {
   // congestion = 1 - s_traffic으로 역변환
   const congestion = 1 - (traffic.sTraffic || 0)
   const label = congestion < 0.33 ? "낮음" : congestion < 0.67 ? "보통" : "높음"
-  return traffic.status === "provisional" ? `${label} (참고용)` : label
+  if (traffic.status === "provisional") return `${label} (참고용)`
+  if (traffic.status === "district_fallback") return `${label} (지역 평균)`
+  return label
 }

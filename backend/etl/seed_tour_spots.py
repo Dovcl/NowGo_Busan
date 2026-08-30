@@ -50,7 +50,10 @@ def upsert(session, model, records: list[dict], pk_cols: str | list[str]) -> Non
 
 def seed_sigungu_code(session) -> None:
     df = pd.read_csv(SIGUNGU_CSV)
-    records = [{"code": int(row.code), "name": row.name} for row in df.itertuples()]
+    records = [
+        {"code": int(row.code), "name": row.name, "signgu_code": int(row.signgu_code)}
+        for row in df.itertuples()
+    ]
     upsert(session, SigunguCode, records, "code")
     print(f"sigungu_code: {len(records)}건")
 

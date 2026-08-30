@@ -6,19 +6,22 @@
 - 1.0 = 원활 (평소와 동일)
 - 0.5 = 보통 (평소보다 50% 느림)
 - 0.0 = 정체 (정지 상태)
+
+도로 baseline이 아직 3일치도 안 쌓인 cold-start 구간에서는 구·군 방문객수
+baseline(`DistrictVisitorBaseline`)으로 대체한다(harness/DECISIONS.md 참고).
 """
 
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from db.environment_queries import nearest_road_links
-from db.models import RoadLinkBaseline, RoadLinkTrafficCache
+from db.environment_queries import nearest_road_links, nearest_sigungu_code
+from db.models import DistrictVisitorBaseline, RoadLinkBaseline, RoadLinkTrafficCache
 
 
 def calculate_traffic_congestion(
     session: Session, lat: float, lon: float, link_limit: int = 10, radius_m: int = 500
-) -> float | None:
+) -> tuple[float | None, str | None]:
     """관광지 좌표 기반 교통 혼잡도 계산.
 
     Args:
@@ -28,13 +31,15 @@ def calculate_traffic_congestion(
         radius_m: 검색 반경 (미터)
 
     Returns:
-        s_traffic 값 (0~1, None이면 데이터 부족)
+        (s_traffic, source) 튜플. source는 'road'(실제 도로 baseline) 또는
+        'district_fallback'(구·군 방문객수 baseline, cold-start용). 데이터가
+        전혀 없으면 (None, None).
     """
     # 반경 내 가까운 링크 조회
     nearby_links = nearest_road_links(session, lat, lon, limit=link_limit, radius_m=radius_m)
 
     if not nearby_links:
-        return None  # 반경 내 링크 없음 (산, 도서 지역 등)
+        return None, None  # 반경 내 링크 없음 (산, 도서 지역 등) — 도로 맥락 자체가 없어 구·군 대체도 안 씀
 
     # 현재 시간대의 baseline 기준값 준비
     now = datetime.now()
@@ -72,8 +77,29 @@ def calculate_traffic_congestion(
         s_traffic = min(max(current_traffic.current_speed / baseline.avg_speed, 0), 1)
         traffic_scores.append(s_traffic)
 
-    if not traffic_scores:
-        return None  # 비교할 baseline이 충분한 링크가 없음
+    if traffic_scores:
+        return sum(traffic_scores) / len(traffic_scores), "road"
 
-    # 여러 링크의 평균으로 최종 점수 계산
-    return sum(traffic_scores) / len(traffic_scores)
+    # 링크는 있지만 도로 baseline이 아직 부족 — cold-start 동안만 구·군 대체 신호 시도
+    fallback = _district_fallback_score(session, lat, lon, current_dow)
+    if fallback is not None:
+        return fallback, "district_fallback"
+    return None, None
+
+
+def _district_fallback_score(session: Session, lat: float, lon: float, dow: int) -> float | None:
+    """구·군 요일별 방문객 비율로 만든 임시 대체 신호. 실시간 신호가 아니라
+    "이 구는 이 요일에 보통 이 정도 붐빈다"는 고정 패턴이다."""
+    sigungu_code = nearest_sigungu_code(session, lat, lon)
+    if sigungu_code is None:
+        return None
+
+    baseline = (
+        session.query(DistrictVisitorBaseline)
+        .filter_by(sigungu_code=sigungu_code, dow=dow)
+        .first()
+    )
+    if not baseline or not baseline.visitor_ratio or baseline.sample_count < 3:
+        return None
+
+    return min(max(1 / baseline.visitor_ratio, 0), 1)

@@ -42,7 +42,7 @@ class RipCurrentOut(BaseModel):
 
 class TrafficCongestionOut(BaseModel):
     s_traffic: float | None  # 0~1, 높을수록 원활. None이면 데이터 부족(1주 미만 또는 링크 없음)
-    status: str  # 'data_collecting'(1주 미만), 'provisional'(1~3주), 'normal'(3주+)
+    status: str  # 'district_fallback'(구·군 대체), 'data_collecting'(1주 미만), 'provisional'(1~3주), 'normal'(3주+)
 
 
 class EnvironmentOut(BaseModel):

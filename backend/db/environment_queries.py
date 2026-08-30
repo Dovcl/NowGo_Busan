@@ -5,7 +5,7 @@ from geoalchemy2 import Geography
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from db.models import AirQualityCache, RipCurrentCache, RoadLinkCache, RoadLinkTrafficCache, RoadLinkBaseline
+from db.models import AirQualityCache, RipCurrentCache, RoadLinkCache, RoadLinkTrafficCache, RoadLinkBaseline, TourSpot
 
 
 def nearest_air_quality_station(session: Session, lat: float, lon: float) -> AirQualityCache | None:
@@ -63,3 +63,19 @@ def nearest_road_links(
         .limit(limit)
         .all()
     )
+
+
+def nearest_sigungu_code(session: Session, lat: float, lon: float, max_distance_m: int = 30000) -> int | None:
+    """좌표에서 가장 가까운 관광지의 구·군(TourAPI sigungucode)으로 근사. 구·군 경계
+    폴리곤이 DB에 없어 정확한 point-in-polygon 대신 최근접 관광지로 대체한다 —
+    s_traffic cold-start 대체 신호처럼 근사치로 충분한 용도에만 쓸 것.
+    부산은 폭이 40km 안팎이라 30km 컷오프는 부산 밖 좌표를 걸러내는 용도."""
+    point = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+    row = (
+        session.query(TourSpot.sigungucode)
+        .filter(TourSpot.sigungucode.isnot(None))
+        .filter(func.ST_DWithin(TourSpot.geom.cast(Geography), func.cast(point, Geography), max_distance_m))
+        .order_by(TourSpot.geom.op("<->")(point))
+        .first()
+    )
+    return row[0] if row else None
