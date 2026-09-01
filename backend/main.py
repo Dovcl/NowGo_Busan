@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import api_router
 from core.config import settings
 from core.scheduler import start_scheduler, stop_scheduler
+from db.schema_migrations import ensure_schema
 
 # [설정 로딩 흐름]
 # .env (실제 값) -> core/config.py의 Settings(BaseSettings)가 pydantic-settings로 자동 로딩
@@ -30,6 +31,10 @@ from core.scheduler import start_scheduler, stop_scheduler
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 시작 (startup)
+    # 웹서비스와 cron이 서로 다른 시점에 재배포되면, 새 모델 코드가 먼저 뜬 쪽이 아직
+    # 스키마 변경 전인 DB에 쿼리를 날려 에러가 날 수 있다(2026-09-02 실제로 겪음) — 웹
+    # 시작 때도 스키마를 직접 보장해서 어느 쪽이 먼저 뜨든 안전하게 한다.
+    ensure_schema()
     start_scheduler()
     yield
     # 종료 (shutdown)
