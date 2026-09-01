@@ -11,12 +11,13 @@
 baseline(`DistrictVisitorBaseline`)으로 대체한다(harness/DECISIONS.md 참고).
 """
 
+from collections import defaultdict
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 
 from db.environment_queries import nearest_road_links, nearest_sigungu_code
-from db.models import DistrictVisitorBaseline, RoadLinkBaseline, RoadLinkTrafficCache
+from db.models import DistrictVisitorBaseline, RoadLinkBaseline, RoadLinkTrafficCache, RoadLinkTrafficHistory
 from services.traffic.calendar import effective_dow
 
 
@@ -124,3 +125,57 @@ def _district_fallback_score(session: Session, lat: float, lon: float, dow: int)
         return None
 
     return min(max(1 / baseline.visitor_ratio, 0), 1)
+
+
+def traffic_history_for_spot(
+    session: Session, lat: float, lon: float, link_limit: int = 10, radius_m: int = 500
+) -> list[dict]:
+    """"오늘 실측 vs 평소 baseline" 그래프용 — 오늘 0시부터 지금까지 시간대별 속도.
+
+    반경 내 링크들의 RoadLinkTrafficHistory(최근 48시간 이력)를 시간대별로 평균 내
+    실측 속도를, 같은 링크들의 RoadLinkBaseline(dow×hour)을 24시간 전체로 평소 속도를
+    만든다. baseline은 sample_count < 3(3주 미만 관측)인 시간대는 아직 못 믿을 값이라
+    None으로 뺀다 — 나머지 화면과 동일한 기준(harness/DECISIONS.md).
+    """
+    nearby_links = nearest_road_links(session, lat, lon, limit=link_limit, radius_m=radius_m)
+    if not nearby_links:
+        return []
+    link_ids = [link.link_id for link in nearby_links]
+
+    now = datetime.now()
+    today_start = datetime(now.year, now.month, now.day)
+    dow = effective_dow(session, now.date())
+
+    history_rows = (
+        session.query(RoadLinkTrafficHistory)
+        .filter(RoadLinkTrafficHistory.link_id.in_(link_ids))
+        .filter(RoadLinkTrafficHistory.observed_at >= today_start)
+        .all()
+    )
+    speeds_by_hour: dict[int, list[float]] = defaultdict(list)
+    for row in history_rows:
+        if row.current_speed is not None:
+            speeds_by_hour[row.observed_at.hour].append(row.current_speed)
+
+    baseline_rows = (
+        session.query(RoadLinkBaseline)
+        .filter(RoadLinkBaseline.link_id.in_(link_ids))
+        .filter(RoadLinkBaseline.dow == dow)
+        .all()
+    )
+    baseline_by_hour: dict[int, list[float]] = defaultdict(list)
+    for b in baseline_rows:
+        if b.avg_speed is not None and b.sample_count >= 3:
+            baseline_by_hour[b.hour].append(b.avg_speed)
+
+    def avg(values: list[float] | None) -> float | None:
+        return sum(values) / len(values) if values else None
+
+    return [
+        {
+            "hour": hour,
+            "current_speed": avg(speeds_by_hour.get(hour)),
+            "baseline_speed": avg(baseline_by_hour.get(hour)),
+        }
+        for hour in range(24)
+    ]

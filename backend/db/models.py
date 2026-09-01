@@ -404,9 +404,11 @@ class RoadLinkBaseline(Base):
     (harness/DECISIONS.md 2026-08-20 — 관광빅데이터/지하철은 단위가 달라 결합에
     별도 정규화가 필요해서 채택 안 함).
 
-    sample_count는 관측 "횟수"가 아니라 관측한 날짜 수를 의미해야 함 — 같은 날
-    15분 간격으로 들어온 여러 샘플은 서로 독립된 관측이 아니라 그날 하루의 스냅샷일
-    뿐이라, ETL에서 시간당 대표값 1개로 집계한 뒤에만 이 테이블에 반영한다."""
+    sample_count는 관측 "횟수"가 아니라 관측한 날짜 수를 의미해야 함 — 같은 날 여러 번
+    수집해도(수동 재시도, 중복 cron 등) 서로 독립된 관측이 아니라 그날 하루의 스냅샷일
+    뿐이다. `last_sample_date`로 "이 날짜는 이미 반영했다"를 기억해서, 같은 날짜가 다시
+    들어오면 sample_count/avg_speed를 안 건드리고 그대로 둔다(2026-09-02, 수동 재시도와
+    미관리 중복 cron이 같은 시간대를 여러 번 반영해 sample_count가 부풀려진 사고 이후 추가)."""
 
     __tablename__ = "road_link_baseline"
 
@@ -417,6 +419,7 @@ class RoadLinkBaseline(Base):
     avg_speed = Column(Float, nullable=False)
     avg_volume = Column(Float)
     sample_count = Column(Integer, nullable=False, default=0)  # 관측한 날짜 수
+    last_sample_date = Column(Date)  # 마지막으로 sample_count에 반영된 날짜 (같은 날 중복 반영 방지)
 
 
 class HolidayCache(Base):

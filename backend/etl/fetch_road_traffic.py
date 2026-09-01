@@ -26,7 +26,7 @@ from datetime import datetime, timedelta
 from urllib.parse import unquote
 
 import requests
-from sqlalchemy import case, func
+from sqlalchemy import case, func, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from core.config import settings
@@ -166,6 +166,7 @@ def update_baseline(session, records: list[dict], observed_date: str) -> int:
     dow = effective_dow(session, observed_dt.date())
     hour = observed_dt.hour
 
+    sample_date = observed_dt.date()
     rows = [
         {
             "link_id": r["link_id"],
@@ -174,23 +175,33 @@ def update_baseline(session, records: list[dict], observed_date: str) -> int:
             "avg_speed": r["current_speed"],
             "avg_volume": r["current_volume"],
             "sample_count": 1,
+            "last_sample_date": sample_date,
         }
         for r in records
     ]
 
+    # 같은 날짜가 이미 반영돼 있으면(수동 재시도, 중복 cron 등으로 같은 시간대를 여러 번
+    # 수집) sample_count/avg_speed를 다시 안 건드린다 — 2026-09-02, 이 가드가 없어서
+    # 하루 안에 여러 번 도는 바람에 sample_count가 실제 관측 일수보다 부풀려진 사고 이후 추가.
     for i in range(0, len(rows), _BASELINE_UPSERT_CHUNK):
         chunk = rows[i : i + _BASELINE_UPSERT_CHUNK]
         stmt = pg_insert(RoadLinkBaseline).values(chunk)
+        already_counted_today = RoadLinkBaseline.last_sample_date == stmt.excluded.last_sample_date
         stmt = stmt.on_conflict_do_update(
             index_elements=["link_id", "dow", "hour"],
             set_={
-                # 기존 값과 새 값의 가중 평균 (이전 표본 count × 이전 평균 + 새 값) / (count+1)
-                "avg_speed": (
-                    RoadLinkBaseline.avg_speed * RoadLinkBaseline.sample_count + stmt.excluded.avg_speed
-                )
-                / (RoadLinkBaseline.sample_count + 1),
+                # 기존 값과 새 값의 가중 평균 (이전 표본 count × 이전 평균 + 새 값) / (count+1).
+                # 단, 오늘 이미 반영된 날짜면 기존 값 그대로 유지(중복 카운트 방지).
+                "avg_speed": case(
+                    (already_counted_today, RoadLinkBaseline.avg_speed),
+                    else_=(
+                        RoadLinkBaseline.avg_speed * RoadLinkBaseline.sample_count + stmt.excluded.avg_speed
+                    )
+                    / (RoadLinkBaseline.sample_count + 1),
+                ),
                 # volume은 결측일 수 있어 speed와 독립적으로 처리 (기존 Python 분기와 동일한 규칙)
                 "avg_volume": case(
+                    (already_counted_today, RoadLinkBaseline.avg_volume),
                     (stmt.excluded.avg_volume.is_(None), None),
                     (
                         RoadLinkBaseline.avg_volume.isnot(None),
@@ -199,7 +210,11 @@ def update_baseline(session, records: list[dict], observed_date: str) -> int:
                     ),
                     else_=stmt.excluded.avg_volume,
                 ),
-                "sample_count": RoadLinkBaseline.sample_count + 1,
+                "sample_count": case(
+                    (already_counted_today, RoadLinkBaseline.sample_count),
+                    else_=RoadLinkBaseline.sample_count + 1,
+                ),
+                "last_sample_date": stmt.excluded.last_sample_date,
             },
         )
         session.execute(stmt)
@@ -234,8 +249,31 @@ def prune_history(session, before: datetime) -> int:
     )
 
 
+def _ensure_last_sample_date_column() -> None:
+    """`create_all()`은 새 테이블만 만들고 기존 테이블에 컬럼을 추가해 주지 않는다
+    (harness/DECISIONS.md, weather_cache 때와 같은 문제) — road_link_baseline은 drop 후
+    재생성이 안전하지 않은(과거로 되돌릴 수 없는 누적 데이터) 테이블이라 ALTER로 추가.
+
+    같이 실행하는 정리 쿼리(2026-09-02, 1회성): 이 가드가 생기기 전엔 수동 재시도·중복
+    cron이 같은 날짜를 여러 번 반영해 sample_count가 부풀려진 행이 있었다 — 지금까지는
+    전부 오늘/최근 하루치뿐이라 sample_count>1은 곧 "중복 카운트"와 같은 뜻이므로, 그런
+    행을 1로 되돌리고 last_sample_date를 과거 임의 날짜로 세팅해 다음 실제 관측부터
+    정상적으로 다시 늘어나게 한다. 이후엔 가드 덕분에 대상이 없어 매번 그냥 no-op."""
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE road_link_baseline ADD COLUMN IF NOT EXISTS last_sample_date DATE"))
+        result = conn.execute(
+            text(
+                "UPDATE road_link_baseline SET sample_count = 1, last_sample_date = DATE '2026-08-01' "
+                "WHERE sample_count > 1"
+            )
+        )
+        if result.rowcount:
+            print(f"[baseline cleanup] 중복 카운트 의심 {result.rowcount}건 sample_count=1로 정리")
+
+
 def main() -> None:
     Base.metadata.create_all(engine)
+    _ensure_last_sample_date_column()
 
     session = SessionLocal()
     try:

@@ -55,3 +55,17 @@ export async function fetchEnvironment(lat, lng) {
   if (!res.ok) throw new Error(`fetchEnvironment failed: ${res.status}`)
   return adaptEnvironment(await res.json())
 }
+
+// "오늘 실측 vs 평소 baseline" 그래프용 — 24시간 전체, 값 없는 시간대는 null 그대로 유지
+// (프론트에서 그 구간만 선을 끊어 그리는 데 필요해서 0으로 메우지 않는다)
+export async function fetchTrafficHistory(lat, lng) {
+  const query = new URLSearchParams({ lat, lon: lng }).toString()
+  const res = await fetch(`${API_BASE_URL}/api/environment/traffic-history?${query}`)
+  if (!res.ok) throw new Error(`fetchTrafficHistory failed: ${res.status}`)
+  const data = await res.json()
+  return data.hours.map((h) => ({
+    hour: h.hour,
+    currentSpeed: h.current_speed,
+    baselineSpeed: h.baseline_speed,
+  }))
+}

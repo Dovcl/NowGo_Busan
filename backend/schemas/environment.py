@@ -49,6 +49,16 @@ class TrafficCongestionOut(BaseModel):
     congested_road_name: str | None  # 집계에 쓰인 링크 중 현재 속도가 가장 낮은 도로명("정체 구간" 표시용)
 
 
+class TrafficHistoryHourOut(BaseModel):
+    hour: int  # 0~23
+    current_speed: float | None  # 오늘 그 시간대 실측 평균 속도(km/h). 아직 관측 안 됐으면 null
+    baseline_speed: float | None  # 같은 요일 baseline 평균 속도(km/h). 3주 미만 관측이면 null
+
+
+class TrafficHistoryOut(BaseModel):
+    hours: list[TrafficHistoryHourOut]  # 24시간 전체(0~23), 값 없는 시간대는 필드가 null
+
+
 class EnvironmentOut(BaseModel):
     weather: WeatherOut | None
     air_quality: AirQualityOut | None

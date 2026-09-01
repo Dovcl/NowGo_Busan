@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { fetchPlaces } from "../services/placesService"
-import { fetchEnvironment } from "../services/environmentService"
+import { fetchEnvironment, fetchTrafficHistory } from "../services/environmentService"
 import { demoTrafficFor, demoHistoryCurveFor } from "../lib/bumbimDemoData"
 import { useKakaoMap } from "../hooks/useKakaoMap"
 
@@ -300,14 +300,35 @@ function DemoModeBanner({ demoMode, onToggle }) {
   )
 }
 
+// baseline이 최소 2시간대 이상 신뢰 가능(sample_count>=3)해야 그래프를 그릴 의미가
+// 있다고 판단 — 그 전엔 기존 "데이터 수집 중" 문구를 그대로 유지한다.
+function hasEnoughRealHistory(hours) {
+  return hours && hours.filter((h) => h.baselineSpeed != null).length >= 2
+}
+
 function HistoryCard({ focalSpot, demoMode }) {
-  const curve = demoMode && focalSpot ? demoHistoryCurveFor(focalSpot) : null
+  const [realHistory, setRealHistory] = useState(null)
+
+  useEffect(() => {
+    if (demoMode || !focalSpot) {
+      setRealHistory(null)
+      return
+    }
+    fetchTrafficHistory(focalSpot.lat, focalSpot.lng)
+      .then(setRealHistory)
+      .catch(() => setRealHistory(null))
+  }, [demoMode, focalSpot])
+
+  const demoCurve = demoMode && focalSpot ? demoHistoryCurveFor(focalSpot) : null
+  const showReal = !demoMode && hasEnoughRealHistory(realHistory)
 
   return (
     <div className="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/20 p-6">
       <h3 className="font-body-md text-on-surface font-bold mb-1">오늘 실측 vs 평소 baseline</h3>
-      {curve ? (
-        <HistoryChart curve={curve} />
+      {demoCurve ? (
+        <HistoryChart curve={demoCurve} />
+      ) : showReal ? (
+        <RealHistoryChart hours={realHistory} />
       ) : (
         <div className="flex flex-col items-center justify-center gap-2 h-40 border border-dashed border-outline-variant rounded-lg text-outline">
           <span className="material-symbols-outlined text-2xl">hourglass_top</span>
@@ -317,8 +338,76 @@ function HistoryCard({ focalSpot, demoMode }) {
         </div>
       )}
       <p className="font-label-sm text-[10px] text-outline mt-2">
-        도로 속도 기반 · 최근 1시간 기준 · 매시 10분 갱신{curve && " · 데모 데이터"}
+        도로 속도 기반 · 최근 1시간 기준 · 매시 10분 갱신{demoCurve && " · 데모 데이터"}
       </p>
+    </div>
+  )
+}
+
+// 실측 그래프는 데모(0~100 혼잡 지수)와 달리 km/h 원본 속도 두 줄을 그대로 겹쳐 보여준다 —
+// baseline을 그 자신과 비교한 지수는 의미가 없어서(항상 100%가 됨), 두 속도 차이 자체를
+// 눈으로 보여주는 쪽이 더 정직하다. 관측 없는 시간대는 null이라 선을 끊어 그려야 해서
+// 구간(segment)별로 나눠 폴리라인을 여러 개 그린다.
+function RealHistoryChart({ hours }) {
+  const speeds = hours.flatMap((h) => [h.currentSpeed, h.baselineSpeed]).filter((v) => v != null)
+  const maxSpeed = Math.max(...speeds, 10)
+  const x = (h) => 40 + (h / 23) * 760
+  const y = (v) => 180 - (v / maxSpeed) * 160
+  const nowHour = new Date().getHours()
+
+  function segmentsFor(key) {
+    const segments = []
+    let current = []
+    hours.forEach((h, i) => {
+      const v = h[key]
+      if (v == null) {
+        if (current.length > 1) segments.push(current)
+        current = []
+      } else {
+        current.push(`${x(i)},${y(v)}`)
+      }
+    })
+    if (current.length > 1) segments.push(current)
+    return segments
+  }
+
+  return (
+    <div className="relative h-[200px] w-full">
+      <svg className="w-full h-full text-outline-variant" viewBox="0 0 800 200" preserveAspectRatio="none">
+        {[0, 0.25, 0.5, 0.75].map((f) => (
+          <line key={f} x1="40" x2="800" y1={y(maxSpeed * f)} y2={y(maxSpeed * f)} stroke="currentColor" strokeDasharray="4" strokeWidth="1" />
+        ))}
+        <line x1="40" x2="800" y1={y(0)} y2={y(0)} stroke="currentColor" strokeWidth="1" />
+        {[0, 0.25, 0.5, 0.75, 1].map((f) => (
+          <text key={f} className="text-xs fill-outline" textAnchor="end" x="30" y={y(maxSpeed * f) + 4}>
+            {Math.round(maxSpeed * f)}
+          </text>
+        ))}
+        {[0, 3, 6, 9, 12, 15, 18, 21, 23].map((h) => (
+          <text key={h} className="text-xs fill-outline" textAnchor="middle" x={x(h)} y="195">
+            {h}시
+          </text>
+        ))}
+        {segmentsFor("baselineSpeed").map((seg, i) => (
+          <polyline key={`b${i}`} fill="none" points={seg.join(" ")} stroke="#8B5CF6" strokeDasharray="6 4" strokeWidth="2" />
+        ))}
+        {segmentsFor("currentSpeed").map((seg, i) => (
+          <polyline key={`a${i}`} fill="none" points={seg.join(" ")} className="text-primary" stroke="currentColor" strokeWidth="2" />
+        ))}
+        <line x1={x(nowHour)} x2={x(nowHour)} y1="20" y2="180" stroke="#434653" strokeDasharray="2" strokeWidth="1" />
+        <rect fill="#273143" height="20" rx="4" width="36" x={x(nowHour) - 18} y="0" />
+        <text className="text-[10px] fill-white" textAnchor="middle" x={x(nowHour)} y="14">
+          지금
+        </text>
+      </svg>
+      <div className="flex items-center gap-4 mt-1 text-xs text-on-surface-variant">
+        <span className="flex items-center gap-1">
+          <span className="w-4 h-0.5 bg-primary inline-block" /> 오늘 실측 속도(km/h)
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-4 h-0.5 border-b-2 border-dashed border-[#8B5CF6] inline-block" /> 평소 속도(baseline, km/h)
+        </span>
+      </div>
     </div>
   )
 }
