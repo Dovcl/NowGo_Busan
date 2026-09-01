@@ -38,7 +38,9 @@ function trafficCongestionLabel(traffic) {
   // congestion = 1 - s_traffic으로 역변환
   const congestion = 1 - (traffic.sTraffic || 0)
   const label = congestion < 0.33 ? "낮음" : congestion < 0.67 ? "보통" : "높음"
-  if (traffic.status === "provisional") return `${label} (참고용)`
-  if (traffic.status === "district_fallback") return `${label} (지역 평균)`
-  return label
+  const suffix =
+    traffic.status === "provisional" ? " (참고용)" : traffic.status === "district_fallback" ? " (지역 평균)" : ""
+  // baseline 대비 편차의 원인을 설명해주는 배지 — 오늘 근처에 축제·행사가 있으면 같이 노출
+  const eventNote = traffic.nearbyEvent ? ` · ${traffic.nearbyEvent} 진행중` : ""
+  return `${label}${suffix}${eventNote}`
 }

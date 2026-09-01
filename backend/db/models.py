@@ -399,6 +399,17 @@ class RoadLinkBaseline(Base):
     sample_count = Column(Integer, nullable=False, default=0)  # 관측한 날짜 수
 
 
+class HolidayCache(Base):
+    """한국천문연구원 특일 정보(공휴일) 캐시. RoadLinkBaseline/DistrictVisitorBaseline이
+    순수 요일(dow) 단위라 평일 공휴일(광복절 등)이 원래 요일과 다른 통행 패턴을 보이면
+    baseline이 오염된다 — 공휴일은 일요일(dow=6) 패턴으로 대체한다(services/traffic/calendar.py)."""
+
+    __tablename__ = "holiday_cache"
+
+    date = Column(Date, primary_key=True)
+    name = Column(String, nullable=False)
+
+
 class DistrictVisitorBaseline(Base):
     """구·군 요일별 방문객수 패턴(한국관광공사 방문자수 API 기반). RoadLinkBaseline이
     아직 3일치도 안 쌓인 cold-start 구간에서만 s_traffic 대체 신호로 쓴다 — 실시간

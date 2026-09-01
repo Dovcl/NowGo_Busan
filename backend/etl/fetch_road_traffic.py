@@ -34,6 +34,7 @@ from db.base import Base
 from db.models import RoadLinkBaseline, RoadLinkCache, RoadLinkTrafficCache
 from db.session import SessionLocal, engine
 from etl.seed_tour_spots import upsert
+from services.traffic.calendar import effective_dow
 
 _BASELINE_UPSERT_CHUNK = 2000  # 원격 DB(Render) 왕복을 줄이기 위한 벌크 upsert 배치 크기
 
@@ -160,8 +161,8 @@ def update_baseline(session, records: list[dict], observed_date: str) -> int:
     if not observed_dt:
         return 0
 
-    # observed_dt 기준으로 요일(0=월~6=일)과 시간대 계산
-    dow = observed_dt.weekday()  # Monday=0, Sunday=6
+    # observed_dt 기준으로 요일(0=월~6=일, 공휴일은 일요일로 대체)과 시간대 계산
+    dow = effective_dow(session, observed_dt.date())
     hour = observed_dt.hour
 
     rows = [

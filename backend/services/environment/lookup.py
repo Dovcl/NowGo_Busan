@@ -10,11 +10,12 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from db.environment_queries import nearest_air_quality_station, nearest_rip_current_station
+from db.environment_queries import nearest_air_quality_station, nearest_rip_current_station, nearby_active_event
 from db.models import AirQualityCache, RipCurrentCache, UvIndexCache, WeatherCache, RoadLinkBaseline
 from services.environment.feels_like import feels_like_temperature
 from services.environment.grid import latlon_to_grid
 from services.traffic.calculate import calculate_traffic_congestion
+from services.traffic.calendar import effective_dow
 
 _BUSAN_AREA_NO = "2600000000"  # 생활기상지수 MVP는 부산 전체 1개 값만 사용
 
@@ -108,12 +109,16 @@ def _traffic_congestion_out(
     if s_traffic is None:
         return None
 
-    if source == "district_fallback":
-        return {"s_traffic": s_traffic, "status": "district_fallback"}
+    # "왜 평소보다 혼잡한지" 설명용 — 오늘 이 근처에서 열리는 축제·행사가 있으면 같이 노출
+    event = nearby_active_event(session, lat, lon, datetime.now().date())
+    nearby_event = event.title if event else None
 
-    # 가장 최신 baseline의 sample_count로 수집 기간 판정
+    if source == "district_fallback":
+        return {"s_traffic": s_traffic, "status": "district_fallback", "nearby_event": nearby_event}
+
+    # 가장 최신 baseline의 sample_count로 수집 기간 판정 (공휴일이면 일요일 패턴으로 대체)
     now = datetime.now()
-    current_dow = now.weekday()
+    current_dow = effective_dow(session, now.date())
     current_hour = now.hour
 
     # 반경 내 링크 중 baseline이 있는 것들의 sample_count 확인
@@ -145,4 +150,5 @@ def _traffic_congestion_out(
     return {
         "s_traffic": s_traffic,
         "status": status,
+        "nearby_event": nearby_event,
     }

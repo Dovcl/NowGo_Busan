@@ -40,6 +40,7 @@ export function adaptEnvironment(data) {
     trafficCongestion: data.traffic_congestion && {
       sTraffic: data.traffic_congestion.s_traffic,
       status: data.traffic_congestion.status,
+      nearbyEvent: data.traffic_congestion.nearby_event,
     },
     updatedAt: data.updated_at,
   }

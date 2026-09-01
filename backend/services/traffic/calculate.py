@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from db.environment_queries import nearest_road_links, nearest_sigungu_code
 from db.models import DistrictVisitorBaseline, RoadLinkBaseline, RoadLinkTrafficCache
+from services.traffic.calendar import effective_dow
 
 
 def calculate_traffic_congestion(
@@ -41,9 +42,9 @@ def calculate_traffic_congestion(
     if not nearby_links:
         return None, None  # 반경 내 링크 없음 (산, 도서 지역 등) — 도로 맥락 자체가 없어 구·군 대체도 안 씀
 
-    # 현재 시간대의 baseline 기준값 준비
+    # 현재 시간대의 baseline 기준값 준비 (공휴일이면 일요일 패턴으로 대체)
     now = datetime.now()
-    current_dow = now.weekday()  # 0=월, 6=일
+    current_dow = effective_dow(session, now.date())
     current_hour = now.hour
 
     traffic_scores = []

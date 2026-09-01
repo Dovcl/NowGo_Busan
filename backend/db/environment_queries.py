@@ -1,11 +1,21 @@
 """환경 데이터 캐시 테이블 대상 PostGIS 공간 쿼리. (CLAUDE.md 규칙: PostGIS 쿼리는
 반드시 backend/db/ 안에서만 작성)"""
 
+from datetime import date
+
 from geoalchemy2 import Geography
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from db.models import AirQualityCache, RipCurrentCache, RoadLinkCache, RoadLinkTrafficCache, RoadLinkBaseline, TourSpot
+from db.models import (
+    AirQualityCache,
+    Event,
+    RipCurrentCache,
+    RoadLinkCache,
+    RoadLinkTrafficCache,
+    RoadLinkBaseline,
+    TourSpot,
+)
 
 
 def nearest_air_quality_station(session: Session, lat: float, lon: float) -> AirQualityCache | None:
@@ -62,6 +72,24 @@ def nearest_road_links(
         .order_by(RoadLinkCache.geom.op("<->")(point))
         .limit(limit)
         .all()
+    )
+
+
+def nearby_active_event(session: Session, lat: float, lon: float, today: date, radius_m: int = 1500) -> Event | None:
+    """오늘이 행사 기간에 포함되고 좌표 반경 내인 가장 가까운 축제·행사 1건.
+
+    "주변 혼잡도가 왜 평소보다 높은지" 설명용 배지라 관광지 좌표(500m)보다 넓게
+    잡는다. end_date가 없는 항목(단일일 행사)은 start_date를 종료일로 취급한다.
+    좌표 없는 소스(KOPIS 등)는 geom이 null이라 자연히 제외된다."""
+    point = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+    return (
+        session.query(Event)
+        .filter(Event.geom.isnot(None))
+        .filter(Event.start_date <= today)
+        .filter(func.coalesce(Event.end_date, Event.start_date) >= today)
+        .filter(func.ST_DWithin(Event.geom.cast(Geography), func.cast(point, Geography), radius_m))
+        .order_by(Event.geom.op("<->")(point))
+        .first()
     )
 
 

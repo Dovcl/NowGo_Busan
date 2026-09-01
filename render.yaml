@@ -98,3 +98,5 @@ services:
         sync: false
       - key: TOUR_API_KEY_IAN
         sync: false
+      - key: TOUR_API_KEY
+        sync: false
