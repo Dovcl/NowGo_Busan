@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom"
 import AppLayout from "./layouts/AppLayout"
 import Home from "./pages/Home"
 import MapView from "./pages/MapView"
-import PulseDashboard from "./pages/PulseDashboard"
+import BusanBumbim from "./pages/BusanBumbim"
 import PlaceDetail from "./pages/PlaceDetail"
 import Profile from "./pages/Profile"
 import SavedLists from "./pages/SavedLists"
@@ -11,6 +11,7 @@ import Recommend from "./pages/Recommend"
 import AdminLogin from "./pages/AdminLogin"
 import AdminEventReview from "./pages/AdminEventReview"
 import AdminUserManagement from "./pages/AdminUserManagement"
+import AdminDataInspector from "./pages/AdminDataInspector"
 import SearchResults from "./pages/SearchResults"
 
 function App() {
@@ -19,11 +20,12 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/map" element={<MapView />} />
-        <Route path="/dashboard" element={<PulseDashboard />} />
+        <Route path="/bumbim" element={<BusanBumbim />} />
         <Route path="/place/:placeId" element={<PlaceDetail />} />
         <Route path="/recommend" element={<Recommend />} />
         <Route path="/admin/events/review" element={<AdminEventReview />} />
         <Route path="/admin/users" element={<AdminUserManagement />} />
+        <Route path="/admin/data" element={<AdminDataInspector />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/saved" element={<SavedLists />} />

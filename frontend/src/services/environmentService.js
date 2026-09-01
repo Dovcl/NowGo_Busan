@@ -43,6 +43,7 @@ export function adaptEnvironment(data) {
       nearbyEvent: data.traffic_congestion.nearby_event,
       currentSpeed: data.traffic_congestion.current_speed,
       baselineSpeed: data.traffic_congestion.baseline_speed,
+      congestedRoadName: data.traffic_congestion.congested_road_name,
     },
     updatedAt: data.updated_at,
   }

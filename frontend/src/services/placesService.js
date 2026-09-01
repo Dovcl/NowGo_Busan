@@ -44,6 +44,7 @@ export function adaptPlace(place) {
     envTypeCode: place.env_type_code,
     isEnvTarget: place.is_env_target, // 환경 신호등 점수 대상 여부 (실내는 항상 false)
     envTag: place.is_env_target ? "실외 관광지" : "실내 관광지",
+    sigunguCode: place.sigungucode,
     lat: place.lat,
     lng: place.lng,
     overview: place.overview,

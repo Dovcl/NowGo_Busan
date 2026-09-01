@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from routers.admin_data import router as admin_data_router
 from routers.admin_events import router as admin_events_router
 from routers.admin_users import router as admin_users_router
 from routers.auth import router as auth_router
@@ -15,5 +16,6 @@ api_router.include_router(environment_router, prefix="/api")
 api_router.include_router(events_router, prefix="/api")
 api_router.include_router(admin_events_router, prefix="/api")
 api_router.include_router(admin_users_router, prefix="/api")
+api_router.include_router(admin_data_router, prefix="/api")
 api_router.include_router(lists_router, prefix="/api")
 api_router.include_router(auth_router)

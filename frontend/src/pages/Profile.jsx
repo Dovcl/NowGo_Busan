@@ -201,6 +201,17 @@ export default function Profile() {
                     <span className="material-symbols-outlined text-outline-variant">chevron_right</span>
                   </Link>
                   <Divider />
+                  <Link
+                    to="/admin/data"
+                    className="flex justify-between items-center gap-4 py-1 hover:opacity-70 transition-opacity"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary">database</span>
+                      <span className="font-body-md text-body-md text-on-surface font-bold">데이터</span>
+                    </div>
+                    <span className="material-symbols-outlined text-outline-variant">chevron_right</span>
+                  </Link>
+                  <Divider />
                 </>
               )}
               <div className="flex justify-between items-center gap-4 py-1">

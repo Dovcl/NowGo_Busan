@@ -22,7 +22,7 @@ from services.traffic.calendar import effective_dow
 
 def calculate_traffic_congestion(
     session: Session, lat: float, lon: float, link_limit: int = 10, radius_m: int = 500
-) -> tuple[float | None, str | None, float | None, float | None]:
+) -> tuple[float | None, str | None, float | None, float | None, str | None]:
     """관광지 좌표 기반 교통 혼잡도 계산.
 
     Args:
@@ -32,17 +32,19 @@ def calculate_traffic_congestion(
         radius_m: 검색 반경 (미터)
 
     Returns:
-        (s_traffic, source, current_speed, baseline_speed) 튜플.
+        (s_traffic, source, current_speed, baseline_speed, congested_road_name) 튜플.
         - source: 'road'(실제 도로 baseline) 또는 'district_fallback'(구·군 방문객수, cold-start용)
         - current_speed/baseline_speed: 반경 내 링크 평균 속도(km/h, s_traffic과 같은 링크 집합으로
           집계). district_fallback은 방문객 비율이라 속도 단위가 아니므로 항상 None
+        - congested_road_name: 집계에 쓰인 링크 중 현재 속도가 가장 낮은 링크의 도로명
+          ("정체 구간" 표시용). 마찬가지로 district_fallback이면 None
         - 데이터가 전혀 없으면 전부 None
     """
     # 반경 내 가까운 링크 조회
     nearby_links = nearest_road_links(session, lat, lon, limit=link_limit, radius_m=radius_m)
 
     if not nearby_links:
-        return None, None, None, None  # 반경 내 링크 없음 (산, 도서 지역 등) — 구·군 대체도 안 씀
+        return None, None, None, None, None  # 반경 내 링크 없음 (산, 도서 지역 등) — 구·군 대체도 안 씀
 
     # 현재 시간대의 baseline 기준값 준비 (공휴일이면 일요일 패턴으로 대체)
     now = datetime.now()
@@ -52,6 +54,8 @@ def calculate_traffic_congestion(
     traffic_scores = []
     current_speeds = []
     baseline_speeds = []
+    worst_speed = None
+    worst_road_name = None
 
     for link in nearby_links:
         link_id = link.link_id
@@ -84,19 +88,24 @@ def calculate_traffic_congestion(
         current_speeds.append(current_traffic.current_speed)
         baseline_speeds.append(baseline.avg_speed)
 
+        if worst_speed is None or current_traffic.current_speed < worst_speed:
+            worst_speed = current_traffic.current_speed
+            worst_road_name = link.road_name
+
     if traffic_scores:
         return (
             sum(traffic_scores) / len(traffic_scores),
             "road",
             sum(current_speeds) / len(current_speeds),
             sum(baseline_speeds) / len(baseline_speeds),
+            worst_road_name,
         )
 
     # 링크는 있지만 도로 baseline이 아직 부족 — cold-start 동안만 구·군 대체 신호 시도
     fallback = _district_fallback_score(session, lat, lon, current_dow)
     if fallback is not None:
-        return fallback, "district_fallback", None, None
-    return None, None, None, None
+        return fallback, "district_fallback", None, None, None
+    return None, None, None, None, None
 
 
 def _district_fallback_score(session: Session, lat: float, lon: float, dow: int) -> float | None:

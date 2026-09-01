@@ -26,14 +26,18 @@ def get_environment(session: Session, lat: float, lon: float) -> dict:
     uv = session.get(UvIndexCache, _BUSAN_AREA_NO)
     air = nearest_air_quality_station(session, lat, lon)
     rip_current = nearest_rip_current_station(session, lat, lon)
-    traffic, traffic_source, current_speed, baseline_speed = calculate_traffic_congestion(session, lat, lon)
+    traffic, traffic_source, current_speed, baseline_speed, congested_road_name = calculate_traffic_congestion(
+        session, lat, lon
+    )
 
     # 5개 캐시 중 가장 오래된 fetched_at을 "기준 시각"으로
     fetched_ats = [row.fetched_at for row in (weather, uv, air, rip_current) if row is not None]
 
     # traffic은 fetched_at이 아니라 baseline 생성 여부로 상태 판정
     traffic_congestion = (
-        _traffic_congestion_out(session, lat, lon, traffic, traffic_source, current_speed, baseline_speed)
+        _traffic_congestion_out(
+            session, lat, lon, traffic, traffic_source, current_speed, baseline_speed, congested_road_name
+        )
         if traffic is not None
         else None
     )
@@ -105,6 +109,7 @@ def _traffic_congestion_out(
     source: str | None,
     current_speed: float | None,
     baseline_speed: float | None,
+    congested_road_name: str | None,
 ) -> dict | None:
     """traffic congestion 상태를 판정. s_traffic 값 없으면 데이터 부족.
 
@@ -128,6 +133,7 @@ def _traffic_congestion_out(
             "nearby_event": nearby_event,
             "current_speed": None,
             "baseline_speed": None,
+            "congested_road_name": None,
         }
 
     # 가장 최신 baseline의 sample_count로 수집 기간 판정 (공휴일이면 일요일 패턴으로 대체)
@@ -167,4 +173,5 @@ def _traffic_congestion_out(
         "nearby_event": nearby_event,
         "current_speed": current_speed,
         "baseline_speed": baseline_speed,
+        "congested_road_name": congested_road_name,
     }

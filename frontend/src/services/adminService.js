@@ -90,3 +90,17 @@ export async function restoreUsers(ids) {
 export function adminUsersExportUrl() {
   return `${API_BASE_URL}/api/admin/users/export`
 }
+
+// 수집 파이프라인 데이터 점검(날씨/도로교통/공휴일 등 ETL 테이블) — 관리자 전용
+export async function fetchAdminDataTables() {
+  const res = await fetch(`${API_BASE_URL}/api/admin/data/tables`, { credentials: "include" })
+  if (!res.ok) throw new Error(`fetchAdminDataTables failed: ${res.status}`)
+  return res.json()
+}
+
+export async function fetchAdminTableRows(table, { page = 1, pageSize = 20 } = {}) {
+  const params = new URLSearchParams({ page, page_size: pageSize })
+  const res = await fetch(`${API_BASE_URL}/api/admin/data/tables/${table}?${params}`, { credentials: "include" })
+  if (!res.ok) throw new Error(`fetchAdminTableRows failed: ${res.status}`)
+  return res.json()
+}

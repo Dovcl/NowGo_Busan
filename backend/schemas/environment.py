@@ -46,6 +46,7 @@ class TrafficCongestionOut(BaseModel):
     nearby_event: str | None  # 오늘 반경 1.5km 내 진행 중인 축제·행사명 (혼잡 원인 설명용, 없으면 null)
     current_speed: float | None  # 반경 내 링크 평균 현재 속도(km/h). district_fallback이면 null
     baseline_speed: float | None  # 같은 요일·시간대 평균 속도(km/h). district_fallback이면 null
+    congested_road_name: str | None  # 집계에 쓰인 링크 중 현재 속도가 가장 낮은 도로명("정체 구간" 표시용)
 
 
 class EnvironmentOut(BaseModel):

@@ -11,8 +11,6 @@ import {
   ripCurrentRisk,
   crowdLevel,
   mapMarkers,
-  districts,
-  pulseDashboard,
 } from "../mock/places"
 
 const MOCK_MODE = import.meta.env.VITE_MOCK_MODE !== "false"
@@ -38,17 +36,5 @@ export async function fetchHomeSummary() {
 export async function fetchMapMarkers() {
   if (MOCK_MODE) return mapMarkers
   const res = await fetch("/api/score/map")
-  return res.json()
-}
-
-export async function fetchDistricts() {
-  if (MOCK_MODE) return districts
-  const res = await fetch("/api/districts")
-  return res.json()
-}
-
-export async function fetchPulseDashboard(district) {
-  if (MOCK_MODE) return pulseDashboard[district] ?? pulseDashboard["수영구"]
-  const res = await fetch(`/api/pulse/${encodeURIComponent(district)}`)
   return res.json()
 }
