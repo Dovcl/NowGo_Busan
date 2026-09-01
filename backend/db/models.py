@@ -358,6 +358,26 @@ class RoadLinkTrafficCache(Base):
     fetched_at = Column(DateTime, nullable=False)  # 우리가 실제 호출한 시각
 
 
+class RoadLinkTrafficHistory(Base):
+    """"오늘 실측 혼잡도" 그래프용 시간별 이력. RoadLinkTrafficCache는 link_id가 PK라
+    폴링마다 최신값으로 덮어써서 "오늘 지금까지의 흐름"을 재구성할 수 없다 — 이 테이블은
+    매 폴링 사이클을 그대로 쌓는다.
+
+    RoadLinkBaseline처럼 무기한 누적하지 않고 최근 48시간만 유지한다(그래프가 "오늘 vs
+    평소"만 보여주면 충분해서 — YAGNI). fetch_road_traffic.py가 매 사이클마다 48시간보다
+    오래된 행을 정리한다. 관광지 단위가 아니라 링크 단위로 저장 — 관광지-링크 매핑은
+    RoadLinkBaseline과 동일하게 조회 시점에 반경 검색으로 즉석 계산한다(harness/DECISIONS.md,
+    "관광지-링크 사전매핑 테이블은 P0에서 안 만듦" 결정과 동일 패턴)."""
+
+    __tablename__ = "road_link_traffic_history"
+
+    link_id = Column(String, ForeignKey("road_link_cache.link_id"), primary_key=True)
+    observed_at = Column(DateTime, primary_key=True)  # API statsDt 기준, RoadLinkTrafficCache와 동일 시각
+
+    current_speed = Column(Float)
+    current_volume = Column(Float)
+
+
 class RoadLinkHourlyBuffer(Base):
     """RoadLinkBaseline에 반영하기 전 시간당 누적 staging 테이블. 15분 주기로 들어오는
     관측치를 그대로 baseline에 반영하면 같은 날의 4개 샘플이 서로 다른 4번의 관측처럼

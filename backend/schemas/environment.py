@@ -44,6 +44,8 @@ class TrafficCongestionOut(BaseModel):
     s_traffic: float | None  # 0~1, 높을수록 원활. None이면 데이터 부족(1주 미만 또는 링크 없음)
     status: str  # 'district_fallback'(구·군 대체), 'data_collecting'(1주 미만), 'provisional'(1~3주), 'normal'(3주+)
     nearby_event: str | None  # 오늘 반경 1.5km 내 진행 중인 축제·행사명 (혼잡 원인 설명용, 없으면 null)
+    current_speed: float | None  # 반경 내 링크 평균 현재 속도(km/h). district_fallback이면 null
+    baseline_speed: float | None  # 같은 요일·시간대 평균 속도(km/h). district_fallback이면 null
 
 
 class EnvironmentOut(BaseModel):

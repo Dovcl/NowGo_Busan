@@ -26,14 +26,16 @@ def get_environment(session: Session, lat: float, lon: float) -> dict:
     uv = session.get(UvIndexCache, _BUSAN_AREA_NO)
     air = nearest_air_quality_station(session, lat, lon)
     rip_current = nearest_rip_current_station(session, lat, lon)
-    traffic, traffic_source = calculate_traffic_congestion(session, lat, lon)
+    traffic, traffic_source, current_speed, baseline_speed = calculate_traffic_congestion(session, lat, lon)
 
     # 5개 캐시 중 가장 오래된 fetched_at을 "기준 시각"으로
     fetched_ats = [row.fetched_at for row in (weather, uv, air, rip_current) if row is not None]
 
     # traffic은 fetched_at이 아니라 baseline 생성 여부로 상태 판정
     traffic_congestion = (
-        _traffic_congestion_out(session, lat, lon, traffic, traffic_source) if traffic is not None else None
+        _traffic_congestion_out(session, lat, lon, traffic, traffic_source, current_speed, baseline_speed)
+        if traffic is not None
+        else None
     )
 
     return {
@@ -96,7 +98,13 @@ def _rip_current_out(r: RipCurrentCache | None) -> dict | None:
 
 
 def _traffic_congestion_out(
-    session: Session, lat: float, lon: float, s_traffic: float | None, source: str | None
+    session: Session,
+    lat: float,
+    lon: float,
+    s_traffic: float | None,
+    source: str | None,
+    current_speed: float | None,
+    baseline_speed: float | None,
 ) -> dict | None:
     """traffic congestion 상태를 판정. s_traffic 값 없으면 데이터 부족.
 
@@ -114,7 +122,13 @@ def _traffic_congestion_out(
     nearby_event = event.title if event else None
 
     if source == "district_fallback":
-        return {"s_traffic": s_traffic, "status": "district_fallback", "nearby_event": nearby_event}
+        return {
+            "s_traffic": s_traffic,
+            "status": "district_fallback",
+            "nearby_event": nearby_event,
+            "current_speed": None,
+            "baseline_speed": None,
+        }
 
     # 가장 최신 baseline의 sample_count로 수집 기간 판정 (공휴일이면 일요일 패턴으로 대체)
     now = datetime.now()
@@ -151,4 +165,6 @@ def _traffic_congestion_out(
         "s_traffic": s_traffic,
         "status": status,
         "nearby_event": nearby_event,
+        "current_speed": current_speed,
+        "baseline_speed": baseline_speed,
     }

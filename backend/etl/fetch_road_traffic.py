@@ -31,12 +31,13 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from core.config import settings
 from db.base import Base
-from db.models import RoadLinkBaseline, RoadLinkCache, RoadLinkTrafficCache
+from db.models import RoadLinkBaseline, RoadLinkCache, RoadLinkTrafficCache, RoadLinkTrafficHistory
 from db.session import SessionLocal, engine
 from etl.seed_tour_spots import upsert
 from services.traffic.calendar import effective_dow
 
 _BASELINE_UPSERT_CHUNK = 2000  # 원격 DB(Render) 왕복을 줄이기 위한 벌크 upsert 배치 크기
+_HISTORY_RETENTION_HOURS = 48  # "오늘 실측 vs 평소" 그래프용 — 그 이상은 필요 없어 정리
 
 _URL = "https://apis.data.go.kr/6260000/BusanITSLINKTraffic/LINKTrafficList"
 _NUM_OF_ROWS = 100
@@ -206,6 +207,33 @@ def update_baseline(session, records: list[dict], observed_date: str) -> int:
     return len(rows)
 
 
+def insert_history(session, records: list[dict]) -> int:
+    """RoadLinkTrafficCache와 같은 레코드를 이력 테이블에도 그대로 쌓는다.
+    PK가 (link_id, observed_at)라 같은 사이클을 재실행해도 중복 없이 upsert된다."""
+    if not records:
+        return 0
+    history_records = [
+        {
+            "link_id": r["link_id"],
+            "observed_at": r["observed_at"],
+            "current_speed": r["current_speed"],
+            "current_volume": r["current_volume"],
+        }
+        for r in records
+    ]
+    upsert(session, RoadLinkTrafficHistory, history_records, ["link_id", "observed_at"])
+    return len(history_records)
+
+
+def prune_history(session, before: datetime) -> int:
+    """48시간(_HISTORY_RETENTION_HOURS)보다 오래된 이력 삭제 — 무기한 누적 방지."""
+    return (
+        session.query(RoadLinkTrafficHistory)
+        .filter(RoadLinkTrafficHistory.observed_at < before)
+        .delete(synchronize_session=False)
+    )
+
+
 def main() -> None:
     Base.metadata.create_all(engine)
 
@@ -220,15 +248,18 @@ def main() -> None:
 
         if records:
             upsert(session, RoadLinkTrafficCache, records, "link_id")
+            history_inserted = insert_history(session, records)
             baseline_updated = update_baseline(session, records, stats_dt.strftime("%Y-%m-%d"))
+            history_pruned = prune_history(session, stats_dt - timedelta(hours=_HISTORY_RETENTION_HOURS))
             session.commit()
         else:
-            baseline_updated = 0
+            history_inserted = baseline_updated = history_pruned = 0
 
         print(
             f"road_link_traffic_cache: {len(records)}건 갱신 (statsDt={stats_dt}) "
             f"(원본 {total_count} → 좌표매칭 {len(usable)} → 이상치제외 후 {len(records)}, "
-            f"좌표없음 {len(unmatched)}건 제외) | baseline: {baseline_updated}건 적재"
+            f"좌표없음 {len(unmatched)}건 제외) | baseline: {baseline_updated}건 적재 | "
+            f"history: {history_inserted}건 적재, {history_pruned}건 정리"
         )
     finally:
         session.close()
