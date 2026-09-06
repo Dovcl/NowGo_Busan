@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from db.session import get_db
-from schemas.environment import EnvironmentOut, TrafficHistoryOut
-from services.environment.lookup import get_environment
+from schemas.environment import EnvironmentOut, TrafficHistoryOut, WeatherWarningOut
+from services.environment.lookup import get_environment, recent_weather_warnings
 from services.traffic.calculate import traffic_history_for_spot
 
 router = APIRouter()
@@ -22,3 +22,12 @@ def read_traffic_history(lat: float, lon: float, db: Session = Depends(get_db)):
     """"오늘 실측 vs 평소 baseline" 그래프용 — 오늘 0시~지금 시간대별 실측 속도 +
     24시간 전체 baseline 속도. 반경 내 도로 링크가 없으면 빈 리스트."""
     return {"hours": traffic_history_for_spot(db, lat, lon)}
+
+
+@router.get("/weather-warnings", response_model=list[WeatherWarningOut], tags=["Environment"])
+def read_weather_warnings(db: Session = Depends(get_db)):
+    """부산 지점 최근 기상특보 발표 목록(최신순). 좌표 무관 — 도시 전역 단위 피드."""
+    return [
+        {"title": row.title, "issued_at": row.tm_fc}
+        for row in recent_weather_warnings(db)
+    ]

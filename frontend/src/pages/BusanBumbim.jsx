@@ -294,7 +294,7 @@ function DemoModeBanner({ demoMode, onToggle }) {
         )}
       </div>
       <button type="button" onClick={onToggle} className="font-label-sm text-xs font-bold text-primary underline">
-        {demoMode ? "실데이터로 보기" : "팀 데모용 가상 데이터로 보기"}
+        {demoMode ? "실데이터로 보기" : "데모용 가상 데이터로 보기"}
       </button>
     </div>
   )

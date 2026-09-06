@@ -11,13 +11,26 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from db.environment_queries import nearest_air_quality_station, nearest_rip_current_station, nearby_active_event
-from db.models import AirQualityCache, RipCurrentCache, UvIndexCache, WeatherCache, RoadLinkBaseline
+from db.models import AirQualityCache, RipCurrentCache, UvIndexCache, WeatherCache, WeatherWarningCache, RoadLinkBaseline
 from services.environment.feels_like import feels_like_temperature
 from services.environment.grid import latlon_to_grid
 from services.traffic.calculate import calculate_traffic_congestion
 from services.traffic.calendar import effective_dow
 
 _BUSAN_AREA_NO = "2600000000"  # 생활기상지수 MVP는 부산 전체 1개 값만 사용
+_BUSAN_STN_ID = "159"  # 기상특보 MVP도 부산 전체 1개 지점만 사용
+
+
+def recent_weather_warnings(session: Session, limit: int = 20) -> list[WeatherWarningCache]:
+    """부산 지점 최근 발표순 특보 목록. 좌표 무관 — 도시 전역 단위라 get_environment와
+    분리된 별도 엔드포인트로 노출한다."""
+    return (
+        session.query(WeatherWarningCache)
+        .filter(WeatherWarningCache.stn_id == _BUSAN_STN_ID)
+        .order_by(WeatherWarningCache.tm_fc.desc())
+        .limit(limit)
+        .all()
+    )
 
 
 def get_environment(session: Session, lat: float, lon: float) -> dict:

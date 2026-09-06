@@ -6,6 +6,7 @@ python-dotenv==1.2.2
 requests==2.34.2
 pandas==3.0.3
 ipykernel==7.3.0
+matplotlib==3.11.1
 
 # pandas 의존성 (재현용 pin)
 numpy==2.4.6

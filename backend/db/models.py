@@ -286,6 +286,20 @@ class UvIndexCache(Base):
     fetched_at = Column(DateTime, nullable=False)
 
 
+class WeatherWarningCache(Base):
+    """기상청 기상특보 조회서비스(getWthrWrnList) 배치 캐시. 부산 지점(stnId=159) 최근
+    발표 목록을 그대로 저장 — 발표/해제 짝을 맞춰 "현재 유효한 특보"로 가공하는 로직은
+    MVP 범위 밖(YAGNI), 프론트는 일단 최신순 피드로 노출한다."""
+
+    __tablename__ = "weather_warning_cache"
+
+    stn_id = Column(String, primary_key=True)
+    tm_fc = Column(DateTime, primary_key=True)  # 발표시각
+    title = Column(String(200), primary_key=True)  # 특보 발표문 제목(예: "폭염주의보 발표")
+
+    fetched_at = Column(DateTime, nullable=False)
+
+
 class AirQualityCache(Base):
     """에어코리아 측정소별 실시간 측정정보 배치 캐시. 좌표는 측정소정보 API로 채워야 하며,
     그 전까지는 이 테이블이 비어 있어도 나머지 환경 데이터 조회에는 지장 없다."""

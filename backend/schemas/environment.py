@@ -23,6 +23,11 @@ class WeatherOut(BaseModel):
     forecast: list[WeatherForecastSlotOut]  # 다음 24시간, 3시간 간격
 
 
+class WeatherWarningOut(BaseModel):
+    title: str  # 특보 발표문 제목 원문(예: "폭염주의보 발표") — 발표/해제 상태 가공 없이 그대로 노출
+    issued_at: datetime
+
+
 class AirQualityOut(BaseModel):
     station_name: str
     pm10: float | None

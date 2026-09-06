@@ -26,13 +26,13 @@ from datetime import datetime, timedelta
 from urllib.parse import unquote
 
 import requests
-from sqlalchemy import case, func, text
+from sqlalchemy import case
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from core.config import settings
 from db.models import RoadLinkBaseline, RoadLinkCache, RoadLinkTrafficCache, RoadLinkTrafficHistory
 from db.schema_migrations import ensure_schema
-from db.session import SessionLocal, engine
+from db.session import SessionLocal
 from etl.seed_tour_spots import upsert
 from services.traffic.calendar import effective_dow
 
@@ -249,26 +249,8 @@ def prune_history(session, before: datetime) -> int:
     )
 
 
-def _cleanup_duplicate_sample_counts() -> None:
-    """1회성 정리(2026-09-02): last_sample_date 가드가 생기기 전엔 수동 재시도·중복 cron이
-    같은 날짜를 여러 번 반영해 sample_count가 부풀려진 행이 있었다 — 지금까지는 전부
-    오늘/최근 하루치뿐이라 sample_count>1은 곧 "중복 카운트"와 같은 뜻이므로, 그런 행을
-    1로 되돌리고 last_sample_date를 과거 임의 날짜로 세팅해 다음 실제 관측부터 정상적으로
-    다시 늘어나게 한다. 이후엔 가드 덕분에 대상이 없어 매번 그냥 no-op."""
-    with engine.begin() as conn:
-        result = conn.execute(
-            text(
-                "UPDATE road_link_baseline SET sample_count = 1, last_sample_date = DATE '2026-08-01' "
-                "WHERE sample_count > 1"
-            )
-        )
-        if result.rowcount:
-            print(f"[baseline cleanup] 중복 카운트 의심 {result.rowcount}건 sample_count=1로 정리")
-
-
 def main() -> None:
     ensure_schema()  # 스키마(테이블·컬럼)는 여기와 main.py 웹서비스 시작 양쪽에서 다 보장 — 어느 쪽이 먼저 재배포되든 어긋나지 않게
-    _cleanup_duplicate_sample_counts()
 
     session = SessionLocal()
     try:

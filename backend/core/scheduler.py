@@ -54,6 +54,16 @@ def _run_fetch_rip_current():
         logger.error(f"✗ fetch_rip_current failed: {e}", exc_info=True)
 
 
+def _run_fetch_weather_warning():
+    """기상특보 배치 작업 (15분마다, 안전 관련이라 날씨보다 촘촘히)."""
+    try:
+        from etl.fetch_weather_warning import main as fetch_weather_warning_main
+        fetch_weather_warning_main()
+        logger.info(f"✓ fetch_weather_warning completed at {datetime.now().isoformat()}")
+    except Exception as e:
+        logger.error(f"✗ fetch_weather_warning failed: {e}", exc_info=True)
+
+
 def start_scheduler():
     """백그라운드 스케줄러 시작."""
     global _scheduler
@@ -70,8 +80,12 @@ def start_scheduler():
     _scheduler.add_job(_run_fetch_air_quality, 'cron', hour='*', minute='10')
     # 15분마다
     _scheduler.add_job(_run_fetch_rip_current, 'cron', minute='*/15')
+    # 15분마다
+    _scheduler.add_job(_run_fetch_weather_warning, 'cron', minute='*/15')
     _scheduler.start()
-    logger.info("✓ Scheduler started (weather hourly, UV 3h, air quality hourly, rip current 15min)")
+    logger.info(
+        "✓ Scheduler started (weather hourly, UV 3h, air quality hourly, rip current 15min, weather warning 15min)"
+    )
 
 
 def stop_scheduler():
