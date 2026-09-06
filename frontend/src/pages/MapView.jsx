@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import KakaoMap from "../components/KakaoMap"
 import PlaceDetailPanel from "../components/PlaceDetailPanel"
+import ReorderablePlaceList from "../components/ReorderablePlaceList"
 import { fetchPlaces } from "../services/placesService"
-import { fetchListItems, fetchMyLists } from "../services/listsService"
+import { fetchListItems, fetchMyLists, reorderList } from "../services/listsService"
 import { ENV_GROUP_STYLE } from "../lib/envGroup"
 import { useAuth } from "../context/AuthContext"
 
@@ -19,6 +20,8 @@ export default function MapView() {
   const [savedLists, setSavedLists] = useState([])
   const [activeRouteListId, setActiveRouteListId] = useState(null)
   const [routePlaces, setRoutePlaces] = useState(null)
+  const [expandedListId, setExpandedListId] = useState(null)
+  const [expandedPlaces, setExpandedPlaces] = useState(null)
   const mapRef = useRef(null)
 
   useEffect(() => {
@@ -39,8 +42,22 @@ export default function MapView() {
     })
   }, [activeRouteListId, places])
 
+  // 리스트에 담긴 관광지 이름 목록 펼치기 — 지도 경로 선택(toggleRouteList)과는 별개 동작이라
+  // 경로로 안 고른 리스트도 펼쳐서 순서를 미리 보거나 바꿀 수 있다.
+  useEffect(() => {
+    if (expandedListId == null) return setExpandedPlaces(null)
+    fetchListItems(expandedListId).then((contentids) => {
+      const byId = new Map(places.map((p) => [p.id, p]))
+      setExpandedPlaces(contentids.map((id) => byId.get(String(id))).filter(Boolean))
+    })
+  }, [expandedListId, places])
+
   const toggleRouteList = (listId) => {
     setActiveRouteListId((prev) => (prev === listId ? null : listId))
+  }
+
+  const toggleExpandedList = (listId) => {
+    setExpandedListId((prev) => (prev === listId ? null : listId))
   }
 
   const filteredPlaces = useMemo(
@@ -143,22 +160,65 @@ export default function MapView() {
               <span className="material-symbols-outlined text-sm text-outline">bookmark</span>
             </h3>
             <div className="flex flex-col gap-1">
-              {savedLists.map((list) => (
-                <button
-                  key={list.id}
-                  type="button"
-                  onClick={() => toggleRouteList(list.id)}
-                  className={`flex items-center gap-3 p-2 rounded-lg transition-colors text-left ${
-                    activeRouteListId === list.id ? "bg-primary-container/10 text-primary" : "hover:bg-surface-container-low text-on-surface"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[18px]" style={list.isDefault ? { fontVariationSettings: "'FILL' 1" } : undefined}>
-                    {list.isDefault ? "favorite" : "list"}
-                  </span>
-                  <span className="font-body-md text-body-md flex-1 truncate">{list.name}</span>
-                  <span className="font-label-sm text-label-sm text-outline">{list.itemCount}</span>
-                </button>
-              ))}
+              {savedLists.map((list) => {
+                const isRoute = activeRouteListId === list.id
+                const isExpanded = expandedListId === list.id
+                return (
+                  <div key={list.id}>
+                    <div
+                      onClick={() => {
+                        toggleRouteList(list.id)
+                        // 다른 리스트를 고르면 열려 있던 펼침 목록은 닫는다 — 지금 보던 목록이 아닌
+                        // 리스트로 옮겨가면서 옛 리스트 내용만 계속 남아있으면 헷갈리기 때문.
+                        setExpandedListId((prev) => (prev === list.id ? prev : null))
+                      }}
+                      className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left cursor-pointer ${
+                        isRoute ? "bg-primary-container/10 text-primary" : "hover:bg-surface-container-low text-on-surface"
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[18px]" style={list.isDefault ? { fontVariationSettings: "'FILL' 1" } : undefined}>
+                        {list.isDefault ? "favorite" : "list"}
+                      </span>
+                      <span className="font-body-md text-body-md flex-1 truncate">{list.name}</span>
+                      <span className="font-label-sm text-label-sm text-outline">{list.itemCount}</span>
+                      {/* 리스트 선택(지도 경로 표시)과는 별개 버튼 — 이 화살표만 눌러야 관광지 목록이 펼쳐진다. */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleExpandedList(list.id)
+                        }}
+                        className="shrink-0 -m-1 p-1 text-outline hover:text-primary"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">{isExpanded ? "expand_less" : "expand_more"}</span>
+                      </button>
+                    </div>
+                    {/* 순서 번호가 어떤 관광지인지 바로 보이도록, 펼치면 이 리스트에 담긴 관광지들을
+                        순서대로 보여준다 — 여기서 순서를 바꾸면 (이 리스트가 지도 경로로도 선택돼 있다면) 지도 마커 번호도 같이 바뀐다. */}
+                    {isExpanded && (
+                      <div className="pl-2 pt-1 pb-2">
+                        {expandedPlaces == null ? (
+                          <p className="font-label-sm text-label-sm text-outline p-2">불러오는 중...</p>
+                        ) : expandedPlaces.length === 0 ? (
+                          <p className="font-label-sm text-label-sm text-outline p-2">아직 담긴 관광지가 없어요.</p>
+                        ) : (
+                          <ReorderablePlaceList
+                            key={list.id}
+                            places={expandedPlaces}
+                            compact
+                            onSelectPlace={handleSelectPlace}
+                            onReorder={(next) => {
+                              setExpandedPlaces(next)
+                              reorderList(list.id, next.map((p) => Number(p.id)))
+                              if (isRoute) setRoutePlaces(next)
+                            }}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
             {activeRouteListId != null && (
               <button
@@ -181,9 +241,13 @@ export default function MapView() {
               </label>
             ))}
           </div>
-          <div className="mt-6 pt-6 border-t border-outline-variant">
+          <div className="mt-6 pt-6 border-t border-outline-variant flex flex-col gap-3">
             <label className="flex items-center justify-between cursor-pointer">
               <span className="text-on-surface font-body-md text-body-md">위험 관광지만 보기</span>
+              <input className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
+            </label>
+            <label className="flex items-center justify-between cursor-pointer">
+              <span className="text-on-surface font-body-md text-body-md">위험 관광지 빼고 보기</span>
               <input className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
             </label>
           </div>
