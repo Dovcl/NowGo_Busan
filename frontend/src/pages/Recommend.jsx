@@ -1,6 +1,6 @@
 // "축제·행사" 탭 — 부산 축제/공연/전시/스포츠/마켓 정보를 모아 보여주고,
 // 캘린더 팝업에서 담거나(가고싶어요) 직접 개인 일정을 만들 수 있다.
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import EventCalendarModal from "../components/EventCalendarModal"
 import EventDetailModal from "../components/EventDetailModal"
@@ -12,6 +12,21 @@ import { fetchDedupCandidates } from "../services/adminService"
 import { fetchAnnouncements, fetchEvents } from "../services/eventsService"
 
 const CATEGORY_ORDER = ["festival", "performance", "exhibition", "sports", "market"]
+
+// "전체 행사" 목록 전용 상태 필터 — 카테고리 필터(위쪽 탭)와는 별개 축.
+// 연도 버튼은 하드코딩하지 않고 실제 행사 데이터(startDate)에 있는 연도로만 만든다.
+const STATUS_FILTERS = [
+  { key: "all", label: "전체" },
+  { key: "upcoming", label: "예정 및 진행중" },
+  { key: "ended", label: "종료" },
+]
+
+function matchesStatusFilter(event, filter) {
+  if (filter === "all") return true
+  if (filter === "upcoming") return eventStatus(event).state !== "ended"
+  if (filter === "ended") return eventStatus(event).state === "ended"
+  return event.startDate?.slice(0, 4) === filter // 연도 필터
+}
 
 // "놓치면 아쉬운 행사" 기준 — 백엔드(TourAPI/KOPIS)엔 인기도·중요도 신호가 없어서,
 // 큐레이션된 축제 카테고리(TourAPI searchFestival2 — 시가 인정한 축제만 들어옴, KOPIS의
@@ -37,6 +52,7 @@ export default function Recommend() {
   const [events, setEvents] = useState([])
   const [announcements, setAnnouncements] = useState([])
   const [category, setCategory] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("all")
   const [search, setSearch] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [calendarInitialDate, setCalendarInitialDate] = useState(null)
@@ -60,10 +76,21 @@ export default function Recommend() {
   // 공백 위치가 제각각인 행사명이 많아서("부산국제록페스티벌" vs 사용자가 "록 페스티벌"로
   // 검색) 완전 문자열 일치 대신 양쪽 다 공백을 지우고 비교한다.
   const query = normalizeForSearch(search)
-  const filtered = query
+  const searched = query
     ? categoryFiltered.filter((e) => normalizeForSearch(e.title).includes(query) || normalizeForSearch(e.location).includes(query))
     : categoryFiltered
+  const filtered = statusFilter === "all" ? searched : searched.filter((e) => matchesStatusFilter(e, statusFilter))
   const noteworthy = pickNoteworthy(events)
+
+  // 연도 버튼 목록 — 실제 행사 startDate에 있는 연도 중 올해·작년만, 최신순으로.
+  // (전체 기간을 다 열면 KOPIS 데이터 오류로 시작일이 몇 년씩 어긋난 이상치까지 탭으로 뜬다)
+  const yearOptions = useMemo(() => {
+    const thisYear = new Date().getFullYear()
+    const years = new Set(
+      events.map((e) => Number(e.startDate?.slice(0, 4))).filter((y) => y >= thisYear - 1 && y <= thisYear)
+    )
+    return [...years].sort((a, b) => b - a).map(String)
+  }, [events])
 
   // 캘린더는 이제 담은 행사만 보여주니까(EventCalendarModal 참고), "캘린더에서 보기"로
   // 어떤 행사의 날짜를 열 땐 그 행사가 아직 안 담겨있으면 같이 담아준다 — 안 그러면
@@ -177,6 +204,19 @@ export default function Recommend() {
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+            {STATUS_FILTERS.map(({ key, label }) => (
+              <FilterChip key={key} active={statusFilter === key} onClick={() => setStatusFilter(key)}>
+                {label}
+              </FilterChip>
+            ))}
+            {yearOptions.map((year) => (
+              <FilterChip key={year} active={statusFilter === year} onClick={() => setStatusFilter(year)}>
+                {year}
+              </FilterChip>
+            ))}
           </div>
 
           {filtered.length === 0 ? (

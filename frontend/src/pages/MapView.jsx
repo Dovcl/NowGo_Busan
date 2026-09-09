@@ -5,7 +5,10 @@ import ReorderablePlaceList from "../components/ReorderablePlaceList"
 import { fetchPlaces } from "../services/placesService"
 import { fetchListItems, fetchMyLists, reorderList } from "../services/listsService"
 import { ENV_GROUP_STYLE } from "../lib/envGroup"
+import { matchRank } from "../lib/placeSearch"
 import { useAuth } from "../context/AuthContext"
+
+const SEARCH_RESULT_LIMIT = 8
 
 // 사이드바 체크박스용 조금 더 자세한 라벨 — 마커 색상/범례와 같은 env_group4 키를 쓰되
 // 문구만 더 풀어서 쓴다 (top pill·범례는 ENV_GROUP_STYLE의 짧은 라벨을 그대로 씀).
@@ -22,6 +25,7 @@ export default function MapView() {
   const [routePlaces, setRoutePlaces] = useState(null)
   const [expandedListId, setExpandedListId] = useState(null)
   const [expandedPlaces, setExpandedPlaces] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("")
   const mapRef = useRef(null)
 
   useEffect(() => {
@@ -86,6 +90,33 @@ export default function MapView() {
     mapRef.current?.panTo(place.lat, place.lng)
   }
 
+  const handleSearchSelect = (place) => {
+    handleSelectPlace(place)
+    setSearchQuery("")
+  }
+
+  // 검색어가 있으면 매칭된 장소 전체(지도용) + 그중 상위 몇 개(드롭다운용)로 나눠 쓴다.
+  const searchMatches = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return null
+    return places
+      .map((p) => ({ p, rank: matchRank(p, query) }))
+      .filter(({ rank }) => rank !== null)
+      .sort((a, b) => a.rank - b.rank)
+      .map(({ p }) => p)
+  }, [places, searchQuery])
+
+  const searchResults = searchMatches?.slice(0, SEARCH_RESULT_LIMIT) ?? []
+
+  const selectedPlace = useMemo(
+    () => (selectedPlaceId == null ? null : places.find((p) => p.id === selectedPlaceId) ?? null),
+    [places, selectedPlaceId]
+  )
+
+  // 마커를 클릭해 상세 패널이 열리면 그 장소 하나만, 아니면 검색 결과만(둘 다 없으면 카테고리 필터
+  // 결과를) 지도에 표시 — "관광지 검색하면/클릭하면 그 위치만 뜨도록".
+  const mapPlaces = selectedPlace ? [selectedPlace] : searchMatches ?? filteredPlaces
+
   const handleLocateMe = () => {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition((position) => {
@@ -110,7 +141,24 @@ export default function MapView() {
               className="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-body-md font-body-md placeholder:text-outline"
               placeholder="해운대, 광안리 등..."
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchResults.length > 0 && (
+              <ul className="absolute left-0 right-0 top-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-md z-20 max-h-64 overflow-y-auto">
+                {searchResults.map((place) => (
+                  <li key={place.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleSearchSelect(place)}
+                      className="w-full text-left px-4 py-2 hover:bg-surface-container-low text-body-md font-body-md"
+                    >
+                      {place.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
         <div className="p-5 border-b border-outline-variant">
@@ -257,7 +305,7 @@ export default function MapView() {
 
       {/* Map area */}
       <div className="flex-1 relative bg-surface-dim">
-        <KakaoMap ref={mapRef} places={filteredPlaces} route={routePlaces} onSelectPlace={handleSelectPlace} />
+        <KakaoMap ref={mapRef} places={mapPlaces} route={routePlaces} onSelectPlace={handleSelectPlace} />
 
         {activeRouteListId == null ? (
           <div className="absolute top-4 left-4 flex gap-2 z-10 hide-scrollbar overflow-x-auto max-w-[calc(100%-80px)]">
