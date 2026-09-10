@@ -87,6 +87,15 @@ class TourSpot(Base):
     # mapx/mapy 대신 PostGIS Point 하나로 (WGS84 = srid 4326)
     geom = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
 
+    # 다국어 지원(Phase C) — EngService2/ChsService2는 KorService2와 contentid 체계가
+    # 완전히 별개라(실측 확인) 제목의 괄호 안 한국어명을 title과 정확매칭한 관광지만
+    # 채워짐. 나머지는 전부 NULL — 프론트가 한국어(title/addr1)로 폴백한다
+    # (etl/fetch_tour_spot_translations.py 참고).
+    title_en = Column(String)
+    title_zh = Column(String)
+    addr1_en = Column(String)
+    addr1_zh = Column(String)
+
     env_classification = relationship(
         "TourSpotEnvClassification", back_populates="tour_spot", uselist=False
     )
@@ -133,6 +142,10 @@ class TourSpotIntro(Base):
     parking = Column(String)  # 주차정보
     infocenter = Column(String)  # 문의처
     usefee = Column(String)  # 이용요금 (문화시설/레포츠만 채워짐)
+
+    # 다국어 지원(Phase C) — TourSpot.title_en/title_zh와 같은 매칭 대상에만 채워짐(나머지 NULL)
+    overview_en = Column(Text)
+    overview_zh = Column(Text)
 
     tour_spot = relationship("TourSpot", backref="intro")
 

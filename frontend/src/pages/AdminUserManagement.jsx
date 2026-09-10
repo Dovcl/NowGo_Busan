@@ -2,6 +2,7 @@
 // 여기 role 체크는 UX일 뿐(AdminEventReview.jsx와 같은 패턴).
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext"
 import {
   fetchAdminUsers,
@@ -14,9 +15,9 @@ import {
 } from "../services/adminService"
 
 const PAGE_SIZE = 10
-const SOURCE_LABEL = { kakao: "Kakao", google: "Google", email: "Email" }
 
 export default function AdminUserManagement() {
+  const { t } = useTranslation("admin")
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
@@ -119,9 +120,9 @@ export default function AdminUserManagement() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-bold text-on-surface">
-              회원 관리
+              {t("userManagement.title")}
             </h1>
-            <p className="font-body-md text-body-md text-on-surface-variant mt-1">회원 계정과 권한을 관리해요.</p>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-1">{t("userManagement.subtitle")}</p>
           </div>
           <div className="flex gap-2 shrink-0">
             <a
@@ -129,7 +130,7 @@ export default function AdminUserManagement() {
               className="flex items-center gap-2 border border-outline-variant rounded-lg px-4 py-2 font-label-sm text-[13px] font-bold text-on-surface hover:bg-surface-container-low transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">download</span>
-              CSV 내보내기
+              {t("userManagement.exportCsv")}
             </a>
             <button
               type="button"
@@ -137,14 +138,14 @@ export default function AdminUserManagement() {
               className="flex items-center gap-2 bg-primary text-on-primary rounded-lg px-4 py-2 font-label-sm text-[13px] font-bold hover:bg-primary/90 transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
-              계정 추가
+              {t("userManagement.addAccount")}
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-gutter">
-          <StatCard label="전체 회원" value={stats?.total_users} icon="group" />
-          <StatCard label="오늘 가입" value={stats?.new_today} icon="person_add" />
+          <StatCard label={t("userManagement.totalUsers")} value={stats?.total_users} icon="group" />
+          <StatCard label={t("userManagement.newToday")} value={stats?.new_today} icon="person_add" />
         </div>
 
         <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/20 p-4 flex flex-col gap-3">
@@ -156,12 +157,12 @@ export default function AdminUserManagement() {
               className="border border-outline-variant rounded-lg px-3 py-2 font-label-sm text-[13px] bg-surface-container-lowest disabled:opacity-40"
             >
               <option value="" disabled>
-                일괄 처리 ({selected.length})
+                {t("userManagement.bulkAction", { count: selected.length })}
               </option>
-              <option value="role-admin">관리자로 변경</option>
-              <option value="role-tourist">일반으로 변경</option>
-              <option value="withdraw">탈퇴 처리</option>
-              <option value="restore">복구</option>
+              <option value="role-admin">{t("userManagement.roleToAdmin")}</option>
+              <option value="role-tourist">{t("userManagement.roleToTourist")}</option>
+              <option value="withdraw">{t("userManagement.withdraw")}</option>
+              <option value="restore">{t("userManagement.restore")}</option>
             </select>
 
             <select
@@ -172,13 +173,13 @@ export default function AdminUserManagement() {
               }}
               className="border border-outline-variant rounded-lg px-3 py-2 font-label-sm text-[13px] bg-surface-container-lowest"
             >
-              <option value="">상태: 전체</option>
-              <option value="active">활성</option>
-              <option value="withdrawn">탈퇴</option>
+              <option value="">{t("userManagement.statusAll")}</option>
+              <option value="active">{t("userManagement.statusActive")}</option>
+              <option value="withdrawn">{t("userManagement.statusWithdrawn")}</option>
             </select>
 
             <div className="flex items-center gap-1 font-label-sm text-[13px] text-on-surface-variant">
-              가입일
+              {t("userManagement.joinDate")}
               <input
                 type="date"
                 value={dateFrom}
@@ -211,7 +212,7 @@ export default function AdminUserManagement() {
                   setSearch(e.target.value)
                   setPage(1)
                 }}
-                placeholder="이름 또는 이메일 검색"
+                placeholder={t("userManagement.searchPlaceholder")}
                 className="w-full bg-surface-container border border-outline-variant rounded-full pl-9 pr-3 py-2 font-label-sm text-[13px] outline-none focus:border-primary transition-colors"
               />
             </div>
@@ -229,24 +230,24 @@ export default function AdminUserManagement() {
                       className="accent-primary"
                     />
                   </th>
-                  <Th>회원</Th>
-                  <Th>가입 경로</Th>
-                  <Th>가입일</Th>
-                  <Th>상태</Th>
-                  <Th className="text-right">액션</Th>
+                  <Th>{t("userManagement.columnUser")}</Th>
+                  <Th>{t("userManagement.columnSource")}</Th>
+                  <Th>{t("userManagement.columnJoinDate")}</Th>
+                  <Th>{t("userManagement.columnStatus")}</Th>
+                  <Th className="text-right">{t("userManagement.columnAction")}</Th>
                 </tr>
               </thead>
               <tbody>
                 {items === null ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center font-label-sm text-on-surface-variant">
-                      불러오는 중...
+                      {t("userManagement.loading")}
                     </td>
                   </tr>
                 ) : items.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center font-label-sm text-on-surface-variant">
-                      조건에 맞는 회원이 없어요.
+                      {t("userManagement.noUsers")}
                     </td>
                   </tr>
                 ) : (
@@ -268,7 +269,11 @@ export default function AdminUserManagement() {
 
           <div className="flex items-center justify-between pt-2">
             <span className="font-label-sm text-[12px] text-on-surface-variant">
-              전체 {total}명 중 {items ? (page - 1) * PAGE_SIZE + 1 : 0}-{items ? (page - 1) * PAGE_SIZE + items.length : 0}
+              {t("userManagement.totalCount", {
+                total,
+                from: items ? (page - 1) * PAGE_SIZE + 1 : 0,
+                to: items ? (page - 1) * PAGE_SIZE + items.length : 0,
+              })}
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -327,6 +332,7 @@ function StatCard({ label, value, icon }) {
 }
 
 function UserRow({ u, checked, onToggle, onToggleRole, onToggleWithdraw, busy }) {
+  const { t, i18n } = useTranslation("admin")
   return (
     <tr className={`border-b border-outline-variant/10 ${u.is_withdrawn ? "opacity-50" : ""}`}>
       <td className="py-3 pr-2">
@@ -345,19 +351,19 @@ function UserRow({ u, checked, onToggle, onToggleRole, onToggleWithdraw, busy })
       </td>
       <td className="py-3 px-2">
         <span className="font-label-sm text-[11px] bg-surface-container-low text-on-surface-variant px-2 py-1 rounded-full">
-          {SOURCE_LABEL[u.signup_source] ?? u.signup_source}
+          {t(`userManagement.sourceLabel.${u.signup_source}`, { defaultValue: u.signup_source })}
         </span>
         {u.role === "admin" && (
-          <span className="ml-1 font-label-sm text-[11px] bg-primary/10 text-primary px-2 py-1 rounded-full">관리자</span>
+          <span className="ml-1 font-label-sm text-[11px] bg-primary/10 text-primary px-2 py-1 rounded-full">{t("userManagement.adminBadge")}</span>
         )}
       </td>
       <td className="py-3 px-2 font-label-sm text-[12px] text-on-surface-variant">
-        {new Date(u.created_at).toLocaleDateString("ko-KR")}
+        {new Date(u.created_at).toLocaleDateString({ ko: "ko-KR", en: "en-US", zh: "zh-CN" }[i18n.language] ?? "ko-KR")}
       </td>
       <td className="py-3 px-2">
         <span className={`font-label-sm text-[12px] flex items-center gap-1 ${u.is_withdrawn ? "text-outline" : "text-secondary"}`}>
           <span className="material-symbols-outlined text-[10px] filled-icon">circle</span>
-          {u.is_withdrawn ? "탈퇴" : "활성"}
+          {u.is_withdrawn ? t("userManagement.withdrawn") : t("userManagement.active")}
         </span>
       </td>
       <td className="py-3 px-2 text-right whitespace-nowrap">
@@ -367,7 +373,7 @@ function UserRow({ u, checked, onToggle, onToggleRole, onToggleWithdraw, busy })
           onClick={onToggleRole}
           className="font-label-sm text-[12px] font-bold text-primary border border-primary/30 rounded-lg px-3 py-1.5 mr-1.5 hover:bg-primary/5 transition-colors disabled:opacity-40"
         >
-          {u.role === "admin" ? "일반으로 변경" : "관리자로 변경"}
+          {u.role === "admin" ? t("userManagement.roleToTourist") : t("userManagement.roleToAdmin")}
         </button>
         <button
           type="button"
@@ -379,7 +385,7 @@ function UserRow({ u, checked, onToggle, onToggleRole, onToggleWithdraw, busy })
               : "text-error border-error/30 hover:bg-error-container/20"
           }`}
         >
-          {u.is_withdrawn ? "복구" : "탈퇴 처리"}
+          {u.is_withdrawn ? t("userManagement.restoreAction") : t("userManagement.withdraw")}
         </button>
       </td>
     </tr>
@@ -387,6 +393,7 @@ function UserRow({ u, checked, onToggle, onToggleRole, onToggleWithdraw, busy })
 }
 
 function AddUserModal({ onClose, onCreated }) {
+  const { t } = useTranslation("admin")
   const [nickname, setNickname] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -416,9 +423,9 @@ function AddUserModal({ onClose, onCreated }) {
         </button>
 
         <div>
-          <h2 className="font-headline-lg-mobile text-lg font-bold text-on-surface">NowGo ID 계정 추가</h2>
+          <h2 className="font-headline-lg-mobile text-lg font-bold text-on-surface">{t("userManagement.addModalTitle")}</h2>
           <p className="font-label-sm text-[12px] text-on-surface-variant mt-1">
-            카카오/구글 로그인이 안 되는 상황을 대비한 이메일/비밀번호 계정입니다.
+            {t("userManagement.addModalSubtitle")}
           </p>
         </div>
 
@@ -428,7 +435,7 @@ function AddUserModal({ onClose, onCreated }) {
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             required
-            placeholder="닉네임"
+            placeholder={t("userManagement.nicknamePlaceholder")}
             className="w-full h-11 px-4 bg-surface-container-low rounded-lg font-body-md text-[13.5px] border border-outline-variant focus:border-primary outline-none transition-colors"
           />
           <input
@@ -436,7 +443,7 @@ function AddUserModal({ onClose, onCreated }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            placeholder="NowGo ID(이메일)"
+            placeholder={t("userManagement.idPlaceholder")}
             className="w-full h-11 px-4 bg-surface-container-low rounded-lg font-body-md text-[13.5px] border border-outline-variant focus:border-primary outline-none transition-colors"
           />
           <input
@@ -444,7 +451,7 @@ function AddUserModal({ onClose, onCreated }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            placeholder="비밀번호"
+            placeholder={t("userManagement.passwordPlaceholder")}
             className="w-full h-11 px-4 bg-surface-container-low rounded-lg font-body-md text-[13.5px] border border-outline-variant focus:border-primary outline-none transition-colors"
           />
 
@@ -455,7 +462,7 @@ function AddUserModal({ onClose, onCreated }) {
               onChange={(e) => setIsAdminAccount(e.target.checked)}
               className="accent-primary"
             />
-            <span className="font-body-md text-[13px] text-on-surface">관리자 권한 부여</span>
+            <span className="font-body-md text-[13px] text-on-surface">{t("userManagement.grantAdmin")}</span>
           </label>
 
           {error && <p className="font-label-sm text-[12px] text-error">{error}</p>}
@@ -465,7 +472,7 @@ function AddUserModal({ onClose, onCreated }) {
             disabled={loading}
             className="w-full h-11 bg-primary text-on-primary rounded-lg font-label-sm text-[13px] font-bold hover:bg-primary/90 disabled:opacity-60 transition-colors"
           >
-            {loading ? "생성 중..." : "계정 생성"}
+            {loading ? t("userManagement.creating") : t("userManagement.createAccount")}
           </button>
         </form>
       </div>

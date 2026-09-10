@@ -3,11 +3,13 @@
 // 위아래로 움직이면 순서가 바뀌는 동작의 자세한 구현은 그 파일 상단 주석 참고.
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { fetchListItems, fetchMyLists, reorderList } from "../services/listsService"
 import { fetchPlaceById } from "../services/placesService"
 import ReorderablePlaceList from "../components/ReorderablePlaceList"
 
 export default function SavedListDetail() {
+  const { t, i18n } = useTranslation("saved")
   const { listId } = useParams()
   const navigate = useNavigate()
   const [listName, setListName] = useState(null)
@@ -21,7 +23,7 @@ export default function SavedListDetail() {
     fetchListItems(listId)
       .then((contentids) => Promise.all(contentids.map(fetchPlaceById)))
       .then((result) => setPlaces(result.filter(Boolean)))
-  }, [listId])
+  }, [listId, i18n.language])
 
   if (places === null) return null
 
@@ -38,9 +40,9 @@ export default function SavedListDetail() {
           </button>
           <div>
             <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-bold text-on-surface">
-              {listName ?? "리스트"}
+              {listName ?? t("defaultListName")}
             </h1>
-            <p className="font-label-sm text-label-sm text-on-surface-variant">{places.length}개 관광지</p>
+            <p className="font-label-sm text-label-sm text-on-surface-variant">{t("placeCount", { count: places.length })}</p>
           </div>
         </div>
 
@@ -48,13 +50,13 @@ export default function SavedListDetail() {
           <div className="bg-primary-container/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3">
             <span className="material-symbols-outlined text-primary">drag_indicator</span>
             <p className="font-label-sm text-label-sm text-on-surface-variant">
-              카드를 눌러 잡고 위아래로 옮겨보세요. 이 순서대로 나중에 지도 경로에 표시될 예정이에요.
+              {t("dragHint")}
             </p>
           </div>
         )}
 
         {places.length === 0 && (
-          <p className="font-body-md text-on-surface-variant">아직 이 리스트에 저장한 관광지가 없어요.</p>
+          <p className="font-body-md text-on-surface-variant">{t("emptyList")}</p>
         )}
 
         <ReorderablePlaceList

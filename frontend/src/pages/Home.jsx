@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { fetchHomeSummary, fetchTopPlaces } from "../services/scoreService"
 import { fetchEnvironment } from "../services/environmentService"
-import { STATUS, scoreToStatus, pmGradeToStatus, PM_GRADE_LABEL, uvToLevel, ripLevelToStatus } from "../lib/status"
+import { STATUS, scoreToStatus, pmGradeToStatus, uvToLevel, ripLevelToStatus } from "../lib/status"
 import { weatherCondition } from "../lib/weather"
 
 // 부산시청 좌표 — 홈 화면 "지금 부산 날씨"는 관광지 하나가 아니라 도시 전체 요약이라
@@ -18,6 +19,8 @@ function fmt(value, unit = "") {
 }
 
 export default function Home() {
+  const { t } = useTranslation("home")
+  const { t: tCommon } = useTranslation("common")
   const navigate = useNavigate()
   const [summary, setSummary] = useState(null)
   const [environment, setEnvironment] = useState(null)
@@ -52,11 +55,11 @@ export default function Home() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent" />
           <div className="relative z-10 flex flex-col items-center w-full max-w-3xl px-4 text-center mt-12">
-            <h1 className="font-display-lg text-display-lg text-white mb-4 drop-shadow-md">지금, 부산 어디로 갈까?</h1>
+            <h1 className="font-display-lg text-display-lg text-white mb-4 drop-shadow-md">{t("heroTitle")}</h1>
             <p className="font-body-md text-body-md text-white/90 mb-8 max-w-xl mx-auto drop-shadow">
-              실시간 환경과 혼잡도를 분석하여
+              {t("heroSubtitleLine1")}
               <br />
-              지금 가기 좋은 관광지를 추천해드려요.
+              {t("heroSubtitleLine2")}
             </p>
             <form
               onSubmit={handleSearch}
@@ -65,7 +68,7 @@ export default function Home() {
               <span className="material-symbols-outlined text-outline ml-3 mr-2">search</span>
               <input
                 className="w-full bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline-variant outline-none font-body-md"
-                placeholder="관광지, 지역, 키워드 검색 (예: 해운대, 광안리, 감천문화마을)"
+                placeholder={t("searchPlaceholder")}
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -94,56 +97,56 @@ export default function Home() {
 
           return (
           <section className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-gutter">
-            <StatCard label="현재 부산 날씨" icon={condition.icon} iconClass={condition.color}>
+            <StatCard label={t("weatherLabel")} icon={condition.icon} iconClass={condition.color}>
               <span className="font-score-display text-score-display text-on-surface leading-none">
                 {environment.weather?.temperature}
                 <span className="text-xl">°C</span>
               </span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant mt-1">{condition.text}</span>
+              <span className="font-label-sm text-label-sm text-on-surface-variant mt-1">{tCommon(`weatherCondition.${condition.textKey}`)}</span>
               <StatFooter
-                left={[`체감 ${fmt(environment.weather?.feelsLike, "°C")}`, `바람 ${fmt(environment.weather?.windSpeed, "m/s")}`]}
-                right={[`습도 ${fmt(environment.weather?.humidity, "%")}`, condition.text]}
+                left={[t("feelsLike", { value: fmt(environment.weather?.feelsLike, "°C") }), t("windSpeed", { value: fmt(environment.weather?.windSpeed, "m/s") })]}
+                right={[t("humidity", { value: fmt(environment.weather?.humidity, "%") }), tCommon(`weatherCondition.${condition.textKey}`)]}
               />
             </StatCard>
 
-            <StatCard label="대기질" sub="(부산 평균)" icon="sentiment_satisfied" iconClass={pmStatus.text}>
+            <StatCard label={t("airQualityLabel")} sub={t("busanAverage")} icon="sentiment_satisfied" iconClass={pmStatus.text}>
               <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none mb-1 ${pmStatus.text}`}>
-                {PM_GRADE_LABEL[pmGrade] ?? "-"}
+                {pmGrade != null ? tCommon(`pmGrade.${pmGrade}`) : "-"}
               </span>
               <div className="flex items-center gap-1">
                 <span className={`w-2 h-2 rounded-full ${pmStatus.bg}`} />
-                <span className="font-label-sm text-[10px] text-outline">PM2.5 {environment.airQuality?.pm25}μg/m³</span>
+                <span className="font-label-sm text-[10px] text-outline">{t("pm25", { value: environment.airQuality?.pm25 })}</span>
               </div>
-              <StatFooter single={[`PM10 ${environment.airQuality?.pm10}μg/m³`, `O3 ${environment.airQuality?.o3}ppm`]} />
+              <StatFooter single={[t("pm10", { value: environment.airQuality?.pm10 }), t("o3", { value: environment.airQuality?.o3 })]} />
             </StatCard>
 
-            <StatCard label="자외선 지수" icon="light_mode" iconClass="text-tertiary-container">
+            <StatCard label={t("uvLabel")} icon="light_mode" iconClass="text-tertiary-container">
               <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none mb-1 ${uvStatus.text}`}>
-                {uv.label}
+                {tCommon(`uvLevel.${uv.levelKey}`)}
               </span>
               <div className="flex items-center gap-1">
                 <span className={`w-2 h-2 rounded-full ${uvStatus.bg}`} />
                 <span className="font-label-sm text-[10px] text-outline">UV {environment.uvIndex}</span>
               </div>
               <div className="mt-2 pt-2 border-t border-outline-variant/30">
-                <span className="font-label-sm text-xs text-outline-variant">외출 시 선크림을 챙기세요!</span>
+                <span className="font-label-sm text-xs text-outline-variant">{t("sunscreenTip")}</span>
               </div>
             </StatCard>
 
-            <StatCard label="이안류 위험" sub="(해운대)" icon="waves" iconClass={ripStatus ? ripStatus.text : "text-primary"}>
+            <StatCard label={t("ripLabel")} sub={t("haeundae")} icon="waves" iconClass={ripStatus ? ripStatus.text : "text-primary"}>
               <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none mb-1 ${ripStatus ? ripStatus.text : "text-on-surface-variant"}`}>
-                {rip ? rip.riskLevel : "정보 없음"}
+                {rip ? tCommon(`ripLevel.${rip.riskLevel}`) : t("noInfo")}
               </span>
               {ripStatus && <span className={`w-2 h-2 rounded-full ${ripStatus.bg} inline-block`} />}
               <div className="mt-2 pt-2 border-t border-outline-variant/30">
                 <span className="font-label-sm text-xs text-outline-variant">
-                  {rip ? `파고 ${rip.waveHeight}m · 수온 ${rip.waterTemp}℃` : "관측 시즌(6~9월)에만 제공돼요"}
+                  {rip ? t("waveInfo", { height: rip.waveHeight, temp: rip.waterTemp }) : t("seasonOnly")}
                 </span>
               </div>
             </StatCard>
 
             <StatCard
-              label="혼잡도"
+              label={t("crowdLabel")}
               sub={`(${summary.crowdLevel.area})`}
               icon="groups"
               iconClass="text-error"
@@ -153,7 +156,10 @@ export default function Home() {
                 {summary.crowdLevel.level}
               </span>
               <span className="w-2 h-2 rounded-full bg-error-container inline-block" />
-              <StatFooter left={[`외국인 ${summary.crowdLevel.foreign.toLocaleString()}명`]} right={[`내국인 ${summary.crowdLevel.domestic.toLocaleString()}명`]} />
+              <StatFooter
+                left={[t("foreignCount", { count: summary.crowdLevel.foreign.toLocaleString() })]}
+                right={[t("domesticCount", { count: summary.crowdLevel.domestic.toLocaleString() })]}
+              />
             </StatCard>
           </section>
           )
@@ -163,7 +169,7 @@ export default function Home() {
         <section className="flex flex-col gap-4">
           <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
             <h2 className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">
-              지금 가기 좋은 부산 관광지 TOP 10
+              {t("top10Title")}
             </h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-gutter">
@@ -190,7 +196,7 @@ export default function Home() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-baseline gap-1">
                         <span className={`font-score-display text-2xl font-bold ${status.text}`}>{place.score}</span>
-                        <span className={`font-label-sm text-[10px] font-bold ${status.text}`}>({status.label})</span>
+                        <span className={`font-label-sm text-[10px] font-bold ${status.text}`}>({tCommon(`status.${place.status ?? scoreToStatus(place.score)}`)})</span>
                       </div>
                       <span className="font-label-sm text-[10px] text-outline px-2 py-1 bg-surface-container rounded-full">
                         {place.category}

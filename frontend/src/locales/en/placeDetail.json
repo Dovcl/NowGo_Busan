@@ -1,0 +1,66 @@
+{
+  "notFound": "Couldn't find that spot.",
+  "scoreRow": {
+    "air": "Air Quality",
+    "weather": "Weather",
+    "uv": "UV",
+    "ripCurrentOrWater": "Rip Current/Water",
+    "crowd": "Crowd"
+  },
+  "infoRow": {
+    "usetime": "Hours",
+    "restdate": "Closed On",
+    "parking": "Parking",
+    "usefee": "Admission Fee"
+  },
+  "envRows": {
+    "temperature": "Temperature",
+    "feelsLike": "Feels Like",
+    "humidity": "Humidity",
+    "windSpeed": "Wind Speed",
+    "precipitationType": "Precipitation",
+    "pm10": "PM10",
+    "pm25": "PM2.5",
+    "uvIndex": "UV Index",
+    "ripRisk": "Rip Current Risk",
+    "trafficCongestion": "Nearby Traffic"
+  },
+  "precipitationType": {
+    "none": "None",
+    "rain": "Rain",
+    "rainSnow": "Rain/Snow",
+    "snow": "Snow",
+    "shower": "Showers"
+  },
+  "trafficLevel": {
+    "low": "Light",
+    "moderate": "Moderate",
+    "high": "Heavy"
+  },
+  "trafficCollecting": "Collecting data",
+  "trafficProvisional": "provisional",
+  "trafficDistrictFallback": "district avg.",
+  "trafficNearbyEvent": "{{event}} nearby",
+  "statusMessage": {
+    "danger": "It's best to avoid visiting right now",
+    "caution": "May be crowded, keep this in mind",
+    "safe": "Great time to visit!"
+  },
+  "tipsTitle": "Visitor Tips & Reviews",
+  "nearbyFoodTitle": "Nearby Food & Cafes",
+  "infoTitle": "Spot Info",
+  "weatherAirTitle": "Current Weather · Air Quality",
+  "breakdownTitle": "Real-time Environment Metrics",
+  "forecastTitle": "Today's Forecast",
+  "forecastSubtitle": "KMA short-term forecast · every 3 hours",
+  "hourSuffix": "{{hour}}:00",
+  "directionsButton": "Get Directions (Kakao Map)",
+  "alternativesTitle": "Alternatives if Risky",
+  "altScoreLabel": "NowGo {{score}} ({{status}})",
+  "backToHome": "← Back to Home",
+  "backToMap": "Back to Map",
+  "directions": "Directions",
+  "save": "Save",
+  "saved": "Saved",
+  "details": "Details"
+}

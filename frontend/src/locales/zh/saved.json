@@ -1,0 +1,20 @@
+{
+  "loginPrompt": "登录后即可查看收藏夹。",
+  "login": "登录",
+  "title": "收藏夹",
+  "subtitle": "按列表汇总您收藏的景点。",
+  "savedPlacesLabel": "收藏的地点",
+  "listsLabel": "列表",
+  "itemCount": "{{count}}个",
+  "listNamePlaceholder": "列表名称",
+  "add": "添加",
+  "createNewList": "创建新列表",
+  "defaultListName": "列表",
+  "placeCount": "{{count}}个景点",
+  "dragHint": "按住卡片上下拖动即可调整顺序。此顺序稍后将用于地图路线显示。",
+  "emptyList": "该列表中还没有收藏的景点。",
+  "saveToListTitle": "保存到列表",
+  "placeCountInList": "{{count}}个地点",
+  "newList": "新建列表",
+  "done": "完成"
+}

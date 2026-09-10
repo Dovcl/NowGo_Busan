@@ -1,0 +1,20 @@
+{
+  "loginPrompt": "Log in to see your saved lists.",
+  "login": "Log In",
+  "title": "Saved Lists",
+  "subtitle": "Your saved spots, grouped by list.",
+  "savedPlacesLabel": "Saved Places",
+  "listsLabel": "Lists",
+  "itemCount": "{{count}}",
+  "listNamePlaceholder": "List name",
+  "add": "Add",
+  "createNewList": "Create New List",
+  "defaultListName": "List",
+  "placeCount": "{{count}} spots",
+  "dragHint": "Press and drag a card up or down to reorder. This order will be used for map routes later.",
+  "emptyList": "No spots saved to this list yet.",
+  "saveToListTitle": "Save to List",
+  "placeCountInList": "{{count}} places",
+  "newList": "New List",
+  "done": "Done"
+}

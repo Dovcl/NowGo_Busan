@@ -64,6 +64,31 @@ def _run_fetch_weather_warning():
         logger.error(f"✗ fetch_weather_warning failed: {e}", exc_info=True)
 
 
+def _run_fetch_tour_spots():
+    """관광지 목록/상세 배치 작업 (1일 1회, 새벽 시간대). TourAPI 키 일일 호출
+    한도가 낮아 목록만 매번 전체 조회하고, 상세는 신규/변경분만 호출한다
+    (etl/fetch_tour_spots.py 참고)."""
+    try:
+        from etl.fetch_tour_spots import main as fetch_tour_spots_main
+        fetch_tour_spots_main()
+        logger.info(f"✓ fetch_tour_spots completed at {datetime.now().isoformat()}")
+    except Exception as e:
+        logger.error(f"✗ fetch_tour_spots failed: {e}", exc_info=True)
+
+
+def _run_fetch_tour_spot_translations():
+    """관광지 영어·중국어 정보 배치 작업 (1일 1회, tour_spot 목록 갱신 직후).
+    EngService2/ChsService2에서 제목이 정확매칭되는 관광지만 갱신 — 호출량이
+    작아(부산 기준 60여 건) 매일 전체 재조회해도 부담 없다(etl/fetch_tour_spot_
+    translations.py 참고)."""
+    try:
+        from etl.fetch_tour_spot_translations import main as fetch_translations_main
+        fetch_translations_main()
+        logger.info(f"✓ fetch_tour_spot_translations completed at {datetime.now().isoformat()}")
+    except Exception as e:
+        logger.error(f"✗ fetch_tour_spot_translations failed: {e}", exc_info=True)
+
+
 def start_scheduler():
     """백그라운드 스케줄러 시작."""
     global _scheduler
@@ -82,9 +107,14 @@ def start_scheduler():
     _scheduler.add_job(_run_fetch_rip_current, 'cron', minute='*/15')
     # 15분마다
     _scheduler.add_job(_run_fetch_weather_warning, 'cron', minute='*/15')
+    # 1일 1회(새벽 4시 30분 — 다른 배치와 겹치지 않는 한산한 시간대)
+    _scheduler.add_job(_run_fetch_tour_spots, 'cron', hour='4', minute='30')
+    # 관광지 목록 갱신 직후(제목 매칭이 최신 tour_spot 기준이어야 해서)
+    _scheduler.add_job(_run_fetch_tour_spot_translations, 'cron', hour='4', minute='45')
     _scheduler.start()
     logger.info(
-        "✓ Scheduler started (weather hourly, UV 3h, air quality hourly, rip current 15min, weather warning 15min)"
+        "✓ Scheduler started (weather hourly, UV 3h, air quality hourly, rip current 15min, "
+        "weather warning 15min, tour spots daily 04:30, tour spot translations daily 04:45)"
     )
 
 

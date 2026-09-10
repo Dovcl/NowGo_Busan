@@ -19,3 +19,11 @@ def ensure_schema() -> None:
     Base.metadata.create_all(engine)
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE road_link_baseline ADD COLUMN IF NOT EXISTS last_sample_date DATE"))
+        # 다국어 지원(Phase C) — EngService2/ChsService2 매칭된 관광지만 채워짐(나머지는 NULL,
+        # 프론트에서 한국어로 폴백). etl/fetch_tour_spot_translations.py 참고.
+        conn.execute(text("ALTER TABLE tour_spot ADD COLUMN IF NOT EXISTS title_en VARCHAR"))
+        conn.execute(text("ALTER TABLE tour_spot ADD COLUMN IF NOT EXISTS title_zh VARCHAR"))
+        conn.execute(text("ALTER TABLE tour_spot ADD COLUMN IF NOT EXISTS addr1_en VARCHAR"))
+        conn.execute(text("ALTER TABLE tour_spot ADD COLUMN IF NOT EXISTS addr1_zh VARCHAR"))
+        conn.execute(text("ALTER TABLE tour_spot_intro ADD COLUMN IF NOT EXISTS overview_en TEXT"))
+        conn.execute(text("ALTER TABLE tour_spot_intro ADD COLUMN IF NOT EXISTS overview_zh TEXT"))

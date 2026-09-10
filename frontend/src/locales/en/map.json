@@ -1,0 +1,32 @@
+{
+  "searchTitle": "Search Spots",
+  "searchPlaceholder": "Haeundae, Gwangalli, etc...",
+  "typeTitle": "Spot Type",
+  "all": "All",
+  "sidebarLabel": {
+    "해변": "Beach",
+    "산": "Nature (Mountain/Park)",
+    "도심": "Culture/History",
+    "실내": "Indoor"
+  },
+  "envGroupLabel": {
+    "해변": "Beach",
+    "산": "Nature",
+    "도심": "Urban",
+    "실내": "Indoor",
+    "기타": "Other"
+  },
+  "savedListsTitle": "Saved Lists",
+  "emptyList": "No spots saved yet.",
+  "backToNormalMap": "Back to Normal Map",
+  "sortTitle": "Sort By",
+  "sortOptions": {
+    "score": "NowGo Score",
+    "distance": "Distance",
+    "crowd": "Crowd Level",
+    "name": "Name"
+  },
+  "dangerOnly": "Show risky spots only",
+  "excludeDanger": "Hide risky spots",
+  "viewingRoute": "Viewing route: {{name}}"
+}

@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "home": "首页",
+    "map": "地图",
+    "events": "节庆活动",
+    "bumbim": "釜山拥挤度",
+    "profile": "个人资料"
+  },
+  "language": {
+    "ko": "한국어",
+    "en": "English",
+    "zh": "中文"
+  },
+  "status": {
+    "safe": "良好",
+    "caution": "注意",
+    "danger": "危险"
+  },
+  "pmGrade": {
+    "1": "良好",
+    "2": "一般",
+    "3": "较差",
+    "4": "很差"
+  },
+  "uvLevel": {
+    "low": "低",
+    "moderate": "中等",
+    "high": "高",
+    "veryHigh": "很高",
+    "extreme": "危险",
+    "none": "-"
+  },
+  "ripLevel": {
+    "관심": "关注",
+    "주의": "注意",
+    "경계": "警戒",
+    "위험": "危险"
+  },
+  "envGroup": {
+    "해변": "海边",
+    "산": "山",
+    "도심": "市区",
+    "실내": "室内"
+  },
+  "weatherCondition": {
+    "snow": "雪",
+    "rainSnow": "雨夹雪",
+    "rain": "雨",
+    "clear": "晴",
+    "partlyCloudy": "多云",
+    "cloudy": "阴",
+    "none": "-"
+  },
+  "envTag": {
+    "outdoor": "户外景点",
+    "indoor": "室内景点"
+  },
+  "distance": {
+    "walk": "步行{{minutes}}分钟 · {{dist}}",
+    "drive": "驾车{{minutes}}分钟 · {{dist}}"
+  },
+  "errors": {
+    "createAccountFailed": "创建账户失败",
+    "roleChangeFailed": "权限变更失败",
+    "withdrawFailed": "注销处理失败",
+    "loginFailed": "登录失败",
+    "signupFailed": "注册失败",
+    "kakaoMapLoadFailed": "Kakao地图SDK加载失败",
+    "kakaoMapKeyMissing": "未设置 VITE_KAKAO_JS_API_KEY(请检查 frontend/.env)"
+  },
+  "actions": {
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "close": "关闭",
+    "delete": "删除",
+    "edit": "编辑",
+    "search": "搜索",
+    "back": "返回",
+    "next": "下一步",
+    "loading": "加载中..."
+  }
+}

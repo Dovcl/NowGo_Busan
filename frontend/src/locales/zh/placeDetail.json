@@ -1,0 +1,66 @@
+{
+  "notFound": "找不到该景点。",
+  "scoreRow": {
+    "air": "空气质量",
+    "weather": "天气",
+    "uv": "紫外线",
+    "ripCurrentOrWater": "离岸流/水质",
+    "crowd": "拥挤度"
+  },
+  "infoRow": {
+    "usetime": "开放时间",
+    "restdate": "休息日",
+    "parking": "停车场",
+    "usefee": "门票费用"
+  },
+  "envRows": {
+    "temperature": "气温",
+    "feelsLike": "体感温度",
+    "humidity": "湿度",
+    "windSpeed": "风速",
+    "precipitationType": "降水形态",
+    "pm10": "PM10",
+    "pm25": "PM2.5",
+    "uvIndex": "紫外线指数",
+    "ripRisk": "离岸流风险",
+    "trafficCongestion": "周边拥堵度"
+  },
+  "precipitationType": {
+    "none": "无",
+    "rain": "雨",
+    "rainSnow": "雨夹雪",
+    "snow": "雪",
+    "shower": "阵雨"
+  },
+  "trafficLevel": {
+    "low": "顺畅",
+    "moderate": "一般",
+    "high": "拥堵"
+  },
+  "trafficCollecting": "数据收集中",
+  "trafficProvisional": "仅供参考",
+  "trafficDistrictFallback": "地区平均",
+  "trafficNearbyEvent": "附近有{{event}}",
+  "statusMessage": {
+    "danger": "现在最好避免前往",
+    "caution": "可能较为拥挤,请注意",
+    "safe": "现在正是游览的好时机!"
+  },
+  "tipsTitle": "游客提示与点评",
+  "nearbyFoodTitle": "附近推荐美食&咖啡厅",
+  "infoTitle": "景点信息",
+  "weatherAirTitle": "实时天气 · 空气质量",
+  "breakdownTitle": "实时环境指标",
+  "forecastTitle": "今日天气预报",
+  "forecastSubtitle": "气象厅短期预报 · 每3小时",
+  "hourSuffix": "{{hour}}点",
+  "directionsButton": "查看路线(Kakao地图)",
+  "alternativesTitle": "风险时段替代景点",
+  "altScoreLabel": "NowGo {{score}} ({{status}})",
+  "backToHome": "← 返回首页",
+  "backToMap": "返回地图",
+  "directions": "路线",
+  "save": "保存",
+  "saved": "已保存",
+  "details": "详情"
+}

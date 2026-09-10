@@ -1,0 +1,11 @@
+{
+  "title": "搜索结果",
+  "resultUnit": "{{count}}条",
+  "searchPlaceholder": "搜索景点、地区、关键词",
+  "typeLabel": "类型",
+  "resetLabel": "重置",
+  "noResultsForQuery": "没有找到与'{{q}}'相关的结果。",
+  "noResultsFiltered": "没有符合条件的景点。",
+  "loadMore": "查看更多 ({{visible}}/{{total}})",
+  "usetime": "开放时间 {{value}}"
+}

@@ -1,0 +1,160 @@
+{
+  "login": {
+    "marketingLine1": "现在去釜山",
+    "marketingLine2": "哪里玩?",
+    "portalTitle": "Administrator Portal",
+    "portalSubtitle": "Access limited to authorized personnel only.",
+    "emailLabel": "邮箱或账号",
+    "passwordLabel": "密码",
+    "submitting": "登录中...",
+    "submit": "登录"
+  },
+  "eventReview": {
+    "title": "节庆活动重复项审核",
+    "subtitle": "系统难以自动判断的一对活动。若为同一活动请合并,若不同请分别保留。",
+    "noItems": "没有需要审核的项目。",
+    "pendingCount": "待处理 {{count}}件",
+    "similarity": "相似度 {{total}}%(标题 {{title}} · 日期 {{date}} · 地点 {{venue}})",
+    "different": "不同活动",
+    "same": "同一活动"
+  },
+  "userManagement": {
+    "title": "会员管理",
+    "subtitle": "管理会员账户与权限。",
+    "exportCsv": "导出CSV",
+    "addAccount": "添加账户",
+    "totalUsers": "全部会员",
+    "newToday": "今日注册",
+    "bulkAction": "批量处理({{count}})",
+    "roleToAdmin": "设为管理员",
+    "roleToTourist": "设为普通用户",
+    "withdraw": "注销处理",
+    "restore": "恢复",
+    "statusAll": "状态:全部",
+    "statusActive": "正常",
+    "statusWithdrawn": "已注销",
+    "joinDate": "注册日期",
+    "searchPlaceholder": "按姓名或邮箱搜索",
+    "columnUser": "会员",
+    "columnSource": "注册途径",
+    "columnJoinDate": "注册日期",
+    "columnStatus": "状态",
+    "columnAction": "操作",
+    "loading": "加载中...",
+    "noUsers": "没有符合条件的会员。",
+    "totalCount": "全部{{total}}名中 {{from}}-{{to}}",
+    "adminBadge": "管理员",
+    "active": "正常",
+    "withdrawn": "已注销",
+    "restoreAction": "恢复",
+    "addModalTitle": "添加 NowGo ID 账户",
+    "addModalSubtitle": "用于Kakao/Google登录不可用情况下的邮箱/密码账户。",
+    "nicknamePlaceholder": "昵称",
+    "idPlaceholder": "NowGo ID(邮箱)",
+    "passwordPlaceholder": "密码",
+    "grantAdmin": "授予管理员权限",
+    "creating": "创建中...",
+    "createAccount": "创建账户",
+    "sourceLabel": {
+      "kakao": "Kakao",
+      "google": "Google",
+      "email": "Email"
+    }
+  },
+  "dataInspector": {
+    "title": "采集数据检查",
+    "subtitle": "按表查看批量ETL是否实际在积累数据。",
+    "readingGuide": "本表阅读说明",
+    "loadError": "无法加载该表。",
+    "loading": "加载中...",
+    "noData": "还没有累积的数据。",
+    "totalCount": "全部{{total}}条中 {{from}}-{{to}}",
+    "tableLabels": {
+      "road_link_baseline": "道路基准值(星期×时段)",
+      "road_link_traffic_cache": "道路实时快照",
+      "road_link_traffic_history": "道路历史(最近48小时)",
+      "holiday_cache": "法定节假日",
+      "district_visitor_baseline": "各区访客基准值",
+      "weather_cache": "天气",
+      "uv_index_cache": "紫外线指数",
+      "air_quality_cache": "空气质量",
+      "rip_current_cache": "离岸流"
+    },
+    "columnLabels": {
+      "link_id": "路段ID",
+      "dow": "星期",
+      "hour": "时段",
+      "avg_speed": "平均速度",
+      "avg_volume": "平均交通量",
+      "sample_count": "样本数",
+      "current_speed": "当前速度",
+      "current_volume": "当前交通量",
+      "observed_at": "观测时刻",
+      "fetched_at": "采集时刻",
+      "date": "日期",
+      "name": "名称",
+      "sigungu_code": "行政区代码",
+      "visitor_ratio": "访客比率",
+      "nx": "网格X",
+      "ny": "网格Y",
+      "temperature": "气温",
+      "humidity": "湿度",
+      "wind_speed": "风速",
+      "precipitation_prob": "降水概率",
+      "sky": "天空状态",
+      "precipitation_type": "降水形态",
+      "forecast": "预报(6小时)",
+      "area_no": "地区代码",
+      "uv_index": "紫外线指数",
+      "station_name": "测站名称",
+      "pm10": "PM10",
+      "pm25": "PM2.5",
+      "o3": "臭氧",
+      "pm10_grade": "PM10等级",
+      "pm25_grade": "PM2.5等级",
+      "station_code": "观测站代码",
+      "index_value": "离岸流指数",
+      "risk_level": "风险等级",
+      "wave_height": "浪高",
+      "water_temp": "水温"
+    },
+    "tableNotes": {
+      "road_link_baseline": [
+        "星期(dow):0=周一 ~ 6=周日。",
+        "时段(hour):0~23时,以整点为准。",
+        "样本数(sample_count)低于3时尚不可信,不用于实际服务页面——基准为至少观测3周。",
+        "平均交通量(avg_volume)仅保存原始API数值,目前未用于拥堵度计算。"
+      ],
+      "road_link_traffic_cache": [
+        "每个路段仅保留1行——每小时用最新值覆盖,不保留历史值。",
+        "观测时刻(observed_at)为API提供的时间,采集时刻(fetched_at)为我方实际调用的时间。相差几分钟属于正常。"
+      ],
+      "road_link_traffic_history": [
+        "仅保留最近48小时数据,更早的行会在每次采集周期自动删除。",
+        "这是绘制'今日实测拥堵度'图表所用的原始数据。"
+      ],
+      "holiday_cache": [
+        "以政府法定节假日为准,替代假日也单独成行(例如'替代假日(光复节)')。",
+        "计算基准值时,平日节假日会用星期日(dow=6)的模式替代该星期。"
+      ],
+      "district_visitor_baseline": [
+        "星期(dow)与道路基准值编码相同(0=周一~6=周日)。",
+        "访客比率(visitor_ratio)为1.0表示该区平常平均水平的星期,1.5表示比平常拥挤50%的星期。",
+        "仅在道路基准值尚未累积满3周时作为临时替代值使用。"
+      ],
+      "weather_cache": [
+        "网格X/Y(nx, ny)是气象厅自有网格坐标,并非经纬度。",
+        "天空状态(sky):1=晴,3=多云,4=阴。",
+        "降水形态(precipitation_type):0=无,1=雨,2=雨夹雪,3=雪,4=阵雨。",
+        "降水概率(precipitation_prob)因超短期预报特性,原始API不提供该值,始终为空属于正常。"
+      ],
+      "uv_index_cache": ["地区代码(area_no)目前固定使用'2600000000'(釜山全域)一个值。"],
+      "air_quality_cache": ["等级(pm10_grade/pm25_grade)为环境部官方4级标准——1=良好,2=一般,3=较差,4=很差。"],
+      "rip_current_cache": [
+        "观测站代码(station_code):HAE=海云台,SONGJUNG=松亭,IMRANG=林浪。",
+        "风险等级从低到高依次为:关注 < 注意 < 警戒 < 危险。",
+        "该API仅在海水浴场开放期间(6~9月)提供数值,非季节期表为空属于正常。"
+      ]
+    }
+  }
+}

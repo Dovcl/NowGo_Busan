@@ -2,11 +2,13 @@
 // 후보를 사람이 보고 같은 행사/다른 행사로 확정한다(harness/DECISIONS.md 2026-08-26).
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext"
 import { formatDateRange } from "../lib/events"
 import { fetchDedupCandidates, resolveDedupCandidate } from "../services/adminService"
 
 export default function AdminEventReview() {
+  const { t } = useTranslation("admin")
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [candidates, setCandidates] = useState(null)
@@ -37,10 +39,10 @@ export default function AdminEventReview() {
       <div className="px-4 md:px-container-margin py-4 md:py-8 pb-24 md:pb-8 max-w-4xl mx-auto w-full flex flex-col gap-gutter">
         <div>
           <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface">
-            축제·행사 중복 검토
+            {t("eventReview.title")}
           </h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-            자동으로 판단하기 애매한 쌍. 같은 행사면 하나로 합치고, 다른 행사면 각자 그대로 두기.
+            {t("eventReview.subtitle")}
           </p>
         </div>
 
@@ -51,11 +53,11 @@ export default function AdminEventReview() {
         ) : candidates.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16 text-center">
             <span className="material-symbols-outlined text-4xl text-outline-variant">task_alt</span>
-            <p className="font-body-md text-on-surface-variant">검토할 항목이 없어요.</p>
+            <p className="font-body-md text-on-surface-variant">{t("eventReview.noItems")}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <span className="font-label-sm text-[12px] text-outline">{candidates.length}건 대기 중</span>
+            <span className="font-label-sm text-[12px] text-outline">{t("eventReview.pendingCount", { count: candidates.length })}</span>
             {candidates.map((c) => (
               <CandidateCard key={c.id} candidate={c} busy={resolvingId === c.id} onResolve={(decision) => resolve(c.id, decision)} />
             ))}
@@ -67,12 +69,17 @@ export default function AdminEventReview() {
 }
 
 function CandidateCard({ candidate, busy, onResolve }) {
+  const { t } = useTranslation("admin")
   return (
     <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-4 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <span className="font-label-sm text-[11px] text-outline">
-          유사도 {(candidate.total_score * 100).toFixed(0)}% (제목 {(candidate.title_score * 100).toFixed(0)} · 날짜{" "}
-          {(candidate.date_score * 100).toFixed(0)} · 장소 {(candidate.venue_score * 100).toFixed(0)})
+          {t("eventReview.similarity", {
+            total: (candidate.total_score * 100).toFixed(0),
+            title: (candidate.title_score * 100).toFixed(0),
+            date: (candidate.date_score * 100).toFixed(0),
+            venue: (candidate.venue_score * 100).toFixed(0),
+          })}
         </span>
       </div>
 
@@ -88,7 +95,7 @@ function CandidateCard({ candidate, busy, onResolve }) {
           onClick={() => onResolve("DIFFERENT")}
           className="flex-1 py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-sm text-[13px] font-bold hover:bg-surface-container transition-colors disabled:opacity-40"
         >
-          다른 행사예요
+          {t("eventReview.different")}
         </button>
         <button
           type="button"
@@ -96,7 +103,7 @@ function CandidateCard({ candidate, busy, onResolve }) {
           onClick={() => onResolve("SAME")}
           className="flex-1 py-2 rounded-lg bg-primary text-on-primary font-label-sm text-[13px] font-bold hover:bg-primary/90 transition-colors disabled:opacity-40"
         >
-          같은 행사예요
+          {t("eventReview.same")}
         </button>
       </div>
     </div>
@@ -104,6 +111,7 @@ function CandidateCard({ candidate, busy, onResolve }) {
 }
 
 function EventSide({ side }) {
+  const { i18n } = useTranslation("admin")
   return (
     <div className="flex gap-3 p-3 rounded-lg bg-surface border border-outline-variant/20">
       <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-surface-container">
@@ -113,7 +121,7 @@ function EventSide({ side }) {
         <span className="font-label-sm text-[10px] font-bold text-outline uppercase">{side.source}</span>
         <span className="font-body-md text-[13.5px] font-bold text-on-surface truncate">{side.title}</span>
         {side.start_date && (
-          <span className="font-label-sm text-[11px] text-on-surface-variant">{formatDateRange(side.start_date, side.end_date)}</span>
+          <span className="font-label-sm text-[11px] text-on-surface-variant">{formatDateRange(side.start_date, side.end_date, i18n.language)}</span>
         )}
         {side.venue && <span className="font-label-sm text-[11px] text-on-surface-variant truncate">{side.venue}</span>}
       </div>

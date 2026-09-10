@@ -1,0 +1,49 @@
+{
+  "pageTitle": "Festivals & Events",
+  "pageSubtitle": "All of Busan's festivals and events in one place.",
+  "calendarButton": "View Calendar",
+  "categoryAll": "All",
+  "eventCategory": {
+    "festival": "Festival",
+    "performance": "Performance",
+    "exhibition": "Exhibition",
+    "sports": "Sports",
+    "market": "Market/Food",
+    "personal": "My Schedule"
+  },
+  "noteworthyTitle": "Don't Miss These",
+  "viewInCalendar": "View in Calendar",
+  "allEventsTitle": "All Events",
+  "resultUnit": "{{count}} events",
+  "pendingReview": "{{count}} pending review",
+  "searchPlaceholder": "Search by event name or venue",
+  "statusFilter": {
+    "all": "All",
+    "upcoming": "Upcoming & Ongoing",
+    "ended": "Ended"
+  },
+  "noResultsForQuery": "No results found for '{{q}}'.",
+  "noResults": "No matching events.",
+  "eventStatus": {
+    "ended": "Ended",
+    "live": "Live Now",
+    "today": "Starts Today",
+    "upcoming": "D-{{days}}"
+  },
+  "today": "Today",
+  "dragHint": "Long-press and drag to create a multi-day schedule",
+  "scheduleCount": "{{count}} events",
+  "noSchedule": "No events",
+  "noSavedEvents": "No events saved yet.",
+  "noSavedEventsHintPrefix": "Tap ",
+  "noSavedEventsHintSuffix": " on an event you're interested in from the list.",
+  "excludeThisDate": "Exclude this date only",
+  "reincludeDate": "Include this date again",
+  "footerHint": "Saved events are also available in Profile > Saved Lists",
+  "newScheduleTitle": "Create New Schedule",
+  "titlePlaceholder": "Schedule title (e.g. Haeundae family trip)",
+  "notFound": "Couldn't find that event.",
+  "viewDetails": "View Details",
+  "saved": "Saved",
+  "wantToGo": "Add to My List"
+}

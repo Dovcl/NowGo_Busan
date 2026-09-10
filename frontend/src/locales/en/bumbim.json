@@ -1,0 +1,88 @@
+{
+  "districtSelectTitle": "Select District",
+  "districts": {
+    "1": "Gangseo-gu",
+    "2": "Geumjeong-gu",
+    "3": "Gijang-gun",
+    "4": "Nam-gu",
+    "5": "Dong-gu",
+    "6": "Dongnae-gu",
+    "7": "Busanjin-gu",
+    "8": "Buk-gu",
+    "9": "Sasang-gu",
+    "10": "Saha-gu",
+    "11": "Seo-gu",
+    "12": "Suyeong-gu",
+    "13": "Yeonje-gu",
+    "14": "Yeongdo-gu",
+    "15": "Jung-gu",
+    "16": "Haeundae-gu"
+  },
+  "sidebarNoteLine1": "District-wide congestion summary is coming soon",
+  "sidebarNoteLine2": "Select a district to see",
+  "sidebarNoteLine3": "real measurements for its spots",
+  "backendErrorTitle": "Can't connect to the backend",
+  "backendErrorBody": "Please check that the local server is running (backend-dev, port 8080). Since the spot list itself couldn't load, demo mode can't be turned on here either — demo mode overlays fake congestion on real spot names/coordinates, so the backend needs to respond at least once.",
+  "loading": "Loading…",
+  "trafficTier": {
+    "label": {
+      "light": "Light",
+      "moderate": "Moderate",
+      "busy": "Busy",
+      "veryBusy": "Very Busy"
+    },
+    "adjective": {
+      "light": "quiet",
+      "moderate": "moderate",
+      "busy": "busy",
+      "veryBusy": "very busy"
+    }
+  },
+  "focalTitlePrefix": "Right now, the area around {{name}} is ",
+  "focalTitleSuffix": "",
+  "focalTitleCollecting": "Collecting congestion info for the area around {{name}}",
+  "recentHourBasis": "Based on the last hour · {{district}}",
+  "districtFallbackNote": " · Showing typical district pattern instead of live road data",
+  "nearbyEvent": "'{{event}}' is happening nearby today",
+  "gaugeNote": "This is a road congestion index, not a population count",
+  "noRoadData": "No road data near this spot, or baseline data is still insufficient",
+  "indexLabel": "Index",
+  "infoCard": {
+    "slowerThanUsual": "Slower than usual",
+    "currentSpeed": "Current Speed",
+    "usualSpeed": "Usual Speed",
+    "congestedSection": "Congested Section",
+    "noInfo": "No data",
+    "vsBaseline": "vs. baseline speed",
+    "nearbyRoadAvg": "Nearby road average",
+    "dowHourBaseline": "Day/hour baseline",
+    "lowestSpeedLink": "Lowest-speed link"
+  },
+  "demoBanner": {
+    "viewingDemoData": "Viewing demo data",
+    "realData": "Live Data",
+    "demoNote": "— hypothetical values assuming 3+ weeks of baseline. Not real data.",
+    "viewRealData": "Switch to live data",
+    "viewDemoData": "View demo data"
+  },
+  "historyTitle": "Today's Actuals vs. Usual Baseline",
+  "collectingHistory": "Still building up congestion history. Once baseline data reaches 3+ weeks, we'll compare today's actuals with the usual pattern.",
+  "historyFooter": "Based on road speed · last hour · updated at 10 past every hour{{demoSuffix}}",
+  "demoSuffix": " · demo data",
+  "hourSuffix": "{{hour}}:00",
+  "nowLabel": "Now",
+  "actualSpeedLegend": "Today's actual speed (km/h)",
+  "baselineSpeedLegend": "Usual speed (baseline, km/h)",
+  "actualDemoLegend": "Today's actual (demo)",
+  "baselineDemoLegend": "Usual baseline (demo)",
+  "noMapData": "No measurement data to show",
+  "choiceListTitle": "Options Right Now",
+  "collecting": "Collecting",
+  "loadingDistrictSpots": "Loading spots in this district",
+  "badge": {
+    "goodNow": "Good time to go",
+    "moderate": "Moderate",
+    "avoidPeak": "Avoid peak"
+  },
+  "congestionIndexValue": "Congestion index {{value}}"
+}

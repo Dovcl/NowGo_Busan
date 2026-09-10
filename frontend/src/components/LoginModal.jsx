@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { goToKakaoLogin, goToGoogleLogin, adminLogin, signup } from "../services/authService"
 import { useAuth } from "../context/AuthContext"
 
 export default function LoginModal({ open, onClose }) {
+  const { t } = useTranslation("auth")
   const [mode, setMode] = useState("login") // "login" | "signup"
   const [nickname, setNickname] = useState("")
   const [id, setId] = useState("")
@@ -67,9 +69,9 @@ export default function LoginModal({ open, onClose }) {
 
         <div className="p-8 flex flex-col gap-6">
           <div className="text-center flex flex-col gap-3">
-            <h2 className="font-headline-lg-mobile text-xl font-bold text-on-surface">로그인이 필요한 기능이에요</h2>
+            <h2 className="font-headline-lg-mobile text-xl font-bold text-on-surface">{t("loginRequiredTitle")}</h2>
             <p className="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-              즐겨찾기, 리뷰 작성, 맞춤형 추천 기능을 이용하시려면 로그인이 필요합니다.
+              {t("loginRequiredSubtitle")}
             </p>
           </div>
 
@@ -84,7 +86,7 @@ export default function LoginModal({ open, onClose }) {
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
                   required
-                  placeholder="닉네임"
+                  placeholder={t("nicknamePlaceholder")}
                   className="w-full h-12 pl-12 pr-4 bg-surface-container-low rounded-lg font-body-md text-on-surface border border-outline-variant focus:border-primary outline-none transition-colors"
                 />
               </div>
@@ -98,7 +100,7 @@ export default function LoginModal({ open, onClose }) {
                 value={id}
                 onChange={(e) => setId(e.target.value)}
                 required
-                placeholder="NowGo ID"
+                placeholder={t("idPlaceholder")}
                 className="w-full h-12 pl-12 pr-4 bg-surface-container-low rounded-lg font-body-md text-on-surface border border-outline-variant focus:border-primary outline-none transition-colors"
               />
             </div>
@@ -111,7 +113,7 @@ export default function LoginModal({ open, onClose }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="비밀번호"
+                placeholder={t("passwordPlaceholder")}
                 className="w-full h-12 pl-12 pr-12 bg-surface-container-low rounded-lg font-body-md text-on-surface border border-outline-variant focus:border-primary outline-none transition-colors"
               />
               <button
@@ -130,7 +132,7 @@ export default function LoginModal({ open, onClose }) {
               disabled={loading}
               className="w-full h-12 bg-primary text-on-primary rounded-lg font-headline-lg-mobile transition-colors hover:bg-primary/90 disabled:opacity-60"
             >
-              {loading ? "처리 중..." : mode === "signup" ? "NowGo ID 회원가입" : "NowGo ID 로그인"}
+              {loading ? t("processing") : mode === "signup" ? t("signupSubmit") : t("loginSubmit")}
             </button>
 
             <button
@@ -138,13 +140,13 @@ export default function LoginModal({ open, onClose }) {
               onClick={toggleMode}
               className="text-[12px] text-on-surface-variant hover:text-primary font-medium transition-colors self-center"
             >
-              {mode === "signup" ? "이미 계정이 있으신가요? 로그인" : "계정이 없으신가요? 회원가입"}
+              {mode === "signup" ? t("haveAccount") : t("noAccount")}
             </button>
           </form>
 
           <div className="relative flex items-center">
             <div className="flex-grow h-px bg-outline-variant" />
-            <span className="px-4 font-label-sm text-label-sm text-outline uppercase tracking-widest">간편하게 시작하기</span>
+            <span className="px-4 font-label-sm text-label-sm text-outline uppercase tracking-widest">{t("easyStart")}</span>
             <div className="flex-grow h-px bg-outline-variant" />
           </div>
 
@@ -155,7 +157,7 @@ export default function LoginModal({ open, onClose }) {
               className="w-full bg-[#FEE500] hover:bg-[#FDD800] text-black font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
             >
               <span className="material-symbols-outlined filled-icon text-xl">chat_bubble</span>
-              카카오 로그인
+              {t("kakaoLogin")}
             </button>
             <button
               type="button"
@@ -163,7 +165,7 @@ export default function LoginModal({ open, onClose }) {
               className="w-full bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-bold py-3 px-4 rounded-lg border border-outline-variant flex items-center justify-center gap-2 transition-colors"
             >
               <GoogleIcon />
-              Google 로그인
+              {t("googleLogin")}
             </button>
           </div>
 
@@ -172,7 +174,7 @@ export default function LoginModal({ open, onClose }) {
             onClick={onClose}
             className="text-[13px] text-on-surface-variant hover:text-on-surface font-medium transition-colors self-center"
           >
-            나중에 하기
+            {t("later")}
           </button>
         </div>
       </div>

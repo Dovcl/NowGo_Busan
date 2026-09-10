@@ -2,6 +2,7 @@
 // 날짜 칸을 꾹 눌렀다가 옆으로 끌면(long-press + drag) 여러 날짜를 한 번에 잡아
 // 개인 일정(예: 2/4~2/7 여행)을 만들 수 있다.
 import { useMemo, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import {
   eventCoversDate,
   formatDateLabel,
@@ -13,10 +14,10 @@ import {
   normalizeRange,
   parseISODate,
   toISODate,
+  weekdayShortLabels,
 } from "../lib/events"
 import { EVENT_CATEGORIES } from "../mock/events"
 
-const WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"]
 const LONG_PRESS_MS = 260
 
 // 부모가 `{calendarOpen && <EventCalendarModal ... />}`로 마운트/언마운트를 제어한다.
@@ -34,6 +35,7 @@ export default function EventCalendarModal({
   excludedDates,
   onToggleExcludedDate,
 }) {
+  const { t, i18n } = useTranslation("recommend")
   const today = useMemo(() => new Date(), [])
   const [cursor, setCursor] = useState(() => (initialDate ? parseISODate(initialDate) : today))
   const [selectedIso, setSelectedIso] = useState(() => initialDate ?? toISODate(today))
@@ -137,7 +139,7 @@ export default function EventCalendarModal({
               <span className="material-symbols-outlined text-[20px]">chevron_left</span>
             </button>
             <h3 className="font-headline-lg-mobile text-[17px] md:text-[24px] font-bold text-on-surface min-w-[104px] md:min-w-[140px] text-center">
-              {formatMonthLabel(year, month)}
+              {formatMonthLabel(year, month, i18n.language)}
             </h3>
             <button
               type="button"
@@ -151,7 +153,7 @@ export default function EventCalendarModal({
               onClick={goToday}
               className="ml-1 hidden sm:inline-flex px-3 py-1 rounded-full border border-outline-variant text-[12px] font-label-sm text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
             >
-              오늘
+              {t("today")}
             </button>
           </div>
           <button
@@ -167,19 +169,19 @@ export default function EventCalendarModal({
           {Object.entries(EVENT_CATEGORIES).map(([key, cat]) => (
             <div key={key} className="flex items-center gap-1.5 shrink-0">
               <span className={`w-2 h-2 md:w-2.5 md:h-2.5 rounded-full ${cat.dot}`} />
-              <span className="font-label-sm text-[11px] md:text-[12.5px] text-on-surface-variant">{cat.label}</span>
+              <span className="font-label-sm text-[11px] md:text-[12.5px] text-on-surface-variant">{t(`eventCategory.${key}`)}</span>
             </div>
           ))}
           <span className="ml-auto shrink-0 hidden sm:flex items-center gap-1 text-[11px] text-outline font-label-sm">
             <span className="material-symbols-outlined text-[14px]">touch_app</span>
-            꾹 눌러서 옆으로 끌면 여러 날 일정을 만들 수 있어요
+            {t("dragHint")}
           </span>
         </div>
 
         <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
           <div className="md:w-[62%] shrink-0 flex flex-col overflow-y-auto md:border-r border-outline-variant/20">
             <div className="grid grid-cols-7 px-2 md:px-3 pt-2 shrink-0">
-              {WEEKDAYS.map((w) => (
+              {weekdayShortLabels(i18n.language).map((w) => (
                 <div key={w} className="text-center font-label-sm text-[11px] md:text-[13px] text-outline py-1 md:py-1.5">
                   {w}
                 </div>
@@ -241,9 +243,9 @@ export default function EventCalendarModal({
             ) : (
               <>
                 <div>
-                  <h4 className="font-headline-lg-mobile text-[15px] md:text-[19px] font-bold text-on-surface">{formatDateLabel(selectedDate)}</h4>
+                  <h4 className="font-headline-lg-mobile text-[15px] md:text-[19px] font-bold text-on-surface">{formatDateLabel(selectedDate, i18n.language)}</h4>
                   <p className="font-label-sm text-[12px] md:text-[13.5px] text-on-surface-variant mt-0.5">
-                    {selectedEvents.length > 0 ? `${selectedEvents.length}건의 일정` : "일정이 없어요"}
+                    {selectedEvents.length > 0 ? t("scheduleCount", { count: selectedEvents.length }) : t("noSchedule")}
                   </p>
                 </div>
 
@@ -251,9 +253,9 @@ export default function EventCalendarModal({
                   <div className="flex flex-col items-center gap-2 py-8 text-center">
                     <span className="material-symbols-outlined text-3xl text-outline-variant">event_available</span>
                     <p className="font-label-sm text-[12.5px] text-on-surface-variant leading-relaxed">
-                      아직 담은 행사가 없어요.
+                      {t("noSavedEvents")}
                       <br />
-                      리스트에서 관심있는 행사에 <b className="text-on-surface">+</b>를 눌러보세요.
+                      {t("noSavedEventsHintPrefix")}<b className="text-on-surface">+</b>{t("noSavedEventsHintSuffix")}
                     </p>
                   </div>
                 )}
@@ -271,7 +273,7 @@ export default function EventCalendarModal({
                     >
                       <div className="flex-1 min-w-0 flex flex-col gap-1 md:gap-1.5">
                         <span className={`font-label-sm text-[10px] md:text-[11px] font-bold w-fit px-2 md:px-2.5 py-0.5 rounded-full ${cat.badgeBg} ${cat.badgeText}`}>
-                          {cat.label}
+                          {t(`eventCategory.${ev.category}`)}
                         </span>
                         <span className={`font-body-md text-[13.5px] md:text-[16px] font-bold text-on-surface ${excludedToday ? "line-through" : ""}`}>
                           {ev.title}
@@ -283,7 +285,7 @@ export default function EventCalendarModal({
                           </span>
                         )}
                         {isMultiDay && (
-                          <span className="font-label-sm text-[11px] md:text-[12.5px] text-outline">{formatDateRange(ev.startDate, ev.endDate)}</span>
+                          <span className="font-label-sm text-[11px] md:text-[12.5px] text-outline">{formatDateRange(ev.startDate, ev.endDate, i18n.language)}</span>
                         )}
                         {isMultiDay && !isCustom && (
                           <button
@@ -291,7 +293,7 @@ export default function EventCalendarModal({
                             onClick={() => onToggleExcludedDate(ev.id, selectedIso)}
                             className="w-fit font-label-sm text-[11px] md:text-[12px] text-primary hover:underline mt-0.5"
                           >
-                            {excludedToday ? "이 날짜 다시 담기" : "이 날짜만 빼기"}
+                            {excludedToday ? t("reincludeDate") : t("excludeThisDate")}
                           </button>
                         )}
                       </div>
@@ -324,7 +326,7 @@ export default function EventCalendarModal({
 
         <div className="hidden md:flex items-center gap-2 px-6 py-3.5 border-t border-outline-variant/20 bg-surface-container/60 shrink-0">
           <span className="material-symbols-outlined text-[17px] text-secondary">bookmark</span>
-          <span className="font-label-sm text-[12.5px] text-on-surface-variant">담은 행사는 프로필 &gt; 보관함에서도 다시 볼 수 있어요</span>
+          <span className="font-label-sm text-[12.5px] text-on-surface-variant">{t("footerHint")}</span>
         </div>
       </div>
     </div>
@@ -332,21 +334,23 @@ export default function EventCalendarModal({
 }
 
 function EventDraftForm({ range, draft, onChange, onCancel, onSave }) {
+  const { t, i18n } = useTranslation("recommend")
+  const { t: tCommon } = useTranslation("common")
   if (!range) return null
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <span className="material-symbols-outlined text-primary text-[20px]">date_range</span>
         <div>
-          <h4 className="font-headline-lg-mobile text-[15px] font-bold text-on-surface">새 일정 만들기</h4>
-          <p className="font-label-sm text-[12px] text-on-surface-variant">{formatDateRange(range.startDate, range.endDate)}</p>
+          <h4 className="font-headline-lg-mobile text-[15px] font-bold text-on-surface">{t("newScheduleTitle")}</h4>
+          <p className="font-label-sm text-[12px] text-on-surface-variant">{formatDateRange(range.startDate, range.endDate, i18n.language)}</p>
         </div>
       </div>
       <input
         autoFocus
         value={draft.title}
         onChange={(e) => onChange({ ...draft, title: e.target.value })}
-        placeholder="일정 제목 (예: 해운대 가족여행)"
+        placeholder={t("titlePlaceholder")}
         className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[13.5px] font-body-md focus:outline-none focus:border-primary"
       />
       <div className="flex flex-wrap gap-1.5">
@@ -359,13 +363,13 @@ function EventDraftForm({ range, draft, onChange, onCancel, onSave }) {
               draft.category === key ? `${cat.chipActive} border-transparent` : "border-outline-variant text-on-surface-variant"
             }`}
           >
-            {cat.label}
+            {t(`eventCategory.${key}`)}
           </button>
         ))}
       </div>
       <div className="flex justify-end gap-2 pt-1">
         <button type="button" onClick={onCancel} className="px-3 py-1.5 rounded-lg font-label-sm text-[12.5px] text-on-surface-variant hover:bg-surface-container">
-          취소
+          {tCommon("actions.cancel")}
         </button>
         <button
           type="button"
@@ -373,7 +377,7 @@ function EventDraftForm({ range, draft, onChange, onCancel, onSave }) {
           disabled={!draft.title.trim()}
           className="px-4 py-1.5 rounded-lg font-label-sm text-[12.5px] bg-primary text-on-primary disabled:opacity-40"
         >
-          저장
+          {tCommon("actions.save")}
         </button>
       </div>
     </div>

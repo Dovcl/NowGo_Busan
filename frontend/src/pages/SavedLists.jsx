@@ -2,11 +2,13 @@
 // 카드를 누르면 SavedListDetail로 들어가 순서를 바꿀 수 있다.
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext"
 import { createList, fetchListItems, fetchMyLists } from "../services/listsService"
 import { fetchPlaceById } from "../services/placesService"
 
 export default function SavedLists() {
+  const { t } = useTranslation("saved")
   const { isLoggedIn, openLoginModal } = useAuth()
   const [lists, setLists] = useState(null)
   const [creating, setCreating] = useState(false)
@@ -43,9 +45,9 @@ export default function SavedLists() {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-3 text-center px-4">
         <span className="material-symbols-outlined text-5xl text-outline-variant">folder_open</span>
-        <p className="font-body-md text-on-surface-variant">로그인하면 보관함을 볼 수 있어요.</p>
+        <p className="font-body-md text-on-surface-variant">{t("loginPrompt")}</p>
         <button type="button" onClick={openLoginModal} className="text-primary font-body-md font-bold hover:underline">
-          로그인하기
+          {t("login")}
         </button>
       </div>
     )
@@ -58,18 +60,18 @@ export default function SavedLists() {
       <div className="max-w-5xl mx-auto w-full px-4 md:px-container-margin py-8 pb-24 md:pb-8 flex flex-col gap-section-gap">
         <div>
           <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-bold text-on-surface">
-            보관함
+            {t("title")}
           </h1>
-          <p className="font-body-md text-on-surface-variant mt-1">저장한 관광지를 리스트별로 모아봤어요.</p>
+          <p className="font-body-md text-on-surface-variant mt-1">{t("subtitle")}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-gutter max-w-md">
           <div className="bg-surface-container-lowest rounded-xl p-card-padding border border-outline-variant/30">
-            <p className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">저장한 장소</p>
+            <p className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">{t("savedPlacesLabel")}</p>
             <p className="text-headline-lg font-headline-lg text-primary font-bold">{totalPlaces}</p>
           </div>
           <div className="bg-surface-container-lowest rounded-xl p-card-padding border border-outline-variant/30">
-            <p className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">리스트</p>
+            <p className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">{t("listsLabel")}</p>
             <p className="text-headline-lg font-headline-lg text-primary font-bold">{lists?.length ?? 0}</p>
           </div>
         </div>
@@ -100,7 +102,7 @@ export default function SavedLists() {
                     </div>
                   )}
                   <span className="absolute top-2 left-2 bg-black/50 text-white text-label-sm font-label-sm px-2 py-0.5 rounded-full">
-                    {list.itemCount}개
+                    {t("itemCount", { count: list.itemCount })}
                   </span>
                 </div>
                 <div className="p-4 flex items-center gap-2">
@@ -125,11 +127,11 @@ export default function SavedLists() {
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onBlur={() => !newName.trim() && setCreating(false)}
-                  placeholder="리스트 이름"
+                  placeholder={t("listNamePlaceholder")}
                   className="bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md font-body-md focus:outline-none focus:border-primary"
                 />
                 <button type="submit" className="text-primary font-body-md font-bold self-end">
-                  추가
+                  {t("add")}
                 </button>
               </form>
             ) : (
@@ -139,7 +141,7 @@ export default function SavedLists() {
                 className="flex flex-col items-center justify-center gap-2 p-card-padding bg-surface-container-lowest rounded-xl border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-low transition-colors min-h-[176px]"
               >
                 <span className="material-symbols-outlined text-3xl text-primary">add_circle</span>
-                <span className="font-body-md text-body-md font-bold text-primary">새 리스트 만들기</span>
+                <span className="font-body-md text-body-md font-bold text-primary">{t("createNewList")}</span>
               </button>
             )}
           </div>

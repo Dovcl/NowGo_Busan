@@ -74,8 +74,9 @@ def seed_content_type(session) -> None:
     print(f"content_type: {len(records)}건")
 
 
-def _parse_tour_time(raw) -> datetime | None:
-    # TourAPI 원본 형식: 20230101120000 (문자열이 아니라 정수로 읽힘)
+def parse_tour_time(raw) -> datetime | None:
+    # TourAPI 원본 형식: 20230101120000 (문자열이 아니라 정수로 읽힘) — 라이브
+    # API 응답에서는 문자열로 오지만 int() 캐스팅이 둘 다 허용해 그대로 재사용된다.
     if pd.isna(raw):
         return None
     return datetime.strptime(str(int(raw)), "%Y%m%d%H%M%S")
@@ -87,7 +88,13 @@ def _none_if_nan(value):
 
 def seed_tour_spot_and_classification(session) -> None:
     df = pd.read_csv(TOUR_SPOT_CSV)
+    sync_tour_spot_and_classification(session, df)
 
+
+def sync_tour_spot_and_classification(session, df: pd.DataFrame) -> None:
+    """df는 CSV든 TourAPI areaBasedList2 라이브 응답이든 contentid/contenttypeid/
+    title/cat3/mapx/mapy 등 TourAPI 원본 컬럼명을 그대로 갖고 있어야 한다
+    (etl/fetch_tour_spots.py가 라이브 갱신에 재사용)."""
     # contenttypeid=15(축제/공연/행사)는 여기서 뺀다 — 상시 존재하는 "장소"가 아니라
     # 기간이 있는 "행사"라서 NowGo Score를 받는 지도 핀으로 취급하면 안 됨. 실제로
     # is_env_target=True로 분류돼 지도에 일반 관광지처럼 상시 노출되고 있었음(실측
@@ -147,8 +154,8 @@ def seed_tour_spot_and_classification(session) -> None:
                 "firstimage": _none_if_nan(row.firstimage),
                 "firstimage2": _none_if_nan(row.firstimage2),
                 "cpyrhtdivcd": _none_if_nan(row.cpyrhtDivCd),
-                "createdtime": _parse_tour_time(row.createdtime),
-                "modifiedtime": _parse_tour_time(row.modifiedtime),
+                "createdtime": parse_tour_time(row.createdtime),
+                "modifiedtime": parse_tour_time(row.modifiedtime),
                 "ldongregncd": _none_if_nan(row.lDongRegnCd),
                 "ldongsignugucd": _none_if_nan(row.lDongSignguCd),
                 "lclssystm1": _none_if_nan(row.lclsSystm1),

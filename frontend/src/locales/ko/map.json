@@ -1,0 +1,32 @@
+{
+  "searchTitle": "관광지 검색",
+  "searchPlaceholder": "해운대, 광안리 등...",
+  "typeTitle": "관광지 유형",
+  "all": "전체",
+  "sidebarLabel": {
+    "해변": "해변",
+    "산": "자연 (산/공원)",
+    "도심": "문화/역사",
+    "실내": "실내"
+  },
+  "envGroupLabel": {
+    "해변": "해변",
+    "산": "자연",
+    "도심": "도심",
+    "실내": "실내",
+    "기타": "기타"
+  },
+  "savedListsTitle": "보관함",
+  "emptyList": "아직 담긴 관광지가 없어요.",
+  "backToNormalMap": "일반 지도로 돌아가기",
+  "sortTitle": "정렬 기준",
+  "sortOptions": {
+    "score": "NowGo Score 순",
+    "distance": "거리 순",
+    "crowd": "혼잡도 순",
+    "name": "이름 순"
+  },
+  "dangerOnly": "위험 관광지만 보기",
+  "excludeDanger": "위험 관광지 빼고 보기",
+  "viewingRoute": "{{name}} 경로 보는 중"
+}

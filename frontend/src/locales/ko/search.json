@@ -1,0 +1,11 @@
+{
+  "title": "검색 결과",
+  "resultUnit": "{{count}}건",
+  "searchPlaceholder": "관광지, 지역, 키워드 검색",
+  "typeLabel": "유형",
+  "resetLabel": "초기화",
+  "noResultsForQuery": "'{{q}}'에 대한 검색 결과가 없어요.",
+  "noResultsFiltered": "조건에 맞는 관광지가 없어요.",
+  "loadMore": "더보기 ({{visible}}/{{total}})",
+  "usetime": "이용시간 {{value}}"
+}

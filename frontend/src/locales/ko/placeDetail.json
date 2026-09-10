@@ -1,0 +1,66 @@
+{
+  "notFound": "해당 관광지를 찾을 수 없어요.",
+  "scoreRow": {
+    "air": "대기질",
+    "weather": "기상",
+    "uv": "자외선",
+    "ripCurrentOrWater": "이안류/수질",
+    "crowd": "혼잡도"
+  },
+  "infoRow": {
+    "usetime": "이용시간",
+    "restdate": "휴무일",
+    "parking": "주차시설",
+    "usefee": "이용요금"
+  },
+  "envRows": {
+    "temperature": "기온",
+    "feelsLike": "체감온도",
+    "humidity": "습도",
+    "windSpeed": "풍속",
+    "precipitationType": "강수형태",
+    "pm10": "미세먼지",
+    "pm25": "초미세먼지",
+    "uvIndex": "자외선지수",
+    "ripRisk": "이안류 위험도",
+    "trafficCongestion": "주변 혼잡도"
+  },
+  "precipitationType": {
+    "none": "없음",
+    "rain": "비",
+    "rainSnow": "비/눈",
+    "snow": "눈",
+    "shower": "소나기"
+  },
+  "trafficLevel": {
+    "low": "낮음",
+    "moderate": "보통",
+    "high": "높음"
+  },
+  "trafficCollecting": "정보 수집 중",
+  "trafficProvisional": "참고용",
+  "trafficDistrictFallback": "지역 평균",
+  "trafficNearbyEvent": "{{event}} 진행중",
+  "statusMessage": {
+    "danger": "지금은 방문을 피하는 게 좋아요",
+    "caution": "혼잡할 수 있어요, 참고하세요",
+    "safe": "지금 방문하기 좋은 상태예요!"
+  },
+  "tipsTitle": "방문객 팁 & 리뷰",
+  "nearbyFoodTitle": "주변 추천 맛집 & 카페",
+  "infoTitle": "관광지 정보",
+  "weatherAirTitle": "현재 날씨 · 대기질",
+  "breakdownTitle": "실시간 환경 지표",
+  "forecastTitle": "오늘의 날씨 예보",
+  "forecastSubtitle": "기상청 단기예보 · 3시간 간격",
+  "hourSuffix": "{{hour}}시",
+  "directionsButton": "경로보기 (카카오맵)",
+  "alternativesTitle": "위험 시 대체 관광지",
+  "altScoreLabel": "NowGo {{score}} ({{status}})",
+  "backToHome": "← 홈으로 돌아가기",
+  "backToMap": "지도로 돌아가기",
+  "directions": "길찾기",
+  "save": "저장",
+  "saved": "저장됨",
+  "details": "상세정보"
+}

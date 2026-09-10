@@ -1,16 +1,22 @@
+import { useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext"
+import { useLanguage } from "../context/LanguageContext"
 
 const NAV_ITEMS = [
-  { to: "/", label: "홈" },
-  { to: "/map", label: "지도" },
-  { to: "/recommend", label: "축제·행사" },
-  { to: "/bumbim", label: "부산 붐빔" },
-  { to: "/profile", label: "프로필" },
+  { to: "/", key: "home" },
+  { to: "/map", key: "map" },
+  { to: "/recommend", key: "events" },
+  { to: "/bumbim", key: "bumbim" },
+  { to: "/profile", key: "profile" },
 ]
 
 export default function TopNavBar() {
+  const { t } = useTranslation("common")
   const { isLoggedIn, openLoginModal } = useAuth()
+  const { language, setLanguage, supportedLanguages } = useLanguage()
+  const [langMenuOpen, setLangMenuOpen] = useState(false)
   const navigate = useNavigate()
 
   const handleProfileClick = (e) => {
@@ -42,15 +48,40 @@ export default function TopNavBar() {
                 }`
               }
             >
-              {item.label}
+              {t(`nav.${item.key}`)}
             </NavLink>
           ))}
         </nav>
       </div>
       <div className="flex items-center gap-4 text-on-surface-variant">
-        <button className="p-2 hover:bg-surface-container-low rounded-full transition-colors" type="button">
-          <span className="material-symbols-outlined">language</span>
-        </button>
+        <div className="relative">
+          <button
+            className="p-2 hover:bg-surface-container-low rounded-full transition-colors"
+            type="button"
+            onClick={() => setLangMenuOpen((open) => !open)}
+          >
+            <span className="material-symbols-outlined">language</span>
+          </button>
+          {langMenuOpen && (
+            <div className="absolute right-0 mt-1 bg-surface rounded-lg shadow-lg border border-outline-variant/30 py-1 min-w-[120px] z-50">
+              {supportedLanguages.map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => {
+                    setLanguage(lang)
+                    setLangMenuOpen(false)
+                  }}
+                  className={`w-full text-left px-4 py-2 font-body-md text-body-md hover:bg-surface-container-low transition-colors ${
+                    lang === language ? "text-primary font-bold" : "text-on-surface"
+                  }`}
+                >
+                  {t(`language.${lang}`)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <button className="p-2 hover:bg-surface-container-low rounded-full transition-colors" type="button">
           <span className="material-symbols-outlined">notifications</span>
         </button>

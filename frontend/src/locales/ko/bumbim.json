@@ -1,0 +1,88 @@
+{
+  "districtSelectTitle": "지역 선택",
+  "districts": {
+    "1": "강서구",
+    "2": "금정구",
+    "3": "기장군",
+    "4": "남구",
+    "5": "동구",
+    "6": "동래구",
+    "7": "부산진구",
+    "8": "북구",
+    "9": "사상구",
+    "10": "사하구",
+    "11": "서구",
+    "12": "수영구",
+    "13": "연제구",
+    "14": "영도구",
+    "15": "중구",
+    "16": "해운대구"
+  },
+  "sidebarNoteLine1": "지역별 종합 혼잡도는 준비 중이에요",
+  "sidebarNoteLine2": "선택하면 그 지역",
+  "sidebarNoteLine3": "관광지별 실측을 보여드려요",
+  "backendErrorTitle": "백엔드에 연결할 수 없어요",
+  "backendErrorBody": "로컬 서버가 켜져 있는지 확인해주세요(backend-dev, 포트 8080). 관광지 목록 자체를 못 불러온 상태라 데모 모드도 이 화면에서는 못 켜요 — 데모는 실제 관광지 이름·좌표에 가상 혼잡도만 입히는 방식이라 백엔드가 최소한 한 번은 응답해야 해요.",
+  "loading": "불러오는 중…",
+  "trafficTier": {
+    "label": {
+      "light": "여유",
+      "moderate": "보통",
+      "busy": "혼잡",
+      "veryBusy": "매우 혼잡"
+    },
+    "adjective": {
+      "light": "한산한",
+      "moderate": "보통인",
+      "busy": "붐비는",
+      "veryBusy": "매우 붐비는"
+    }
+  },
+  "focalTitlePrefix": "{{name}} 주변, 지금은 ",
+  "focalTitleSuffix": " 편이에요",
+  "focalTitleCollecting": "{{name}} 주변 혼잡도 정보를 수집 중이에요",
+  "recentHourBasis": "최근 1시간 기준 · {{district}}",
+  "districtFallbackNote": " · 도로 실측 대신 지역 평소 패턴으로 표시 중",
+  "nearbyEvent": "오늘 근처에서 '{{event}}' 진행 중",
+  "gaugeNote": "인구수가 아닌 도로 혼잡 지수예요",
+  "noRoadData": "이 관광지는 반경 내 도로 정보가 없거나 baseline이 아직 부족해요",
+  "indexLabel": "지수",
+  "infoCard": {
+    "slowerThanUsual": "평소보다 느림",
+    "currentSpeed": "현재 속도",
+    "usualSpeed": "평소 속도",
+    "congestedSection": "정체 구간",
+    "noInfo": "정보 없음",
+    "vsBaseline": "기준 속도 대비",
+    "nearbyRoadAvg": "주변 도로 평균",
+    "dowHourBaseline": "요일·시간 baseline",
+    "lowestSpeedLink": "가장 낮은 속도 링크"
+  },
+  "demoBanner": {
+    "viewingDemoData": "데모 데이터 보는 중",
+    "realData": "실데이터",
+    "demoNote": "— baseline이 3주 이상 쌓였을 때를 가정한 가상 값이에요. 실제 값 아님",
+    "viewRealData": "실데이터로 보기",
+    "viewDemoData": "데모용 가상 데이터로 보기"
+  },
+  "historyTitle": "오늘 실측 vs 평소 baseline",
+  "collectingHistory": "혼잡도 이력을 쌓는 중이에요. baseline이 3주 이상 쌓이면 오늘 실측과 평소 패턴을 비교해서 보여드릴게요.",
+  "historyFooter": "도로 속도 기반 · 최근 1시간 기준 · 매시 10분 갱신{{demoSuffix}}",
+  "demoSuffix": " · 데모 데이터",
+  "hourSuffix": "{{hour}}시",
+  "nowLabel": "지금",
+  "actualSpeedLegend": "오늘 실측 속도(km/h)",
+  "baselineSpeedLegend": "평소 속도(baseline, km/h)",
+  "actualDemoLegend": "오늘 실측(데모)",
+  "baselineDemoLegend": "평소 baseline(데모)",
+  "noMapData": "표시할 실측 데이터가 없어요",
+  "choiceListTitle": "지금 선택지",
+  "collecting": "수집 중",
+  "loadingDistrictSpots": "이 지역 관광지를 불러오는 중이에요",
+  "badge": {
+    "goodNow": "지금 가기 좋음",
+    "moderate": "보통",
+    "avoidPeak": "피크 회피"
+  },
+  "congestionIndexValue": "혼잡 지수 {{value}}"
+}

@@ -60,7 +60,13 @@ def seed_tour_spot_intro(session) -> None:
     intro = pd.read_csv(DETAIL_INTRO_CSV)
     # contenttypeid는 두 CSV 모두에 있지만 common 쪽 값을 기준으로 삼음 (항상 채워져 있음)
     merged = common.merge(intro.drop(columns=["contenttypeid"]), on="contentid", how="left")
+    sync_tour_spot_intro_from_df(session, merged)
 
+
+def sync_tour_spot_intro_from_df(session, merged: pd.DataFrame) -> None:
+    """merged는 detailCommon2 + detailIntro2 응답을 contentid 기준으로 합친
+    df — CSV든 TourAPI 라이브 호출 결과든 원본 컬럼명 그대로면 된다
+    (etl/fetch_tour_spots.py가 신규/변경 관광지 상세 갱신에 재사용)."""
     records = []
     for _, row in merged.iterrows():
         record = {

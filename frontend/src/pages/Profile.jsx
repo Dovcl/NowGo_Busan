@@ -1,24 +1,23 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import Toggle from "../components/Toggle"
 import { useAuth } from "../context/AuthContext"
+import { useLanguage } from "../context/LanguageContext"
 import { fetchMyLists, fetchListItems } from "../services/listsService"
 import { fetchPlaceById } from "../services/placesService"
 
 const PERSONAS = ["20대", "30대", "40대+"]
-const LANGUAGES = [
-  { code: "ko", flag: "🇰🇷", label: "한국어" },
-  { code: "en", flag: "🇺🇸", label: "English" },
-  { code: "zh", flag: "🇨🇳", label: "中文" },
-  { code: "ja", flag: "🇯🇵", label: "日本語" },
-]
+const LANGUAGE_FLAGS = { ko: "🇰🇷", en: "🇺🇸", zh: "🇨🇳" }
 
 export default function Profile() {
+  const { t } = useTranslation("profile")
+  const { t: tCommon } = useTranslation("common")
   const { user, isLoggedIn, openLoginModal, logout } = useAuth()
+  const { language, setLanguage, supportedLanguages } = useLanguage()
   const [respiratoryMode, setRespiratoryMode] = useState(true)
   const [persona, setPersona] = useState("20대")
   const [withChildren, setWithChildren] = useState(false)
-  const [language, setLanguage] = useState("ko")
   const [notifDanger, setNotifDanger] = useState(true)
   const [notifDaily, setNotifDaily] = useState(true)
   const [notifDust, setNotifDust] = useState(true)
@@ -42,13 +41,13 @@ export default function Profile() {
       )
       setSavedLists(withPlaces)
     })
-  }, [isLoggedIn])
+  }, [isLoggedIn, language])
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-4xl mx-auto w-full px-4 md:px-container-margin pt-gutter md:pt-section-gap pb-24 md:pb-section-gap flex flex-col gap-section-gap">
         <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface">
-          프로필 및 설정
+          {t("title")}
         </h1>
 
         {/* Profile card */}
@@ -63,15 +62,15 @@ export default function Profile() {
               <div className="text-center">
                 <h2 className="font-headline-lg-mobile text-headline-lg-mobile">{user.nickname}</h2>
                 <p className="font-body-md text-body-md text-on-primary-container">
-                  {user.nickname}님, 안전한 부산 여행 하고 계세요!
+                  {t("greeting", { nickname: user.nickname })}
                 </p>
               </div>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-stack-gap relative z-10 w-full">
-              <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-center">NowGo Busan 시작하기</h2>
+              <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-center">{t("startTitle")}</h2>
               <p className="font-body-md text-body-md text-on-primary-container text-center mb-2">
-                맞춤 안전 알림을 받고 관심 있는 관광지를 저장해보세요.
+                {t("startSubtitle")}
               </p>
               <button
                 type="button"
@@ -79,7 +78,7 @@ export default function Profile() {
                 className="bg-white text-primary font-body-md text-body-md rounded-lg px-6 py-3 font-bold flex items-center gap-2 shadow-lg hover:bg-white/90 transition-colors"
               >
                 <span className="material-symbols-outlined filled-icon">login</span>
-                로그인하기
+                {t("login")}
               </button>
             </div>
           )}
@@ -88,21 +87,21 @@ export default function Profile() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
           {/* Column 1 */}
           <div className="flex flex-col gap-gutter">
-            <SettingsCard icon="psychology" title="맞춤 설정">
+            <SettingsCard icon="psychology" title={t("personalizationTitle")}>
               <div className="flex justify-between items-start gap-4">
                 <div className="flex flex-col">
-                  <span className="font-body-md text-body-md font-bold text-on-surface">호흡기 약자 모드</span>
+                  <span className="font-body-md text-body-md font-bold text-on-surface">{t("respiratoryMode")}</span>
                   <span className="font-label-sm text-label-sm text-on-surface-variant">
-                    대기질·자외선에 더 민감한 추천을 받아요.
+                    {t("respiratoryModeDesc")}
                   </span>
                 </div>
                 <Toggle checked={respiratoryMode} onChange={setRespiratoryMode} activeClass="peer-checked:bg-primary" />
               </div>
               <Divider />
               <div className="flex flex-col gap-2">
-                <span className="font-body-md text-body-md font-bold text-on-surface">내 페르소나</span>
+                <span className="font-body-md text-body-md font-bold text-on-surface">{t("personaTitle")}</span>
                 <span className="font-label-sm text-label-sm text-on-surface-variant mb-2">
-                  Recommend 탭 추천 필터에 반영돼요.
+                  {t("personaDesc")}
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {PERSONAS.map((p) => (
@@ -116,44 +115,44 @@ export default function Profile() {
                           : "border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
                       }`}
                     >
-                      {p}
+                      {t(`personas.${p}`)}
                     </button>
                   ))}
                 </div>
                 <div className="flex justify-between items-center mt-3 bg-surface-container-low p-3 rounded-lg border border-outline-variant/50">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary">child_care</span>
-                    <span className="font-body-md text-body-md">아이 동반</span>
+                    <span className="font-body-md text-body-md">{t("withChildren")}</span>
                   </div>
                   <Toggle checked={withChildren} onChange={setWithChildren} activeClass="peer-checked:bg-primary" />
                 </div>
               </div>
             </SettingsCard>
 
-            <SettingsCard icon="translate" title="언어">
+            <SettingsCard icon="translate" title={t("languageTitle")}>
               <div className="flex flex-col gap-1">
-                {LANGUAGES.map((lang) => (
+                {supportedLanguages.map((lang) => (
                   <button
-                    key={lang.code}
+                    key={lang}
                     type="button"
-                    onClick={() => setLanguage(lang.code)}
+                    onClick={() => setLanguage(lang)}
                     className={`flex justify-between items-center p-3 rounded-lg border transition-colors ${
-                      lang.code === language
+                      lang === language
                         ? "bg-surface-container-low border-primary/20"
                         : "border-transparent hover:bg-surface-container-low"
                     }`}
                   >
                     <span className="flex items-center gap-3">
-                      <span className="text-xl">{lang.flag}</span>
+                      <span className="text-xl">{LANGUAGE_FLAGS[lang]}</span>
                       <span
                         className={`font-body-md text-body-md ${
-                          lang.code === language ? "font-bold text-primary" : "text-on-surface-variant"
+                          lang === language ? "font-bold text-primary" : "text-on-surface-variant"
                         }`}
                       >
-                        {lang.label}
+                        {tCommon(`language.${lang}`)}
                       </span>
                     </span>
-                    {lang.code === language && <span className="material-symbols-outlined text-primary">check</span>}
+                    {lang === language && <span className="material-symbols-outlined text-primary">check</span>}
                   </button>
                 ))}
               </div>
@@ -162,28 +161,28 @@ export default function Profile() {
 
           {/* Column 2 */}
           <div className="flex flex-col gap-gutter">
-            <SettingsCard icon="notifications_active" title="알림">
+            <SettingsCard icon="notifications_active" title={t("notificationsTitle")}>
               <div className="flex justify-between items-center gap-4">
-                <span className="font-body-md text-body-md text-on-surface">찜한 장소 위험 신호 알림</span>
+                <span className="font-body-md text-body-md text-on-surface">{t("notifDanger")}</span>
                 <Toggle checked={notifDanger} onChange={setNotifDanger} activeClass="peer-checked:bg-error" />
               </div>
               <Divider />
               <div className="flex justify-between items-center gap-4">
-                <span className="font-body-md text-body-md text-on-surface">매일 아침 추천 코스 알림</span>
+                <span className="font-body-md text-body-md text-on-surface">{t("notifDaily")}</span>
                 <Toggle checked={notifDaily} onChange={setNotifDaily} activeClass="peer-checked:bg-primary" />
               </div>
               <Divider />
               <div className="flex justify-between items-center gap-4">
-                <span className="font-body-md text-body-md text-on-surface">황사·폭염 특보 알림</span>
+                <span className="font-body-md text-body-md text-on-surface">{t("notifDust")}</span>
                 <Toggle checked={notifDust} onChange={setNotifDust} activeClass="peer-checked:bg-tertiary-container" />
               </div>
             </SettingsCard>
 
-            <SettingsCard icon="settings" title="일반">
+            <SettingsCard icon="settings" title={t("generalTitle")}>
               <div className="flex justify-between items-center gap-4">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-on-surface-variant">dark_mode</span>
-                  <span className="font-body-md text-body-md text-on-surface">다크 모드</span>
+                  <span className="font-body-md text-body-md text-on-surface">{t("darkMode")}</span>
                 </div>
                 <Toggle checked={darkMode} onChange={setDarkMode} activeClass="peer-checked:bg-inverse-surface" />
               </div>
@@ -196,7 +195,7 @@ export default function Profile() {
                   >
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-primary">manage_accounts</span>
-                      <span className="font-body-md text-body-md text-on-surface font-bold">회원 관리</span>
+                      <span className="font-body-md text-body-md text-on-surface font-bold">{t("adminUsers")}</span>
                     </div>
                     <span className="material-symbols-outlined text-outline-variant">chevron_right</span>
                   </Link>
@@ -207,7 +206,7 @@ export default function Profile() {
                   >
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-primary">database</span>
-                      <span className="font-body-md text-body-md text-on-surface font-bold">데이터</span>
+                      <span className="font-body-md text-body-md text-on-surface font-bold">{t("adminData")}</span>
                     </div>
                     <span className="material-symbols-outlined text-outline-variant">chevron_right</span>
                   </Link>
@@ -216,15 +215,15 @@ export default function Profile() {
               )}
               <div className="flex justify-between items-center gap-4 py-1">
                 <div className="flex flex-col">
-                  <span className="font-body-md text-body-md text-on-surface">데이터 출처</span>
-                  <span className="font-label-sm text-label-sm text-on-surface-variant">TourAPI · 관광 빅데이터 기반</span>
+                  <span className="font-body-md text-body-md text-on-surface">{t("dataSource")}</span>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant">{t("dataSourceValue")}</span>
                 </div>
                 <span className="material-symbols-outlined text-outline-variant">chevron_right</span>
               </div>
               <Divider />
               <div className="flex justify-between items-center gap-4 py-1">
-                <span className="font-body-md text-body-md text-on-surface">앱 버전</span>
-                <span className="font-label-sm text-label-sm text-on-surface-variant">v0.1.0 (최신 버전)</span>
+                <span className="font-body-md text-body-md text-on-surface">{t("appVersion")}</span>
+                <span className="font-label-sm text-label-sm text-on-surface-variant">{t("appVersionValue")}</span>
               </div>
               {isLoggedIn && (
                 <div className="mt-4 pt-4 border-t border-outline-variant/30 flex justify-center">
@@ -233,7 +232,7 @@ export default function Profile() {
                     onClick={logout}
                     className="font-body-md text-body-md text-error font-bold hover:bg-error-container/20 px-4 py-2 rounded-lg transition-colors"
                   >
-                    로그아웃
+                    {t("logout")}
                   </button>
                 </div>
               )}
@@ -246,21 +245,21 @@ export default function Profile() {
           <div className="flex justify-between items-center">
             <h2 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-bold text-on-surface flex items-center gap-2">
               <span className="material-symbols-outlined text-error filled-icon">favorite</span>
-              찜한 관광지
+              {t("favoritesTitle")}
             </h2>
             {isLoggedIn && savedLists.length > 0 && (
               <Link to="/saved" className="font-body-md text-body-md text-primary font-bold hover:underline">
-                보관함 전체보기
+                {t("viewAllSaved")}
               </Link>
             )}
           </div>
 
           {!isLoggedIn && (
-            <p className="font-body-md text-body-md text-on-surface-variant">로그인하면 저장한 관광지가 여기 모여요.</p>
+            <p className="font-body-md text-body-md text-on-surface-variant">{t("loginPrompt")}</p>
           )}
           {isLoggedIn && savedLists.length === 0 && (
             <p className="font-body-md text-body-md text-on-surface-variant">
-              아직 저장한 관광지가 없어요. 지도에서 마커를 눌러 저장해보세요.
+              {t("emptyFavorites")}
             </p>
           )}
 
@@ -276,6 +275,7 @@ export default function Profile() {
 const SAVED_PREVIEW_COUNT = 3
 
 function SavedListSection({ list }) {
+  const { t } = useTranslation("profile")
   const [expanded, setExpanded] = useState(false)
   const visible = expanded ? list.places : list.places.slice(0, SAVED_PREVIEW_COUNT)
   const hiddenCount = list.places.length - SAVED_PREVIEW_COUNT
@@ -287,7 +287,7 @@ function SavedListSection({ list }) {
           {list.isDefault ? "favorite" : "list"}
         </span>
         {list.name}
-        <span className="font-label-sm text-label-sm text-outline">{list.places.length}개</span>
+        <span className="font-label-sm text-label-sm text-outline">{t("placesCount", { count: list.places.length })}</span>
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-gutter">
         {visible.map((place) => (
@@ -300,7 +300,7 @@ function SavedListSection({ list }) {
           onClick={() => setExpanded((v) => !v)}
           className="self-start font-body-md text-body-md text-primary font-bold hover:underline"
         >
-          {expanded ? "접기" : `더보기 (${hiddenCount}개 더)`}
+          {expanded ? t("collapse") : t("showMore", { count: hiddenCount })}
         </button>
       )}
     </div>

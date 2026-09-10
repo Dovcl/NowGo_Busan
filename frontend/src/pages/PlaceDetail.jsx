@@ -1,4 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { usePlaceDetail } from "../hooks/usePlaceDetail"
 import { useSaveButton } from "../hooks/useSaveButton"
 import { ENV_ROWS } from "../lib/envRows"
@@ -6,19 +7,13 @@ import { STATUS, scoreToStatus } from "../lib/status"
 import { weatherCondition } from "../lib/weather"
 import SaveToListModal from "../components/SaveToListModal"
 
-const SCORE_ROWS = [
-  { key: "air", label: "대기질" },
-  { key: "weather", label: "기상" },
-  { key: "uv", label: "자외선" },
-  { key: "ripCurrentOrWater", label: "이안류/수질" },
-  { key: "crowd", label: "혼잡도" },
-]
+const SCORE_ROWS = ["air", "weather", "uv", "ripCurrentOrWater", "crowd"]
 
 const INFO_ROWS = [
-  { key: "usetime", icon: "schedule", label: "이용시간" },
-  { key: "restdate", icon: "event_busy", label: "휴무일" },
-  { key: "parking", icon: "local_parking", label: "주차시설" },
-  { key: "usefee", icon: "payments", label: "이용요금" },
+  { key: "usetime", icon: "schedule" },
+  { key: "restdate", icon: "event_busy" },
+  { key: "parking", icon: "local_parking" },
+  { key: "usefee", icon: "payments" },
 ]
 
 export default function PlaceDetail() {
@@ -29,6 +24,8 @@ export default function PlaceDetail() {
 }
 
 function PlaceDetailView({ placeId }) {
+  const { t } = useTranslation("placeDetail")
+  const { t: tCommon } = useTranslation("common")
   const navigate = useNavigate()
   const { place, environment } = usePlaceDetail(placeId)
   const { isSaved, showModal, handleClick, closeModal } = useSaveButton(place?.id)
@@ -37,7 +34,7 @@ function PlaceDetailView({ placeId }) {
   if (place === null) {
     return (
       <div className="h-full overflow-y-auto flex items-center justify-center">
-        <p className="font-body-md text-on-surface-variant">해당 관광지를 찾을 수 없어요.</p>
+        <p className="font-body-md text-on-surface-variant">{t("notFound")}</p>
       </div>
     )
   }
@@ -99,11 +96,7 @@ function PlaceDetailView({ placeId }) {
                         })}
                       </div>
                       <p className={`font-label-sm text-label-sm mt-2 text-center ${status.text}`}>
-                        {place.status === "danger"
-                          ? "지금은 방문을 피하는 게 좋아요"
-                          : place.status === "caution"
-                          ? "혼잡할 수 있어요, 참고하세요"
-                          : "지금 방문하기 좋은 상태예요!"}
+                        {t(`statusMessage.${place.status === "danger" ? "danger" : place.status === "caution" ? "caution" : "safe"}`)}
                       </p>
                     </div>
                   )}
@@ -116,7 +109,7 @@ function PlaceDetailView({ placeId }) {
               <section className="bg-surface-container-lowest rounded-xl p-card-padding shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30">
                 <h2 className="font-body-md font-bold mb-4 flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">tips_and_updates</span>
-                  방문객 팁 &amp; 리뷰
+                  {t("tipsTitle")}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {place.tips.map((tip) => (
@@ -137,7 +130,7 @@ function PlaceDetailView({ placeId }) {
               <section className="bg-surface-container-lowest rounded-xl p-card-padding shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30">
                 <h2 className="font-body-md font-bold mb-4 flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">restaurant</span>
-                  주변 추천 맛집 &amp; 카페
+                  {t("nearbyFoodTitle")}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {place.nearbyFood.map((food) => (
@@ -166,7 +159,7 @@ function PlaceDetailView({ placeId }) {
               <div className="space-y-6">
                 {place.info && (
                   <section>
-                    <h2 className="font-headline-lg-mobile text-on-surface mb-4">관광지 정보</h2>
+                    <h2 className="font-headline-lg-mobile text-on-surface mb-4">{t("infoTitle")}</h2>
                     <div className="grid grid-cols-1 gap-3 bg-surface-container-low p-4 rounded-xl">
                       {INFO_ROWS.map((row) => {
                         const value = place.info[row.key]
@@ -175,7 +168,7 @@ function PlaceDetailView({ placeId }) {
                           <div key={row.key} className="flex items-start gap-3">
                             <span className="material-symbols-outlined text-primary">{row.icon}</span>
                             <div>
-                              <p className="text-label-sm text-on-surface-variant">{row.label}</p>
+                              <p className="text-label-sm text-on-surface-variant">{t(`infoRow.${row.key}`)}</p>
                               <p className="text-body-md font-bold">{value}</p>
                             </div>
                           </div>
@@ -187,16 +180,16 @@ function PlaceDetailView({ placeId }) {
 
                 {environment && (
                   <section className="border-t border-outline-variant/30 pt-6">
-                    <h2 className="font-body-md font-bold mb-4">현재 날씨 · 대기질</h2>
+                    <h2 className="font-body-md font-bold mb-4">{t("weatherAirTitle")}</h2>
                     <div className="grid grid-cols-2 gap-3 bg-surface-container-low p-4 rounded-xl">
                       {ENV_ROWS.map((row) => {
-                        const value = row.get(environment)
+                        const value = row.get(environment, t)
                         if (!value) return null
                         return (
-                          <div key={row.label} className="flex items-center gap-2">
+                          <div key={row.labelKey} className="flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary text-[20px]">{row.icon}</span>
                             <div>
-                              <p className="text-label-sm text-on-surface-variant">{row.label}</p>
+                              <p className="text-label-sm text-on-surface-variant">{t(`envRows.${row.labelKey}`)}</p>
                               <p className="text-sm font-bold">{value}</p>
                             </div>
                           </div>
@@ -208,15 +201,15 @@ function PlaceDetailView({ placeId }) {
 
                 {place.breakdown && (
                   <section className="border-t border-outline-variant/30 pt-6">
-                    <h2 className="font-body-md font-bold mb-4">실시간 환경 지표</h2>
+                    <h2 className="font-body-md font-bold mb-4">{t("breakdownTitle")}</h2>
                     <div className="space-y-3">
-                      {SCORE_ROWS.map((row) => {
-                        const value = place.breakdown?.[row.key]
+                      {SCORE_ROWS.map((key) => {
+                        const value = place.breakdown?.[key]
                         if (value == null) return null
                         const rowStatus = STATUS[scoreToStatus(value)]
                         return (
-                          <div key={row.key} className="flex items-center justify-between">
-                            <span className="text-sm">{row.label}</span>
+                          <div key={key} className="flex items-center justify-between">
+                            <span className="text-sm">{t(`scoreRow.${key}`)}</span>
                             <div className={`flex-grow mx-3 h-1.5 rounded-full ${rowStatus.trackBg}`}>
                               <div className={`h-full rounded-full ${rowStatus.bg}`} style={{ width: `${value}%` }} />
                             </div>
@@ -230,14 +223,14 @@ function PlaceDetailView({ placeId }) {
 
                 {environment?.weather?.forecast?.length > 0 && (
                   <section className="border-t border-outline-variant/30 pt-6">
-                    <h2 className="font-body-md font-bold mb-2">오늘의 날씨 예보</h2>
-                    <p className="text-label-sm text-on-surface-variant mb-4">기상청 단기예보 · 3시간 간격</p>
+                    <h2 className="font-body-md font-bold mb-2">{t("forecastTitle")}</h2>
+                    <p className="text-label-sm text-on-surface-variant mb-4">{t("forecastSubtitle")}</p>
                     <div className="bg-surface-container-low rounded-lg p-4 flex justify-between gap-1 overflow-x-auto">
                       {environment.weather.forecast.map((slot) => {
                         const condition = weatherCondition(slot.sky, slot.precipitationType)
                         return (
                           <div key={`${slot.hour}`} className="flex flex-col items-center gap-1 shrink-0 w-12">
-                            <span className="text-[11px] text-on-surface-variant">{slot.hour}시</span>
+                            <span className="text-[11px] text-on-surface-variant">{t("hourSuffix", { hour: slot.hour })}</span>
                             <span className={`material-symbols-outlined text-[20px] ${condition.color}`}>{condition.icon}</span>
                             <span className="text-sm font-bold">{Math.round(slot.temperature)}°</span>
                             {slot.precipitationProb > 0 && (
@@ -252,7 +245,7 @@ function PlaceDetailView({ placeId }) {
 
                 <div className="flex gap-2">
                   <button type="button" className="flex-1 bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary/90 transition-all">
-                    경로보기 (카카오맵)
+                    {t("directionsButton")}
                   </button>
                   <button
                     type="button"
@@ -272,7 +265,7 @@ function PlaceDetailView({ placeId }) {
 
             {place.alternatives && (
               <div className="bg-surface-container-lowest rounded-xl p-card-padding shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30">
-                <h2 className="font-body-md font-bold mb-4">위험 시 대체 관광지</h2>
+                <h2 className="font-body-md font-bold mb-4">{t("alternativesTitle")}</h2>
                 <div className="space-y-3">
                   {place.alternatives.map((alt) => {
                     const altStatus = STATUS[alt.status]
@@ -284,7 +277,7 @@ function PlaceDetailView({ placeId }) {
                         <div className="flex-grow">
                           <p className="text-sm font-bold">{alt.name}</p>
                           <p className={`text-[12px] ${altStatus.text}`}>
-                            NowGo {alt.score} ({altStatus.label})
+                            {t("altScoreLabel", { score: alt.score, status: tCommon(`status.${alt.status}`) })}
                           </p>
                         </div>
                       </div>
@@ -297,7 +290,7 @@ function PlaceDetailView({ placeId }) {
         </div>
 
         <Link to="/" className="inline-block mt-8 text-primary font-body-md hover:underline">
-          ← 홈으로 돌아가기
+          {t("backToHome")}
         </Link>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { fetchPlaceById as fetchMockPlaceById } from "../services/scoreService"
 import { fetchPlaceById as fetchRealPlaceById } from "../services/placesService"
 import { fetchEnvironment } from "../services/environmentService"
+import { useLanguage } from "../context/LanguageContext"
 
 // TOP10 목업이 실제 tour_spot.contentid를 id로 쓰므로, mock을 먼저 찾아 큐레이션된
 // score/tips/forecast를 우선 쓰고 없으면 실제 백엔드로 폴백한다.
@@ -14,6 +15,7 @@ async function fetchPlaceById(placeId) {
 }
 
 export function usePlaceDetail(placeId) {
+  const { language } = useLanguage()
   const [place, setPlace] = useState(undefined)
   const [environment, setEnvironment] = useState(undefined)
 
@@ -22,7 +24,7 @@ export function usePlaceDetail(placeId) {
     setEnvironment(undefined)
     if (!placeId) return
     fetchPlaceById(placeId).then(setPlace)
-  }, [placeId])
+  }, [placeId, language])
 
   // mock 큐레이션 장소는 좌표가 없어서(mock/places.js 참고) 자연히 스킵됨
   useEffect(() => {

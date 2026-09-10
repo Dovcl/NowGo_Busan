@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "home": "Home",
+    "map": "Map",
+    "events": "Events",
+    "bumbim": "Busan Bumbim",
+    "profile": "Profile"
+  },
+  "language": {
+    "ko": "한국어",
+    "en": "English",
+    "zh": "中文"
+  },
+  "status": {
+    "safe": "Good",
+    "caution": "Caution",
+    "danger": "Danger"
+  },
+  "pmGrade": {
+    "1": "Good",
+    "2": "Moderate",
+    "3": "Bad",
+    "4": "Very Bad"
+  },
+  "uvLevel": {
+    "low": "Low",
+    "moderate": "Moderate",
+    "high": "High",
+    "veryHigh": "Very High",
+    "extreme": "Extreme",
+    "none": "-"
+  },
+  "ripLevel": {
+    "관심": "Low",
+    "주의": "Caution",
+    "경계": "Alert",
+    "위험": "Danger"
+  },
+  "envGroup": {
+    "해변": "Beach",
+    "산": "Mountain",
+    "도심": "Urban",
+    "실내": "Indoor"
+  },
+  "weatherCondition": {
+    "snow": "Snow",
+    "rainSnow": "Rain/Snow",
+    "rain": "Rain",
+    "clear": "Clear",
+    "partlyCloudy": "Partly Cloudy",
+    "cloudy": "Cloudy",
+    "none": "-"
+  },
+  "envTag": {
+    "outdoor": "Outdoor Spot",
+    "indoor": "Indoor Spot"
+  },
+  "distance": {
+    "walk": "{{minutes}} min walk · {{dist}}",
+    "drive": "{{minutes}} min drive · {{dist}}"
+  },
+  "errors": {
+    "createAccountFailed": "Failed to create account",
+    "roleChangeFailed": "Failed to change role",
+    "withdrawFailed": "Failed to deactivate account",
+    "loginFailed": "Login failed",
+    "signupFailed": "Sign up failed",
+    "kakaoMapLoadFailed": "Failed to load Kakao Map SDK",
+    "kakaoMapKeyMissing": "VITE_KAKAO_JS_API_KEY is not set (check frontend/.env)"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading..."
+  }
+}

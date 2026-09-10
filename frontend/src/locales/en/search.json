@@ -1,0 +1,11 @@
+{
+  "title": "Search Results",
+  "resultUnit": "{{count}} results",
+  "searchPlaceholder": "Search spots, areas, keywords",
+  "typeLabel": "Type",
+  "resetLabel": "Reset",
+  "noResultsForQuery": "No results found for '{{q}}'.",
+  "noResultsFiltered": "No spots match your filters.",
+  "loadMore": "Load more ({{visible}}/{{total}})",
+  "usetime": "Hours {{value}}"
+}

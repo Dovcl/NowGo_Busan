@@ -1,15 +1,17 @@
 import { NavLink } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext"
 
 const NAV_ITEMS = [
-  { to: "/", label: "Home", icon: "home" },
-  { to: "/map", label: "Map", icon: "map" },
-  { to: "/recommend", label: "Events", icon: "celebration" },
-  { to: "/bumbim", label: "Bumbim", icon: "traffic" },
-  { to: "/profile", label: "Profile", icon: "person" },
+  { to: "/", key: "home", icon: "home" },
+  { to: "/map", key: "map", icon: "map" },
+  { to: "/recommend", key: "events", icon: "celebration" },
+  { to: "/bumbim", key: "bumbim", icon: "traffic" },
+  { to: "/profile", key: "profile", icon: "person" },
 ]
 
 export default function BottomNavBar() {
+  const { t } = useTranslation("common")
   const { isLoggedIn, openLoginModal } = useAuth()
 
   return (
@@ -38,7 +40,7 @@ export default function BottomNavBar() {
               <span className={`material-symbols-outlined text-xl mb-1 ${isActive ? "filled-icon" : ""}`}>
                 {item.icon}
               </span>
-              <span className="font-label-sm text-label-sm">{item.label}</span>
+              <span className="font-label-sm text-label-sm">{t(`nav.${item.key}`)}</span>
             </>
           )}
         </NavLink>

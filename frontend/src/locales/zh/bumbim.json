@@ -1,0 +1,88 @@
+{
+  "districtSelectTitle": "选择地区",
+  "districts": {
+    "1": "江西区",
+    "2": "金井区",
+    "3": "机张郡",
+    "4": "南区",
+    "5": "东区",
+    "6": "东莱区",
+    "7": "釜山镇区",
+    "8": "北区",
+    "9": "沙上区",
+    "10": "沙下区",
+    "11": "西区",
+    "12": "水营区",
+    "13": "莲堤区",
+    "14": "影岛区",
+    "15": "中区",
+    "16": "海云台区"
+  },
+  "sidebarNoteLine1": "各地区综合拥堵度功能正在准备中",
+  "sidebarNoteLine2": "选择地区即可查看",
+  "sidebarNoteLine3": "该地区景点的实测数据",
+  "backendErrorTitle": "无法连接到后端服务器",
+  "backendErrorBody": "请确认本地服务器是否已启动(backend-dev,端口8080)。由于连景点列表都无法加载,此页面也无法开启演示模式——演示模式是在真实景点名称·坐标上叠加虚拟拥堵度,所以后端至少需要成功响应一次。",
+  "loading": "加载中…",
+  "trafficTier": {
+    "label": {
+      "light": "顺畅",
+      "moderate": "一般",
+      "busy": "拥堵",
+      "veryBusy": "非常拥堵"
+    },
+    "adjective": {
+      "light": "较空闲",
+      "moderate": "一般",
+      "busy": "较拥堵",
+      "veryBusy": "非常拥堵"
+    }
+  },
+  "focalTitlePrefix": "现在{{name}}附近",
+  "focalTitleSuffix": "",
+  "focalTitleCollecting": "正在收集{{name}}附近的拥堵信息",
+  "recentHourBasis": "最近1小时基准 · {{district}}",
+  "districtFallbackNote": " · 暂以地区平常模式代替实测道路数据显示",
+  "nearbyEvent": "今日附近正在举行'{{event}}'",
+  "gaugeNote": "这是道路拥堵指数,而非人口数量",
+  "noRoadData": "该景点周边没有道路信息,或基准数据尚不充足",
+  "indexLabel": "指数",
+  "infoCard": {
+    "slowerThanUsual": "比平时慢",
+    "currentSpeed": "当前速度",
+    "usualSpeed": "平时速度",
+    "congestedSection": "拥堵路段",
+    "noInfo": "暂无信息",
+    "vsBaseline": "相对基准速度",
+    "nearbyRoadAvg": "周边道路平均",
+    "dowHourBaseline": "星期·时段基准",
+    "lowestSpeedLink": "速度最低路段"
+  },
+  "demoBanner": {
+    "viewingDemoData": "正在查看演示数据",
+    "realData": "真实数据",
+    "demoNote": "— 假设基准数据已累积3周以上的虚拟数值,并非真实数值",
+    "viewRealData": "切换为真实数据",
+    "viewDemoData": "查看演示用虚拟数据"
+  },
+  "historyTitle": "今日实测 vs 平时基准",
+  "collectingHistory": "正在累积拥堵历史数据。基准数据累积3周以上后,将为您比较今日实测与平时模式。",
+  "historyFooter": "基于道路速度 · 最近1小时基准 · 每小时10分更新{{demoSuffix}}",
+  "demoSuffix": " · 演示数据",
+  "hourSuffix": "{{hour}}点",
+  "nowLabel": "现在",
+  "actualSpeedLegend": "今日实测速度(km/h)",
+  "baselineSpeedLegend": "平时速度(基准,km/h)",
+  "actualDemoLegend": "今日实测(演示)",
+  "baselineDemoLegend": "平时基准(演示)",
+  "noMapData": "没有可显示的实测数据",
+  "choiceListTitle": "当前可选景点",
+  "collecting": "收集中",
+  "loadingDistrictSpots": "正在加载该地区景点",
+  "badge": {
+    "goodNow": "现在适合前往",
+    "moderate": "一般",
+    "avoidPeak": "避开高峰"
+  },
+  "congestionIndexValue": "拥堵指数 {{value}}"
+}

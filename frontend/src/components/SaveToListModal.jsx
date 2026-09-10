@@ -1,9 +1,11 @@
 // 구글 지도의 "목록에 저장" 팝업 재현. 체크박스로 여러 리스트에 동시에 담을 수 있고,
 // "새 목록"으로 그 자리에서 리스트를 만들어 바로 담을 수 있다.
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { addToList, createList, fetchMyLists, removeFromList } from "../services/listsService"
 
 export default function SaveToListModal({ contentid, onClose }) {
+  const { t } = useTranslation("saved")
   const [lists, setLists] = useState(null)
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState("")
@@ -45,7 +47,7 @@ export default function SaveToListModal({ contentid, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-card-padding pb-2">
-          <h2 className="font-body-md text-body-md font-bold">목록에 저장</h2>
+          <h2 className="font-body-md text-body-md font-bold">{t("saveToListTitle")}</h2>
           <button type="button" onClick={handleDone} className="w-8 h-8 rounded-full hover:bg-surface-container-low flex items-center justify-center">
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -74,7 +76,7 @@ export default function SaveToListModal({ contentid, onClose }) {
               </div>
               <div className="flex-1">
                 <p className="text-body-md font-body-md font-bold text-on-surface">{list.name}</p>
-                <p className="text-label-sm font-label-sm text-on-surface-variant">{list.itemCount}개 장소</p>
+                <p className="text-label-sm font-label-sm text-on-surface-variant">{t("placeCountInList", { count: list.itemCount })}</p>
               </div>
               <input
                 type="checkbox"
@@ -98,11 +100,11 @@ export default function SaveToListModal({ contentid, onClose }) {
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onBlur={() => !newName.trim() && setCreating(false)}
-                placeholder="리스트 이름"
+                placeholder={t("listNamePlaceholder")}
                 className="flex-1 bg-surface border border-outline-variant rounded-lg px-3 py-2 text-body-md font-body-md focus:outline-none focus:border-primary"
               />
               <button type="submit" className="text-primary font-body-md font-bold px-2">
-                추가
+                {t("add")}
               </button>
             </form>
           ) : (
@@ -114,14 +116,14 @@ export default function SaveToListModal({ contentid, onClose }) {
               <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center">
                 <span className="material-symbols-outlined text-[20px]">add</span>
               </div>
-              <span className="text-body-md font-body-md font-bold text-primary">새 목록</span>
+              <span className="text-body-md font-body-md font-bold text-primary">{t("newList")}</span>
             </button>
           )}
         </div>
 
         <div className="p-card-padding pt-3">
           <button type="button" onClick={handleDone} className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary/90 transition-colors">
-            완료
+            {t("done")}
           </button>
         </div>
       </div>

@@ -11,6 +11,8 @@
 // there's no algorithm yet, so they're left null here instead of being faked
 // on the backend. See harness/DECISIONS.md for why.
 
+import i18n from "../lib/i18n"
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"
 
 // 도보/차량 여부를 거리로 대략 나누고(1.2km 기준), 각각 평균 속도(도보 4km/h,
@@ -20,7 +22,7 @@ function formatDistance(meters) {
   const isWalk = meters <= 1200
   const minutes = Math.max(1, Math.round(meters / (isWalk ? 67 : 500)))
   const dist = meters >= 1000 ? `${(meters / 1000).toFixed(1)}km` : `${Math.round(meters)}m`
-  return `${isWalk ? "도보" : "차량"} ${minutes}분 · ${dist}`
+  return i18n.t(isWalk ? "distance.walk" : "distance.drive", { ns: "common", minutes, dist })
 }
 
 export function adaptPlace(place) {
@@ -43,7 +45,7 @@ export function adaptPlace(place) {
     envGroup4: place.env_group4, // 해변 / 산 / 도심 / 실내
     envTypeCode: place.env_type_code,
     isEnvTarget: place.is_env_target, // 환경 신호등 점수 대상 여부 (실내는 항상 false)
-    envTag: place.is_env_target ? "실외 관광지" : "실내 관광지",
+    envTag: i18n.t(place.is_env_target ? "envTag.outdoor" : "envTag.indoor", { ns: "common" }),
     sigunguCode: place.sigungucode,
     lat: place.lat,
     lng: place.lng,
@@ -66,15 +68,16 @@ export function adaptPlace(place) {
 }
 
 export async function fetchPlaces(params = {}) {
-  const query = new URLSearchParams(params).toString()
-  const res = await fetch(`${API_BASE_URL}/api/places${query ? `?${query}` : ""}`)
+  const query = new URLSearchParams({ ...params, lang: i18n.language }).toString()
+  const res = await fetch(`${API_BASE_URL}/api/places?${query}`)
   if (!res.ok) throw new Error(`fetchPlaces failed: ${res.status}`)
   const data = await res.json()
   return data.map(adaptPlace)
 }
 
 export async function fetchPlaceById(contentid) {
-  const res = await fetch(`${API_BASE_URL}/api/places/${contentid}`)
+  const query = new URLSearchParams({ lang: i18n.language }).toString()
+  const res = await fetch(`${API_BASE_URL}/api/places/${contentid}?${query}`)
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`fetchPlaceById failed: ${res.status}`)
   return adaptPlace(await res.json())

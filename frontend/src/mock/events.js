@@ -6,9 +6,9 @@
 // PulseDashboard에서 이미 쓰던 chart-3/5(=amber/purple)를 재사용해 앱 전체 색 의미를 통일했다.
 // exhibition에는 참고 목업이 쓴 error(빨강) 대신 primary를 썼다 — 빨강은 이 앱에서
 // NowGo Score "위험"으로 이미 의미가 고정돼 있어 겹치면 안 되기 때문.
+// 라벨은 여기 두지 않고 t(`eventCategory.${key}`, {ns: "recommend"})로 조회한다.
 export const EVENT_CATEGORIES = {
   festival: {
-    label: "축제",
     dot: "bg-secondary",
     text: "text-secondary",
     chipActive: "bg-secondary text-on-secondary",
@@ -18,7 +18,6 @@ export const EVENT_CATEGORIES = {
     badgeText: "text-on-secondary",
   },
   performance: {
-    label: "공연",
     dot: "bg-tertiary-container",
     text: "text-tertiary",
     chipActive: "bg-tertiary text-on-tertiary",
@@ -28,7 +27,6 @@ export const EVENT_CATEGORIES = {
     badgeText: "text-on-tertiary",
   },
   exhibition: {
-    label: "전시",
     dot: "bg-primary",
     text: "text-primary",
     chipActive: "bg-primary text-on-primary",
@@ -38,7 +36,6 @@ export const EVENT_CATEGORIES = {
     badgeText: "text-on-primary",
   },
   sports: {
-    label: "스포츠",
     dot: "bg-chart-5",
     text: "text-chart-5",
     chipActive: "bg-chart-5 text-white",
@@ -48,7 +45,6 @@ export const EVENT_CATEGORIES = {
     badgeText: "text-white",
   },
   market: {
-    label: "마켓·푸드",
     dot: "bg-chart-3",
     text: "text-chart-3",
     chipActive: "bg-chart-3 text-white",
@@ -59,7 +55,6 @@ export const EVENT_CATEGORIES = {
   },
   // 사용자가 캘린더에서 직접 만든 개인 일정용 — 공식 행사와 구분되게 중립 톤.
   personal: {
-    label: "내 일정",
     dot: "bg-outline",
     text: "text-outline",
     chipActive: "bg-outline text-white",

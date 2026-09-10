@@ -1,0 +1,32 @@
+{
+  "searchTitle": "搜索景点",
+  "searchPlaceholder": "海云台、广安里等...",
+  "typeTitle": "景点类型",
+  "all": "全部",
+  "sidebarLabel": {
+    "해변": "海边",
+    "산": "自然 (山/公园)",
+    "도심": "文化/历史",
+    "실내": "室内"
+  },
+  "envGroupLabel": {
+    "해변": "海边",
+    "산": "自然",
+    "도심": "市区",
+    "실내": "室内",
+    "기타": "其他"
+  },
+  "savedListsTitle": "收藏夹",
+  "emptyList": "还没有收藏的景点。",
+  "backToNormalMap": "返回普通地图",
+  "sortTitle": "排序方式",
+  "sortOptions": {
+    "score": "NowGo指数排序",
+    "distance": "距离排序",
+    "crowd": "拥挤度排序",
+    "name": "名称排序"
+  },
+  "dangerOnly": "仅显示风险景点",
+  "excludeDanger": "排除风险景点",
+  "viewingRoute": "正在查看路线: {{name}}"
+}

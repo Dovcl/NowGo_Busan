@@ -2,6 +2,7 @@
 // 캘린더 팝업에서 담거나(가고싶어요) 직접 개인 일정을 만들 수 있다.
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import EventCalendarModal from "../components/EventCalendarModal"
 import EventDetailModal from "../components/EventDetailModal"
 import { useAuth } from "../context/AuthContext"
@@ -15,11 +16,7 @@ const CATEGORY_ORDER = ["festival", "performance", "exhibition", "sports", "mark
 
 // "전체 행사" 목록 전용 상태 필터 — 카테고리 필터(위쪽 탭)와는 별개 축.
 // 연도 버튼은 하드코딩하지 않고 실제 행사 데이터(startDate)에 있는 연도로만 만든다.
-const STATUS_FILTERS = [
-  { key: "all", label: "전체" },
-  { key: "upcoming", label: "예정 및 진행중" },
-  { key: "ended", label: "종료" },
-]
+const STATUS_FILTERS = ["all", "upcoming", "ended"]
 
 function matchesStatusFilter(event, filter) {
   if (filter === "all") return true
@@ -47,6 +44,7 @@ function normalizeForSearch(text) {
 }
 
 export default function Recommend() {
+  const { t } = useTranslation("recommend")
   const { user } = useAuth()
   const navigate = useNavigate()
   const [events, setEvents] = useState([])
@@ -107,9 +105,9 @@ export default function Recommend() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-outline-variant/30 pb-6">
           <div className="flex flex-col gap-2">
             <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface">
-              축제 · 행사
+              {t("pageTitle")}
             </h1>
-            <p className="font-body-md text-body-md text-on-surface-variant">부산 곳곳의 축제와 행사를 한눈에 모아봤어요.</p>
+            <p className="font-body-md text-body-md text-on-surface-variant">{t("pageSubtitle")}</p>
           </div>
           <button
             type="button"
@@ -117,24 +115,24 @@ export default function Recommend() {
             className="flex items-center gap-2 bg-surface hover:bg-surface-container transition-colors border border-outline-variant rounded-full px-4 py-2 text-primary font-label-sm shadow-sm shrink-0"
           >
             <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-            캘린더 보기
+            {t("calendarButton")}
           </button>
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
           <FilterChip active={category === "all"} onClick={() => setCategory("all")}>
-            전체
+            {t("categoryAll")}
           </FilterChip>
           {CATEGORY_ORDER.map((key) => (
             <FilterChip key={key} active={category === key} onClick={() => setCategory(key)} dotClass={EVENT_CATEGORIES[key].dot}>
-              {EVENT_CATEGORIES[key].label}
+              {t(`eventCategory.${key}`)}
             </FilterChip>
           ))}
         </div>
 
         {noteworthy.length > 0 && (
           <section className="mt-4 flex flex-col gap-4">
-            <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">놓치면 아쉬운 행사</h2>
+            <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">{t("noteworthyTitle")}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
               {noteworthy.map((ev) => (
                 <NoteworthyCard
@@ -170,8 +168,8 @@ export default function Recommend() {
         <section className="mt-6 flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-baseline gap-2">
-              <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">전체 행사</h2>
-              <span className="font-label-sm text-[12px] text-outline">{filtered.length}건</span>
+              <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">{t("allEventsTitle")}</h2>
+              <span className="font-label-sm text-[12px] text-outline">{t("resultUnit", { count: filtered.length })}</span>
               {user?.role === "admin" && pendingReviewCount > 0 && (
                 <button
                   type="button"
@@ -179,7 +177,7 @@ export default function Recommend() {
                   className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-container text-on-tertiary-container font-label-sm text-[11px] font-bold hover:opacity-80 transition-opacity"
                 >
                   <span className="material-symbols-outlined text-[14px]">rule</span>
-                  검토 대기 {pendingReviewCount}
+                  {t("pendingReview", { count: pendingReviewCount })}
                 </button>
               )}
             </div>
@@ -191,7 +189,7 @@ export default function Recommend() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="행사명, 장소로 검색"
+                placeholder={t("searchPlaceholder")}
                 className="w-full bg-surface-container border border-outline-variant rounded-full pl-9 pr-8 py-2 text-[13.5px] font-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors"
               />
               {search && (
@@ -207,9 +205,9 @@ export default function Recommend() {
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
-            {STATUS_FILTERS.map(({ key, label }) => (
+            {STATUS_FILTERS.map((key) => (
               <FilterChip key={key} active={statusFilter === key} onClick={() => setStatusFilter(key)}>
-                {label}
+                {t(`statusFilter.${key}`)}
               </FilterChip>
             ))}
             {yearOptions.map((year) => (
@@ -223,7 +221,7 @@ export default function Recommend() {
             <div className="flex flex-col items-center gap-2 py-12 text-center">
               <span className="material-symbols-outlined text-3xl text-outline-variant">search_off</span>
               <p className="font-label-sm text-[13px] text-on-surface-variant">
-                {query ? `'${search.trim()}'에 대한 검색 결과가 없어요.` : "해당하는 행사가 없어요."}
+                {query ? t("noResultsForQuery", { q: search.trim() }) : t("noResults")}
               </p>
             </div>
           ) : (
@@ -286,6 +284,7 @@ function FilterChip({ active, onClick, dotClass, children }) {
 }
 
 function NoteworthyCard({ event, onOpenCalendar, onOpenDetail }) {
+  const { t, i18n } = useTranslation("recommend")
   const status = eventStatus(event)
   const cat = EVENT_CATEGORIES[event.category]
   return (
@@ -299,7 +298,7 @@ function NoteworthyCard({ event, onOpenCalendar, onOpenDetail }) {
           status.state === "live" ? "bg-secondary text-white" : "bg-on-surface/70 text-white backdrop-blur-sm"
         }`}
       >
-        {status.label}
+        {t(`eventStatus.${status.stateKey}`, { days: status.days })}
       </span>
       <div className="h-40 w-full overflow-hidden relative">
         <img
@@ -311,9 +310,9 @@ function NoteworthyCard({ event, onOpenCalendar, onOpenDetail }) {
       </div>
       <div className="p-card-padding flex flex-col gap-3 flex-1">
         <div className="flex flex-col gap-1">
-          <span className={`font-label-sm text-[11px] font-bold ${cat.text}`}>{cat.label}</span>
+          <span className={`font-label-sm text-[11px] font-bold ${cat.text}`}>{t(`eventCategory.${event.category}`)}</span>
           <h3 className="font-body-md text-[16px] font-bold text-on-surface line-clamp-1">{event.title}</h3>
-          <span className="font-label-sm text-[12.5px] text-on-surface-variant">{formatDateRange(event.startDate, event.endDate)}</span>
+          <span className="font-label-sm text-[12.5px] text-on-surface-variant">{formatDateRange(event.startDate, event.endDate, i18n.language)}</span>
           <span className="font-label-sm text-[12.5px] text-on-surface-variant flex items-center gap-1">
             <span className="material-symbols-outlined text-[14px]">location_on</span>
             {event.location}
@@ -327,7 +326,7 @@ function NoteworthyCard({ event, onOpenCalendar, onOpenDetail }) {
           className="mt-auto self-start flex items-center gap-1 font-label-sm text-[12px] text-primary hover:underline"
         >
           <span className="material-symbols-outlined text-[15px]">calendar_month</span>
-          캘린더에서 보기
+          {t("viewInCalendar")}
         </span>
       </div>
     </button>
@@ -335,6 +334,7 @@ function NoteworthyCard({ event, onOpenCalendar, onOpenDetail }) {
 }
 
 function EventRow({ event, saved, onToggleSaved, onOpenDetail }) {
+  const { t } = useTranslation("recommend")
   const status = eventStatus(event)
   const cat = EVENT_CATEGORIES[event.category]
   return (
@@ -354,7 +354,7 @@ function EventRow({ event, saved, onToggleSaved, onOpenDetail }) {
         <div className="flex flex-col gap-0.5">
           <span className={`font-label-sm text-[10.5px] font-bold flex items-center gap-1 ${cat.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${cat.dot}`} />
-            {cat.label}
+            {t(`eventCategory.${event.category}`)}
           </span>
           <h4 className="font-body-md font-bold text-on-surface text-[14.5px] leading-tight truncate">{event.title}</h4>
           <span className="font-label-sm text-on-surface-variant text-[11.5px] truncate">{event.location}</span>
@@ -365,7 +365,7 @@ function EventRow({ event, saved, onToggleSaved, onOpenDetail }) {
               status.state === "live" ? "border border-secondary text-secondary" : "bg-primary-container text-on-primary-container"
             }`}
           >
-            {status.label}
+            {t(`eventStatus.${status.stateKey}`, { days: status.days })}
           </span>
           <button
             type="button"

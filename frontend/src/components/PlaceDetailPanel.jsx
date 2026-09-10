@@ -2,16 +2,17 @@
 // 전체 정보(방문객 팁/주변 맛집/AI 예측 등)는 상세페이지(/place/:id)로 링크만 걸고,
 // 여기서는 핵심 정보(사진/주소/이용정보/실시간 환경)만 보여준다.
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { usePlaceDetail } from "../hooks/usePlaceDetail"
 import { useSaveButton } from "../hooks/useSaveButton"
 import { ENV_ROWS } from "../lib/envRows"
 import SaveToListModal from "./SaveToListModal"
 
 const INFO_ROWS = [
-  { key: "usetime", icon: "schedule", label: "이용시간" },
-  { key: "restdate", icon: "event_busy", label: "휴무일" },
-  { key: "parking", icon: "local_parking", label: "주차시설" },
-  { key: "usefee", icon: "payments", label: "이용요금" },
+  { key: "usetime", icon: "schedule" },
+  { key: "restdate", icon: "event_busy" },
+  { key: "parking", icon: "local_parking" },
+  { key: "usefee", icon: "payments" },
 ]
 
 function directionsUrl(place) {
@@ -19,6 +20,7 @@ function directionsUrl(place) {
 }
 
 export default function PlaceDetailPanel({ placeId, onClose }) {
+  const { t } = useTranslation("placeDetail")
   const { place, environment } = usePlaceDetail(placeId)
   const { isSaved, showModal, handleClick, closeModal } = useSaveButton(place?.id)
 
@@ -32,9 +34,9 @@ export default function PlaceDetailPanel({ placeId, onClose }) {
 
       {place === null && (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
-          <p className="font-body-md text-on-surface-variant">해당 관광지를 찾을 수 없어요.</p>
+          <p className="font-body-md text-on-surface-variant">{t("notFound")}</p>
           <button type="button" onClick={onClose} className="text-primary font-body-md hover:underline">
-            지도로 돌아가기
+            {t("backToMap")}
           </button>
         </div>
       )}
@@ -70,7 +72,7 @@ export default function PlaceDetailPanel({ placeId, onClose }) {
                 <div className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md group-hover:-translate-y-1 transition-transform">
                   <span className="material-symbols-outlined">directions</span>
                 </div>
-                <span className="text-label-sm font-label-sm text-on-surface">길찾기</span>
+                <span className="text-label-sm font-label-sm text-on-surface">{t("directions")}</span>
               </a>
               <button type="button" onClick={handleClick} className="flex flex-col items-center gap-2 group">
                 <div
@@ -83,14 +85,14 @@ export default function PlaceDetailPanel({ placeId, onClose }) {
                   </span>
                 </div>
                 <span className={`text-label-sm font-label-sm ${isSaved ? "text-error font-bold" : "text-on-surface-variant"}`}>
-                  {isSaved ? "저장됨" : "저장"}
+                  {isSaved ? t("saved") : t("save")}
                 </span>
               </button>
               <Link to={`/place/${place.id}`} className="flex flex-col items-center gap-2 group">
                 <div className="w-12 h-12 rounded-full bg-surface-container text-on-surface flex items-center justify-center shadow-sm group-hover:-translate-y-1 transition-transform">
                   <span className="material-symbols-outlined">open_in_full</span>
                 </div>
-                <span className="text-label-sm font-label-sm text-on-surface-variant">상세정보</span>
+                <span className="text-label-sm font-label-sm text-on-surface-variant">{t("details")}</span>
               </Link>
             </div>
 
@@ -134,17 +136,17 @@ export default function PlaceDetailPanel({ placeId, onClose }) {
             {environment && (
               <div className="border-t border-outline-variant/30 pt-4">
                 <h3 className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-3">
-                  현재 날씨 · 대기질
+                  {t("weatherAirTitle")}
                 </h3>
                 <div className="grid grid-cols-2 gap-3 bg-surface-container-low p-4 rounded-xl">
                   {ENV_ROWS.map((row) => {
-                    const value = row.get(environment)
+                    const value = row.get(environment, t)
                     if (!value) return null
                     return (
-                      <div key={row.label} className="flex items-center gap-2">
+                      <div key={row.labelKey} className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary text-[20px]">{row.icon}</span>
                         <div>
-                          <p className="text-label-sm text-on-surface-variant">{row.label}</p>
+                          <p className="text-label-sm text-on-surface-variant">{t(`envRows.${row.labelKey}`)}</p>
                           <p className="text-sm font-bold">{value}</p>
                         </div>
                       </div>

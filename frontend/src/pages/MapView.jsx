@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import KakaoMap from "../components/KakaoMap"
 import PlaceDetailPanel from "../components/PlaceDetailPanel"
 import ReorderablePlaceList from "../components/ReorderablePlaceList"
@@ -9,13 +10,11 @@ import { matchRank } from "../lib/placeSearch"
 import { useAuth } from "../context/AuthContext"
 
 const SEARCH_RESULT_LIMIT = 8
-
-// 사이드바 체크박스용 조금 더 자세한 라벨 — 마커 색상/범례와 같은 env_group4 키를 쓰되
-// 문구만 더 풀어서 쓴다 (top pill·범례는 ENV_GROUP_STYLE의 짧은 라벨을 그대로 씀).
-const SIDEBAR_LABELS = { 해변: "해변", 산: "자연 (산/공원)", 도심: "문화/역사", 실내: "실내" }
 const ALL_GROUPS = Object.keys(ENV_GROUP_STYLE)
 
 export default function MapView() {
+  const { t, i18n } = useTranslation("map")
+  const { t: tCommon } = useTranslation("common")
   const { isLoggedIn } = useAuth()
   const [places, setPlaces] = useState([])
   const [selectedPlaceId, setSelectedPlaceId] = useState(null)
@@ -30,7 +29,7 @@ export default function MapView() {
 
   useEffect(() => {
     fetchPlaces().then(setPlaces)
-  }, [])
+  }, [i18n.language])
 
   useEffect(() => {
     if (!isLoggedIn) return setSavedLists([])
@@ -132,14 +131,14 @@ export default function MapView() {
       ) : (
       <aside className="w-80 bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.05)] z-10 flex-col overflow-y-auto border-r border-outline-variant shrink-0 hidden md:flex">
         <div className="p-5 border-b border-outline-variant">
-          <h2 className="font-body-md text-body-md font-bold mb-4">관광지 검색</h2>
+          <h2 className="font-body-md text-body-md font-bold mb-4">{t("searchTitle")}</h2>
           <div className="relative w-full">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
               search
             </span>
             <input
               className="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-body-md font-body-md placeholder:text-outline"
-              placeholder="해운대, 광안리 등..."
+              placeholder={t("searchPlaceholder")}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -163,7 +162,7 @@ export default function MapView() {
         </div>
         <div className="p-5 border-b border-outline-variant">
           <h3 className="font-body-md text-body-md font-bold mb-3 flex items-center justify-between">
-            <span>관광지 유형</span>
+            <span>{t("typeTitle")}</span>
             <span className="material-symbols-outlined text-sm text-outline">tune</span>
           </h3>
           <div className="flex flex-col gap-2">
@@ -174,7 +173,7 @@ export default function MapView() {
                 className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary"
                 type="checkbox"
               />
-              <span className="text-on-surface font-body-md text-body-md group-hover:text-primary">전체</span>
+              <span className="text-on-surface font-body-md text-body-md group-hover:text-primary">{t("all")}</span>
             </label>
             {ALL_GROUPS.map((group) => {
               const style = ENV_GROUP_STYLE[group]
@@ -195,7 +194,7 @@ export default function MapView() {
                   >
                     <span className="material-symbols-outlined text-[14px]">{style.icon}</span>
                   </div>
-                  <span className="text-on-surface font-body-md text-body-md group-hover:text-primary">{SIDEBAR_LABELS[group]}</span>
+                  <span className="text-on-surface font-body-md text-body-md group-hover:text-primary">{t(`sidebarLabel.${group}`)}</span>
                 </label>
               )
             })}
@@ -204,7 +203,7 @@ export default function MapView() {
         {isLoggedIn && savedLists.length > 0 && (
           <div className="p-5 border-b border-outline-variant">
             <h3 className="font-body-md text-body-md font-bold mb-3 flex items-center justify-between">
-              <span>보관함</span>
+              <span>{t("savedListsTitle")}</span>
               <span className="material-symbols-outlined text-sm text-outline">bookmark</span>
             </h3>
             <div className="flex flex-col gap-1">
@@ -246,9 +245,9 @@ export default function MapView() {
                     {isExpanded && (
                       <div className="pl-2 pt-1 pb-2">
                         {expandedPlaces == null ? (
-                          <p className="font-label-sm text-label-sm text-outline p-2">불러오는 중...</p>
+                          <p className="font-label-sm text-label-sm text-outline p-2">{tCommon("actions.loading")}</p>
                         ) : expandedPlaces.length === 0 ? (
-                          <p className="font-label-sm text-label-sm text-outline p-2">아직 담긴 관광지가 없어요.</p>
+                          <p className="font-label-sm text-label-sm text-outline p-2">{t("emptyList")}</p>
                         ) : (
                           <ReorderablePlaceList
                             key={list.id}
@@ -274,28 +273,28 @@ export default function MapView() {
                 onClick={() => setActiveRouteListId(null)}
                 className="mt-3 w-full text-center font-label-sm text-label-sm text-primary font-bold hover:underline"
               >
-                일반 지도로 돌아가기
+                {t("backToNormalMap")}
               </button>
             )}
           </div>
         )}
         <div className="p-5">
-          <h3 className="font-body-md text-body-md font-bold mb-3">정렬 기준</h3>
+          <h3 className="font-body-md text-body-md font-bold mb-3">{t("sortTitle")}</h3>
           <div className="flex flex-col gap-3">
-            {["NowGo Score 순", "거리 순", "혼잡도 순", "이름 순"].map((label, i) => (
-              <label key={label} className="flex items-center gap-3 cursor-pointer group">
+            {["score", "distance", "crowd", "name"].map((key, i) => (
+              <label key={key} className="flex items-center gap-3 cursor-pointer group">
                 <input defaultChecked={i === 0} className="w-5 h-5 border-outline-variant text-primary focus:ring-primary" name="sort" type="radio" />
-                <span className="text-on-surface font-body-md text-body-md group-hover:text-primary">{label}</span>
+                <span className="text-on-surface font-body-md text-body-md group-hover:text-primary">{t(`sortOptions.${key}`)}</span>
               </label>
             ))}
           </div>
           <div className="mt-6 pt-6 border-t border-outline-variant flex flex-col gap-3">
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-on-surface font-body-md text-body-md">위험 관광지만 보기</span>
+              <span className="text-on-surface font-body-md text-body-md">{t("dangerOnly")}</span>
               <input className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
             </label>
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-on-surface font-body-md text-body-md">위험 관광지 빼고 보기</span>
+              <span className="text-on-surface font-body-md text-body-md">{t("excludeDanger")}</span>
               <input className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
             </label>
           </div>
@@ -316,7 +315,7 @@ export default function MapView() {
                 activeGroups.size === ALL_GROUPS.length ? "bg-primary text-white" : "bg-surface text-on-surface border border-outline-variant hover:bg-surface-container-low"
               }`}
             >
-              전체
+              {t("all")}
             </button>
             {ALL_GROUPS.map((group) => {
               const style = ENV_GROUP_STYLE[group]
@@ -333,7 +332,7 @@ export default function MapView() {
                   <span className="material-symbols-outlined text-[16px]" style={{ color: active ? undefined : style.color }}>
                     {style.icon}
                   </span>
-                  {style.label}
+                  {t(`envGroupLabel.${style.labelKey}`)}
                 </button>
               )
             })}
@@ -342,7 +341,7 @@ export default function MapView() {
           <div className="absolute top-4 left-4 z-10 bg-surface rounded-full pl-4 pr-2 py-2 shadow-md border border-outline-variant flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[18px]">route</span>
             <span className="font-label-sm text-label-sm font-bold text-on-surface whitespace-nowrap">
-              {savedLists.find((l) => l.id === activeRouteListId)?.name} 경로 보는 중
+              {t("viewingRoute", { name: savedLists.find((l) => l.id === activeRouteListId)?.name })}
             </span>
             <button
               type="button"
@@ -383,9 +382,9 @@ export default function MapView() {
         {activeRouteListId == null && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 glass-panel rounded-full px-6 py-3 shadow-lg flex items-center gap-6 z-10 whitespace-nowrap">
             {Object.values(ENV_GROUP_STYLE).map((style) => (
-              <div key={style.label} className="flex items-center gap-2">
+              <div key={style.labelKey} className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: style.color }} />
-                <span className="font-label-sm text-label-sm text-on-surface font-bold">{style.label}</span>
+                <span className="font-label-sm text-label-sm text-on-surface font-bold">{t(`envGroupLabel.${style.labelKey}`)}</span>
               </div>
             ))}
           </div>

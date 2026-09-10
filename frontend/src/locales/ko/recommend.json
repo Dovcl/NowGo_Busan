@@ -1,0 +1,49 @@
+{
+  "pageTitle": "축제 · 행사",
+  "pageSubtitle": "부산 곳곳의 축제와 행사를 한눈에 모아봤어요.",
+  "calendarButton": "캘린더 보기",
+  "categoryAll": "전체",
+  "eventCategory": {
+    "festival": "축제",
+    "performance": "공연",
+    "exhibition": "전시",
+    "sports": "스포츠",
+    "market": "마켓·푸드",
+    "personal": "내 일정"
+  },
+  "noteworthyTitle": "놓치면 아쉬운 행사",
+  "viewInCalendar": "캘린더에서 보기",
+  "allEventsTitle": "전체 행사",
+  "resultUnit": "{{count}}건",
+  "pendingReview": "검토 대기 {{count}}",
+  "searchPlaceholder": "행사명, 장소로 검색",
+  "statusFilter": {
+    "all": "전체",
+    "upcoming": "예정 및 진행중",
+    "ended": "종료"
+  },
+  "noResultsForQuery": "'{{q}}'에 대한 검색 결과가 없어요.",
+  "noResults": "해당하는 행사가 없어요.",
+  "eventStatus": {
+    "ended": "종료",
+    "live": "진행중",
+    "today": "오늘 시작",
+    "upcoming": "D-{{days}}"
+  },
+  "today": "오늘",
+  "dragHint": "꾹 눌러서 옆으로 끌면 여러 날 일정을 만들 수 있어요",
+  "scheduleCount": "{{count}}건의 일정",
+  "noSchedule": "일정이 없어요",
+  "noSavedEvents": "아직 담은 행사가 없어요.",
+  "noSavedEventsHintPrefix": "리스트에서 관심있는 행사에 ",
+  "noSavedEventsHintSuffix": "를 눌러보세요.",
+  "excludeThisDate": "이 날짜만 빼기",
+  "reincludeDate": "이 날짜 다시 담기",
+  "footerHint": "담은 행사는 프로필 > 보관함에서도 다시 볼 수 있어요",
+  "newScheduleTitle": "새 일정 만들기",
+  "titlePlaceholder": "일정 제목 (예: 해운대 가족여행)",
+  "notFound": "행사 정보를 찾을 수 없어요.",
+  "viewDetails": "자세히 보기",
+  "saved": "담았어요",
+  "wantToGo": "가고싶어요"
+}

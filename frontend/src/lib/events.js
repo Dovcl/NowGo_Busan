@@ -1,6 +1,12 @@
 // 축제·행사 캘린더 전용 날짜 유틸. Date를 항상 "로컬 자정" 기준으로 다뤄서
 // 타임존 때문에 하루씩 밀리는 문제를 피한다.
-const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"]
+// 요일/월 표기는 Intl.DateTimeFormat으로 locale에 맞게 포맷한다 —
+// locale은 i18n.language(ko/en/zh)를 호출부에서 그대로 넘긴다.
+const LOCALE_MAP = { ko: "ko-KR", en: "en-US", zh: "zh-CN" }
+
+function toLocaleTag(locale) {
+  return LOCALE_MAP[locale] ?? "ko-KR"
+}
 
 export function toISODate(date) {
   const y = date.getFullYear()
@@ -34,18 +40,25 @@ export function getMonthGrid(year, month) {
   })
 }
 
-export function formatMonthLabel(year, month) {
-  return `${year}년 ${month + 1}월`
+// 캘린더 헤더용 월~일 요일 약칭. 그리드가 항상 월요일 시작으로 고정돼 있어(getMonthGrid),
+// 2024-01-01(월요일)을 기준일 삼아 locale에 맞는 짧은 요일명 7개를 뽑는다.
+export function weekdayShortLabels(locale) {
+  const formatter = new Intl.DateTimeFormat(toLocaleTag(locale), { weekday: "short" })
+  return Array.from({ length: 7 }, (_, i) => formatter.format(new Date(2024, 0, 1 + i)))
 }
 
-export function formatDateLabel(date) {
-  return `${date.getMonth() + 1}월 ${date.getDate()}일 (${WEEKDAY_KO[date.getDay()]})`
+export function formatMonthLabel(year, month, locale) {
+  return new Intl.DateTimeFormat(toLocaleTag(locale), { year: "numeric", month: "long" }).format(new Date(year, month, 1))
 }
 
-export function formatDateRange(startIso, endIso) {
+export function formatDateLabel(date, locale) {
+  return new Intl.DateTimeFormat(toLocaleTag(locale), { month: "long", day: "numeric", weekday: "short" }).format(date)
+}
+
+export function formatDateRange(startIso, endIso, locale) {
   const s = parseISODate(startIso)
   const e = parseISODate(endIso)
-  const short = (d) => `${d.getMonth() + 1}.${d.getDate()} (${WEEKDAY_KO[d.getDay()]})`
+  const short = (d) => new Intl.DateTimeFormat(toLocaleTag(locale), { month: "numeric", day: "numeric", weekday: "short" }).format(d)
   if (startIso === endIso) return short(s)
   return `${short(s)} ~ ${short(e)}`
 }
@@ -56,17 +69,18 @@ export function eventCoversDate(event, iso) {
 }
 
 // D-day/진행 상태. today를 인자로 받아 테스트하기 쉽게 한다.
+// stateKey는 t(`eventStatus.${stateKey}`, {ns: "recommend", days})로 라벨을 찾는 키.
 export function eventStatus(event, today = new Date()) {
   const d0 = startOfDay(today)
   const s0 = parseISODate(event.startDate)
   const e0 = parseISODate(event.endDate)
 
-  if (d0 > e0) return { label: "종료", state: "ended" }
-  if (d0 >= s0 && d0 <= e0) return { label: "진행중", state: "live" }
+  if (d0 > e0) return { stateKey: "ended", state: "ended" }
+  if (d0 >= s0 && d0 <= e0) return { stateKey: "live", state: "live" }
 
   const diffDays = Math.round((s0 - d0) / 86400000)
-  if (diffDays === 0) return { label: "오늘 시작", state: "today" }
-  return { label: `D-${diffDays}`, state: "upcoming" }
+  if (diffDays === 0) return { stateKey: "today", state: "today" }
+  return { stateKey: "upcoming", state: "upcoming", days: diffDays }
 }
 
 // 드래그로 잡은 두 날짜(순서 무관)를 정렬된 { startDate, endDate } ISO 범위로.

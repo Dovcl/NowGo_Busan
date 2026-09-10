@@ -1,5 +1,6 @@
 // 로그인 상태 확인 + 소셜 로그인/로그아웃. 세션은 httpOnly 쿠키라 credentials:
 // 'include'를 매번 넣어야 브라우저가 쿠키를 같이 보낸다.
+import i18n from "../lib/i18n"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"
 
@@ -34,7 +35,7 @@ export async function adminLogin(email, password) {
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(body.detail ?? "로그인에 실패했습니다")
+    throw new Error(body.detail ?? i18n.t("errors.loginFailed", { ns: "common" }))
   }
   return res.json()
 }
@@ -49,7 +50,7 @@ export async function signup(nickname, email, password) {
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(body.detail ?? "회원가입에 실패했습니다")
+    throw new Error(body.detail ?? i18n.t("errors.signupFailed", { ns: "common" }))
   }
   return res.json()
 }

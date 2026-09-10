@@ -1,0 +1,160 @@
+{
+  "login": {
+    "marketingLine1": "Where to go",
+    "marketingLine2": "in Busan right now?",
+    "portalTitle": "Administrator Portal",
+    "portalSubtitle": "Access limited to authorized personnel only.",
+    "emailLabel": "Email or ID",
+    "passwordLabel": "Password",
+    "submitting": "Logging in...",
+    "submit": "Log In"
+  },
+  "eventReview": {
+    "title": "Festival/Event Duplicate Review",
+    "subtitle": "Pairs the system couldn't confidently judge. Merge if they're the same event, leave separate if not.",
+    "noItems": "Nothing to review.",
+    "pendingCount": "{{count}} pending",
+    "similarity": "Similarity {{total}}% (title {{title}} · date {{date}} · venue {{venue}})",
+    "different": "Different events",
+    "same": "Same event"
+  },
+  "userManagement": {
+    "title": "User Management",
+    "subtitle": "Manage user accounts and permissions.",
+    "exportCsv": "Export CSV",
+    "addAccount": "Add Account",
+    "totalUsers": "Total Users",
+    "newToday": "New Today",
+    "bulkAction": "Bulk action ({{count}})",
+    "roleToAdmin": "Set as Admin",
+    "roleToTourist": "Set as Regular User",
+    "withdraw": "Deactivate",
+    "restore": "Restore",
+    "statusAll": "Status: All",
+    "statusActive": "Active",
+    "statusWithdrawn": "Deactivated",
+    "joinDate": "Joined",
+    "searchPlaceholder": "Search by name or email",
+    "columnUser": "User",
+    "columnSource": "Sign-up Source",
+    "columnJoinDate": "Joined",
+    "columnStatus": "Status",
+    "columnAction": "Action",
+    "loading": "Loading...",
+    "noUsers": "No users match your filters.",
+    "totalCount": "{{from}}-{{to}} of {{total}} users",
+    "adminBadge": "Admin",
+    "active": "Active",
+    "withdrawn": "Deactivated",
+    "restoreAction": "Restore",
+    "addModalTitle": "Add NowGo ID Account",
+    "addModalSubtitle": "An email/password account for cases where Kakao/Google login isn't available.",
+    "nicknamePlaceholder": "Nickname",
+    "idPlaceholder": "NowGo ID (email)",
+    "passwordPlaceholder": "Password",
+    "grantAdmin": "Grant admin permissions",
+    "creating": "Creating...",
+    "createAccount": "Create Account",
+    "sourceLabel": {
+      "kakao": "Kakao",
+      "google": "Google",
+      "email": "Email"
+    }
+  },
+  "dataInspector": {
+    "title": "Data Pipeline Inspector",
+    "subtitle": "Check whether the batch ETL is actually accumulating data, table by table.",
+    "readingGuide": "How to read this table",
+    "loadError": "Couldn't load this table.",
+    "loading": "Loading...",
+    "noData": "No data yet.",
+    "totalCount": "{{from}}-{{to}} of {{total}}",
+    "tableLabels": {
+      "road_link_baseline": "Road Baseline (day × hour)",
+      "road_link_traffic_cache": "Road Live Snapshot",
+      "road_link_traffic_history": "Road History (last 48h)",
+      "holiday_cache": "Holidays",
+      "district_visitor_baseline": "District Visitor Baseline",
+      "weather_cache": "Weather",
+      "uv_index_cache": "UV Index",
+      "air_quality_cache": "Air Quality",
+      "rip_current_cache": "Rip Current"
+    },
+    "columnLabels": {
+      "link_id": "Link ID",
+      "dow": "Day of Week",
+      "hour": "Hour",
+      "avg_speed": "Avg. Speed",
+      "avg_volume": "Avg. Volume",
+      "sample_count": "Sample Count",
+      "current_speed": "Current Speed",
+      "current_volume": "Current Volume",
+      "observed_at": "Observed At",
+      "fetched_at": "Fetched At",
+      "date": "Date",
+      "name": "Name",
+      "sigungu_code": "District Code",
+      "visitor_ratio": "Visitor Ratio",
+      "nx": "Grid X",
+      "ny": "Grid Y",
+      "temperature": "Temperature",
+      "humidity": "Humidity",
+      "wind_speed": "Wind Speed",
+      "precipitation_prob": "Precip. Probability",
+      "sky": "Sky",
+      "precipitation_type": "Precipitation Type",
+      "forecast": "Forecast (6h)",
+      "area_no": "Area Code",
+      "uv_index": "UV Index",
+      "station_name": "Station Name",
+      "pm10": "PM10",
+      "pm25": "PM2.5",
+      "o3": "O3",
+      "pm10_grade": "PM10 Grade",
+      "pm25_grade": "PM2.5 Grade",
+      "station_code": "Station Code",
+      "index_value": "Rip Current Index",
+      "risk_level": "Risk Level",
+      "wave_height": "Wave Height",
+      "water_temp": "Water Temp."
+    },
+    "tableNotes": {
+      "road_link_baseline": [
+        "Day of week (dow): 0=Monday ... 6=Sunday.",
+        "Hour: 0-23, on the hour.",
+        "If sample_count is under 3, it's not reliable yet and isn't used in the live service — the threshold is at least 3 weeks of observations.",
+        "avg_volume just stores the raw API value and isn't currently used in congestion calculations."
+      ],
+      "road_link_traffic_cache": [
+        "Exactly 1 row per link — overwritten hourly with the latest value, so past values aren't kept.",
+        "observed_at is the timestamp from the API; fetched_at is when we actually called it. A few minutes' difference is normal."
+      ],
+      "road_link_traffic_history": [
+        "Only the last 48 hours are kept; older rows are auto-deleted every collection cycle.",
+        "This is the raw data behind the \"today's actual congestion\" chart."
+      ],
+      "holiday_cache": [
+        "Based on official public holidays, so substitute holidays get their own row too (e.g. \"Substitute Holiday (Liberation Day)\").",
+        "Weekday holidays are treated as Sunday (dow=6) pattern when computing baselines."
+      ],
+      "district_visitor_baseline": [
+        "Day of week (dow) uses the same encoding as the road baseline (0=Mon ... 6=Sun).",
+        "visitor_ratio of 1.0 = a typical day for that district's average; 1.5 means 50% busier than usual for that day of week.",
+        "Only used as a temporary stand-in while the road baseline hasn't accumulated 3 weeks of data yet."
+      ],
+      "weather_cache": [
+        "Grid X/Y (nx, ny) are KMA's own grid coordinates, not latitude/longitude.",
+        "Sky: 1=clear, 3=partly cloudy, 4=cloudy.",
+        "Precipitation type: 0=none, 1=rain, 2=rain/snow, 3=snow, 4=showers.",
+        "Precipitation probability is normally empty since the ultra-short-term forecast API doesn't provide this value — that's expected."
+      ],
+      "uv_index_cache": ["Area code (area_no) currently only uses a fixed value of '2600000000' (all of Busan)."],
+      "air_quality_cache": ["Grades (pm10_grade/pm25_grade) follow the Ministry of Environment's official 4-tier scale — 1=good, 2=moderate, 3=bad, 4=very bad."],
+      "rip_current_cache": [
+        "Station code: HAE=Haeundae, SONGJUNG=Songjeong, IMRANG=Imrang.",
+        "Risk level increases in severity: low < caution < alert < danger.",
+        "This API only returns values during beach season (Jun-Sep), so an empty table off-season is expected."
+      ]
+    }
+  }
+}

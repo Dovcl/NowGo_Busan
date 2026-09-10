@@ -1,0 +1,49 @@
+{
+  "pageTitle": "节庆活动",
+  "pageSubtitle": "一览釜山各地的节庆与活动。",
+  "calendarButton": "查看日历",
+  "categoryAll": "全部",
+  "eventCategory": {
+    "festival": "节庆",
+    "performance": "演出",
+    "exhibition": "展览",
+    "sports": "体育",
+    "market": "市集·美食",
+    "personal": "我的日程"
+  },
+  "noteworthyTitle": "不容错过的活动",
+  "viewInCalendar": "在日历中查看",
+  "allEventsTitle": "全部活动",
+  "resultUnit": "{{count}}件",
+  "pendingReview": "待审核 {{count}}",
+  "searchPlaceholder": "按活动名称、地点搜索",
+  "statusFilter": {
+    "all": "全部",
+    "upcoming": "即将开始及进行中",
+    "ended": "已结束"
+  },
+  "noResultsForQuery": "没有找到与'{{q}}'相关的结果。",
+  "noResults": "没有符合条件的活动。",
+  "eventStatus": {
+    "ended": "已结束",
+    "live": "进行中",
+    "today": "今日开始",
+    "upcoming": "D-{{days}}"
+  },
+  "today": "今天",
+  "dragHint": "长按后向旁拖动即可创建多日日程",
+  "scheduleCount": "{{count}}项日程",
+  "noSchedule": "没有日程",
+  "noSavedEvents": "还没有收藏的活动。",
+  "noSavedEventsHintPrefix": "在列表中点击感兴趣活动的 ",
+  "noSavedEventsHintSuffix": " 即可收藏。",
+  "excludeThisDate": "仅排除此日期",
+  "reincludeDate": "重新加入此日期",
+  "footerHint": "收藏的活动也可在个人资料 > 收藏夹中查看",
+  "newScheduleTitle": "创建新日程",
+  "titlePlaceholder": "日程标题(例:海云台家庭旅行)",
+  "notFound": "找不到该活动信息。",
+  "viewDetails": "查看详情",
+  "saved": "已收藏",
+  "wantToGo": "想去"
+}

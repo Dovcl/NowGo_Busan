@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { fetchPlaces } from "../services/placesService"
 import { STATUS, scoreToStatus } from "../lib/status"
 import { matchRank } from "../lib/placeSearch"
@@ -8,6 +9,8 @@ const ENV_GROUPS = ["해변", "산", "도심", "실내"]
 const PAGE_SIZE = 20
 
 export default function SearchResults() {
+  const { t, i18n } = useTranslation("search")
+  const { t: tCommon } = useTranslation("common")
   const [searchParams, setSearchParams] = useSearchParams()
   const q = searchParams.get("q") ?? ""
   const [input, setInput] = useState(q)
@@ -21,7 +24,7 @@ export default function SearchResults() {
       setPlaces(data)
       setLoading(false)
     })
-  }, [])
+  }, [i18n.language])
 
   useEffect(() => setInput(q), [q])
 
@@ -61,15 +64,15 @@ export default function SearchResults() {
       <div className="px-4 md:px-container-margin py-6 pb-24 md:pb-8 max-w-[1440px] mx-auto w-full flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">검색 결과</h1>
+            <h1 className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">{t("title")}</h1>
             {!loading && (
               <p className="font-label-sm text-on-surface-variant mt-1">
                 {query ? (
                   <>
-                    “{q}” <span className="font-bold text-on-surface">{filtered.length}건</span>
+                    “{q}” <span className="font-bold text-on-surface">{t("resultUnit", { count: filtered.length })}</span>
                   </>
                 ) : (
-                  `${filtered.length}건`
+                  t("resultUnit", { count: filtered.length })
                 )}
               </p>
             )}
@@ -82,7 +85,7 @@ export default function SearchResults() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="관광지, 지역, 키워드 검색"
+              placeholder={t("searchPlaceholder")}
               className="w-full bg-surface-container border border-outline-variant rounded-full pl-9 pr-8 py-2.5 text-[13.5px] font-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors"
             />
             {input && (
@@ -104,14 +107,14 @@ export default function SearchResults() {
           <aside className="lg:w-56 shrink-0">
             <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/20 p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="font-label-sm font-bold text-on-surface">유형</span>
+                <span className="font-label-sm font-bold text-on-surface">{t("typeLabel")}</span>
                 {envFilter.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setEnvFilter([])}
                     className="font-label-sm text-[11px] text-primary"
                   >
-                    초기화
+                    {t("resetLabel")}
                   </button>
                 )}
               </div>
@@ -124,7 +127,7 @@ export default function SearchResults() {
                       onChange={() => toggleEnv(group)}
                       className="accent-primary"
                     />
-                    <span className="font-body-md text-[13.5px] text-on-surface">{group}</span>
+                    <span className="font-body-md text-[13.5px] text-on-surface">{tCommon(`envGroup.${group}`)}</span>
                   </label>
                 ))}
               </div>
@@ -133,12 +136,12 @@ export default function SearchResults() {
 
           <div className="flex-1">
             {loading ? (
-              <div className="py-20 text-center font-label-sm text-on-surface-variant">불러오는 중...</div>
+              <div className="py-20 text-center font-label-sm text-on-surface-variant">{tCommon("actions.loading")}</div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-20 text-center">
                 <span className="material-symbols-outlined text-3xl text-outline-variant">search_off</span>
                 <p className="font-label-sm text-[13px] text-on-surface-variant">
-                  {query ? `'${q}'에 대한 검색 결과가 없어요.` : "조건에 맞는 관광지가 없어요."}
+                  {query ? t("noResultsForQuery", { q }) : t("noResultsFiltered")}
                 </p>
               </div>
             ) : (
@@ -155,7 +158,7 @@ export default function SearchResults() {
                       onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
                       className="font-label-sm text-[13px] text-primary border border-primary/30 rounded-full px-5 py-2 hover:bg-primary/5 transition-colors"
                     >
-                      더보기 ({visible.length}/{filtered.length})
+                      {t("loadMore", { visible: visible.length, total: filtered.length })}
                     </button>
                   </div>
                 )}
@@ -169,9 +172,12 @@ export default function SearchResults() {
 }
 
 function PlaceCard({ place }) {
+  const { t } = useTranslation("search")
+  const { t: tCommon } = useTranslation("common")
   // score는 NowGo Score 알고리즘 확정 전까지 항상 null(placesService.js 참고) —
   // 값이 있을 때만 배지를 그려서 나중에 알고리즘이 붙어도 이 컴포넌트는 그대로 재사용된다.
-  const status = place.score != null ? STATUS[place.status ?? scoreToStatus(place.score)] : null
+  const statusKey = place.status ?? scoreToStatus(place.score)
+  const status = place.score != null ? STATUS[statusKey] : null
 
   return (
     <Link
@@ -194,7 +200,7 @@ function PlaceCard({ place }) {
           {status ? (
             <div className="flex items-baseline gap-1">
               <span className={`font-score-display text-xl font-bold ${status.text}`}>{place.score}</span>
-              <span className={`font-label-sm text-[10px] font-bold ${status.text}`}>({status.label})</span>
+              <span className={`font-label-sm text-[10px] font-bold ${status.text}`}>({tCommon(`status.${statusKey}`)})</span>
             </div>
           ) : (
             <span className="font-label-sm text-[10px] text-outline px-2 py-1 bg-surface-container rounded-full truncate">
@@ -209,7 +215,7 @@ function PlaceCard({ place }) {
         </div>
         {place.info?.usetime && (
           <p className="font-label-sm text-[11px] text-on-surface-variant pt-2 border-t border-outline-variant/20 truncate">
-            이용시간 {place.info.usetime}
+            {t("usetime", { value: place.info.usetime })}
           </p>
         )}
       </div>

@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     TOUR_API_KEY: str | None = None
     TOUR_API_KEY_BEACH: str | None = None
     TOUR_API_KEY_IAN: str | None = None
+    ENG_SERVICE_API_KEY: str | None = None
+    CHN_SERVICE_API_KEY: str | None = None
     KAKAO_REST_API_KEY: str | None = None
     KAKAO_CLIENT_SECRET: str | None = None
     KAKAO_REDIRECT_URI: str = "http://localhost:8080/auth/kakao/callback"

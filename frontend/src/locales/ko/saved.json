@@ -1,0 +1,20 @@
+{
+  "loginPrompt": "로그인하면 보관함을 볼 수 있어요.",
+  "login": "로그인하기",
+  "title": "보관함",
+  "subtitle": "저장한 관광지를 리스트별로 모아봤어요.",
+  "savedPlacesLabel": "저장한 장소",
+  "listsLabel": "리스트",
+  "itemCount": "{{count}}개",
+  "listNamePlaceholder": "리스트 이름",
+  "add": "추가",
+  "createNewList": "새 리스트 만들기",
+  "defaultListName": "리스트",
+  "placeCount": "{{count}}개 관광지",
+  "dragHint": "카드를 눌러 잡고 위아래로 옮겨보세요. 이 순서대로 나중에 지도 경로에 표시될 예정이에요.",
+  "emptyList": "아직 이 리스트에 저장한 관광지가 없어요.",
+  "saveToListTitle": "목록에 저장",
+  "placeCountInList": "{{count}}개 장소",
+  "newList": "새 목록",
+  "done": "완료"
+}

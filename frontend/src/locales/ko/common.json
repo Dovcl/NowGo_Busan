@@ -1,0 +1,83 @@
+{
+  "nav": {
+    "home": "홈",
+    "map": "지도",
+    "events": "축제·행사",
+    "bumbim": "부산 붐빔",
+    "profile": "프로필"
+  },
+  "language": {
+    "ko": "한국어",
+    "en": "English",
+    "zh": "中文"
+  },
+  "status": {
+    "safe": "좋음",
+    "caution": "주의",
+    "danger": "위험"
+  },
+  "pmGrade": {
+    "1": "좋음",
+    "2": "보통",
+    "3": "나쁨",
+    "4": "매우나쁨"
+  },
+  "uvLevel": {
+    "low": "낮음",
+    "moderate": "보통",
+    "high": "높음",
+    "veryHigh": "매우높음",
+    "extreme": "위험",
+    "none": "-"
+  },
+  "ripLevel": {
+    "관심": "관심",
+    "주의": "주의",
+    "경계": "경계",
+    "위험": "위험"
+  },
+  "envGroup": {
+    "해변": "해변",
+    "산": "산",
+    "도심": "도심",
+    "실내": "실내"
+  },
+  "weatherCondition": {
+    "snow": "눈",
+    "rainSnow": "비/눈",
+    "rain": "비",
+    "clear": "맑음",
+    "partlyCloudy": "구름많음",
+    "cloudy": "흐림",
+    "none": "-"
+  },
+  "envTag": {
+    "outdoor": "실외 관광지",
+    "indoor": "실내 관광지"
+  },
+  "distance": {
+    "walk": "도보 {{minutes}}분 · {{dist}}",
+    "drive": "차량 {{minutes}}분 · {{dist}}"
+  },
+  "errors": {
+    "createAccountFailed": "계정 생성에 실패했습니다",
+    "roleChangeFailed": "권한 변경에 실패했습니다",
+    "withdrawFailed": "탈퇴 처리에 실패했습니다",
+    "loginFailed": "로그인에 실패했습니다",
+    "signupFailed": "회원가입에 실패했습니다",
+    "kakaoMapLoadFailed": "카카오맵 SDK 로드 실패",
+    "kakaoMapKeyMissing": "VITE_KAKAO_JS_API_KEY가 설정되지 않았습니다 (frontend/.env 확인)"
+  },
+  "actions": {
+    "save": "저장",
+    "cancel": "취소",
+    "confirm": "확인",
+    "close": "닫기",
+    "delete": "삭제",
+    "edit": "수정",
+    "search": "검색",
+    "back": "뒤로",
+    "next": "다음",
+    "loading": "불러오는 중..."
+  }
+}

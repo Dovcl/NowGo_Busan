@@ -1,9 +1,11 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { adminLogin } from "../services/authService"
 import { useAuth } from "../context/AuthContext"
 
 export default function AdminLogin() {
+  const { t } = useTranslation("admin")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -47,9 +49,9 @@ export default function AdminLogin() {
             <span className="font-display-lg text-headline-lg tracking-tight">NowGo Busan</span>
           </div>
           <h2 className="font-display-lg text-6xl leading-tight">
-            지금, 부산
+            {t("login.marketingLine1")}
             <br />
-            어디로 갈까?
+            {t("login.marketingLine2")}
           </h2>
         </div>
       </section>
@@ -64,15 +66,15 @@ export default function AdminLogin() {
           </div>
 
           <div>
-            <h1 className="font-headline-lg text-headline-lg text-on-surface mb-2">Administrator Portal</h1>
+            <h1 className="font-headline-lg text-headline-lg text-on-surface mb-2">{t("login.portalTitle")}</h1>
             <p className="font-body-md text-body-md text-on-surface-variant">
-              Access limited to authorized personnel only.
+              {t("login.portalSubtitle")}
             </p>
           </div>
 
           <div className="flex flex-col gap-2">
             <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-              이메일 또는 아이디
+              {t("login.emailLabel")}
             </label>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">
@@ -91,7 +93,7 @@ export default function AdminLogin() {
 
           <div className="flex flex-col gap-2">
             <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-              비밀번호
+              {t("login.passwordLabel")}
             </label>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">
@@ -122,7 +124,7 @@ export default function AdminLogin() {
             disabled={loading}
             className="w-full h-14 bg-primary text-on-primary rounded-lg font-headline-lg-mobile transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
-            {loading ? "로그인 중..." : "로그인"}
+            {loading ? t("login.submitting") : t("login.submit")}
           </button>
         </form>
       </section>
