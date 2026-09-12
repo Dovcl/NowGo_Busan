@@ -89,8 +89,7 @@ export default function MapView() {
 
   const toggleGroup = (group) => {
     setActiveGroups((prev) => {
-      // 전체 선택 상태에서 특정 버튼을 누르면 "제외"가 아니라 그 항목만 남긴다.
-      if (prev.size === ALL_GROUPS.length) return new Set([group])
+      // 전체 선택 상태에서 하나를 누르면 그것만 빼고 나머지는 그대로 유지한다.
       const next = new Set(prev)
       if (next.has(group)) next.delete(group)
       else next.add(group)
