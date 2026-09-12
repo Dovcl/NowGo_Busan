@@ -6,9 +6,48 @@ import { clusterPlaces } from "../lib/clusterPlaces"
 const BUSAN_CENTER = { lat: 35.1796, lng: 129.0756 }
 const FADE_MS = 250
 
-// 관광지 1곳짜리 핀: 환경유형별 색깔 원 + 아이콘. 클릭하면 상세페이지로 이동.
+// 마커 위에 이름을 보여주는 말풍선 — 지도 하나당 하나만 만들어서 호버할 때마다
+// 위치/텍스트만 바꿔 재사용한다(마커마다 만들면 낭비).
+function createTooltipOverlay(kakao) {
+  const wrapper = document.createElement("div")
+  wrapper.className = "pointer-events-none flex flex-col items-center opacity-0 transition-opacity duration-100"
+  wrapper.style.marginBottom = "14px"
+
+  const bubble = document.createElement("div")
+  bubble.className =
+    "bg-surface text-on-surface text-label-sm font-label-sm font-bold px-3 py-1.5 rounded-lg shadow-md border border-outline-variant whitespace-nowrap"
+  wrapper.appendChild(bubble)
+
+  const arrow = document.createElement("div")
+  arrow.className = "w-2 h-2 bg-surface border-b border-r border-outline-variant rotate-45 -mt-1"
+  wrapper.appendChild(arrow)
+
+  const overlay = new kakao.maps.CustomOverlay({
+    map: null,
+    content: wrapper,
+    yAnchor: 1,
+    zIndex: 20,
+  })
+  return { overlay, wrapper, bubble }
+}
+
+function showTooltip(kakao, tooltip, map, place) {
+  if (!tooltip) return
+  tooltip.bubble.textContent = place.name
+  tooltip.overlay.setPosition(new kakao.maps.LatLng(place.lat, place.lng))
+  tooltip.overlay.setMap(map)
+  requestAnimationFrame(() => { tooltip.wrapper.style.opacity = "1" })
+}
+
+function hideTooltip(tooltip) {
+  if (!tooltip) return
+  tooltip.wrapper.style.opacity = "0"
+  tooltip.overlay.setMap(null)
+}
+
+// 관광지 1곳짜리 핀: 환경유형별 색깔 원 + 아이콘. 호버하면 이름 말풍선, 클릭하면 상세페이지로 이동.
 // fadeIn은 경로 모드에서 돌아왔을 때만 true — 매 zoom마다 깜빡이지 않게 평소엔 즉시 그린다.
-function createPinOverlay(kakao, map, place, onSelectPlace, fadeIn) {
+function createPinOverlay(kakao, map, place, onSelectPlace, fadeIn, tooltip) {
   const style = ENV_GROUP_STYLE[place.mapGroup] ?? DEFAULT_ENV_GROUP_STYLE
 
   const content = document.createElement("div")
@@ -18,8 +57,9 @@ function createPinOverlay(kakao, map, place, onSelectPlace, fadeIn) {
   content.style.backgroundColor = style.color
   content.style.transition = fadeIn ? `opacity ${FADE_MS}ms` : ""
   content.innerHTML = `<span class="material-symbols-outlined text-[16px]">${style.icon}</span>`
-  content.title = place.name
   content.addEventListener("click", () => onSelectPlace?.(place))
+  content.addEventListener("mouseenter", () => showTooltip(kakao, tooltip, map, place))
+  content.addEventListener("mouseleave", () => hideTooltip(tooltip))
 
   const overlay = new kakao.maps.CustomOverlay({
     map,
@@ -90,6 +130,7 @@ const KakaoMap = forwardRef(function KakaoMap({ places, onSelectPlace, route }, 
   const routeOverlaysRef = useRef([])
   const routePolylineRef = useRef(null)
   const wasInRouteModeRef = useRef(false)
+  const tooltipRef = useRef(null)
   const { kakao, error } = useKakaoMap()
 
   useEffect(() => {
@@ -98,6 +139,7 @@ const KakaoMap = forwardRef(function KakaoMap({ places, onSelectPlace, route }, 
       center: new kakao.maps.LatLng(BUSAN_CENTER.lat, BUSAN_CENTER.lng),
       level: 9,
     })
+    tooltipRef.current = createTooltipOverlay(kakao)
   }, [kakao])
 
   // 좌측 패널이 열리고 닫힐 때 지도 컨테이너 너비가 바뀌는데, 카카오맵은 이걸
@@ -122,11 +164,12 @@ const KakaoMap = forwardRef(function KakaoMap({ places, onSelectPlace, route }, 
     }
 
     function redraw(fadeIn) {
+      hideTooltip(tooltipRef.current) // 재배치되는 마커를 계속 가리키던 말풍선이 남지 않게
       placeOverlaysRef.current.forEach(({ overlay }) => overlay.setMap(null))
       const clusters = clusterPlaces(places, map.getLevel())
       placeOverlaysRef.current = clusters.map((cluster) =>
         cluster.places.length === 1
-          ? createPinOverlay(kakao, map, cluster.places[0], onSelectPlace, fadeIn)
+          ? createPinOverlay(kakao, map, cluster.places[0], onSelectPlace, fadeIn, tooltipRef.current)
           : createClusterOverlay(kakao, map, cluster, fadeIn)
       )
     }

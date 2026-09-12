@@ -33,6 +33,17 @@ export default function MapView() {
     fetchPlaces().then(setPlaces)
   }, [i18n.language])
 
+  // 상세 패널이 열려있을 때 Esc로 닫기 — 패널이 사이드바 자리를 차지하고 있어서
+  // 닫으면 원래 필터 사이드바가 다시 나온다.
+  useEffect(() => {
+    if (selectedPlaceId == null) return
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setSelectedPlaceId(null)
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [selectedPlaceId])
+
   useEffect(() => {
     if (!isLoggedIn) return setSavedLists([])
     fetchMyLists().then(setSavedLists)
