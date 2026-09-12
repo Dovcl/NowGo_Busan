@@ -87,14 +87,19 @@ export default function MapView() {
     })
   }, [places, activeGroups, scoreRange])
 
+  // 사이드바 체크박스용 — 단순 토글(누른 것만 켜지거나 꺼지고 나머지는 그대로).
   const toggleGroup = (group) => {
     setActiveGroups((prev) => {
-      // 전체 선택 상태에서 하나를 누르면 그것만 빼고 나머지는 그대로 유지한다.
       const next = new Set(prev)
       if (next.has(group)) next.delete(group)
       else next.add(group)
       return next
     })
+  }
+
+  // 지도 위 필터 버튼용 — 누르면 그 유형만 남기고 나머지는 다 꺼진다("이것만 보기").
+  const selectOnlyGroup = (group) => {
+    setActiveGroups(new Set([group]))
   }
 
   // 전체 다 켜진 상태에서 "전체"를 또 누르면 전부 끄고, 아니면 전부 켠다.
@@ -351,7 +356,7 @@ export default function MapView() {
                 <button
                   key={group}
                   type="button"
-                  onClick={() => toggleGroup(group)}
+                  onClick={() => selectOnlyGroup(group)}
                   className={`px-4 py-2 rounded-full font-label-sm text-label-sm shadow-md whitespace-nowrap transition-colors flex items-center gap-1 border ${
                     active ? "bg-primary text-white border-primary" : "bg-surface text-on-surface border-outline-variant hover:bg-surface-container-low"
                   }`}
