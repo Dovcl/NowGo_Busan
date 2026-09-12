@@ -19,78 +19,36 @@ fetch_festivals.py(searchFestival2)와 seed_data/*.csv(같은 API 계열의 과�
 (.env에 TOUR_API_KEY 필요)
 """
 
-from urllib.parse import unquote
-
 import pandas as pd
 import requests
 
-from core.config import settings
 from db.models import TourSpot
 from db.session import SessionLocal
+from etl.fetch_missing_landmarks import sync_missing_landmarks
 from etl.seed_tour_spot_intro import sync_tour_spot_intro_from_df
 from etl.seed_tour_spots import parse_tour_time, sync_tour_spot_and_classification
+from etl.tourapi_client import extract_items, fetch_detail_common, fetch_detail_intro, request
 
-_BASE = "https://apis.data.go.kr/B551011/KorService2"
 _NUM_OF_ROWS = 100
 _AREA_CODE_BUSAN = 6
 _FESTIVAL_CONTENTTYPEID = 15  # fetch_festivals.py가 event_raw로 별도 수집
-
-
-def _request(path: str, params: dict) -> dict:
-    res = requests.get(
-        f"{_BASE}/{path}",
-        params={
-            "serviceKey": unquote(settings.TOUR_API_KEY),
-            "MobileOS": "ETC",
-            "MobileApp": "NowGoBusan",
-            "_type": "json",
-            **params,
-        },
-        timeout=15,
-    )
-    res.raise_for_status()
-    data = res.json()
-    header = data.get("response", {}).get("header", {})
-    if header.get("resultCode") != "0000":
-        raise RuntimeError(f"{path} 실패: {header}")
-    return data["response"]["body"]
-
-
-def _extract_items(body: dict) -> list[dict]:
-    item = body.get("items", {})
-    item = item.get("item", []) if isinstance(item, dict) else []
-    if isinstance(item, dict):
-        item = [item]
-    return item
 
 
 def fetch_all_list() -> list[dict]:
     """fetch_festivals.py와 같은 무결성 원칙 — totalCount와 실제 수집 건수가
     다르면 이번 수집을 통째로 버린다(부분 반영 금지)."""
     params = {"numOfRows": _NUM_OF_ROWS, "pageNo": 1, "arrange": "A", "areaCode": _AREA_CODE_BUSAN}
-    first = _request("areaBasedList2", params)
+    first = request("areaBasedList2", params)
     total_count = int(first.get("totalCount") or 0)
-    items = _extract_items(first)
+    items = extract_items(first)
 
     total_pages = -(-total_count // _NUM_OF_ROWS)  # ceil
     for page in range(2, total_pages + 1):
-        items.extend(_extract_items(_request("areaBasedList2", {**params, "pageNo": page})))
+        items.extend(extract_items(request("areaBasedList2", {**params, "pageNo": page})))
 
     if len(items) != total_count:
         raise RuntimeError(f"수집 건수({len(items)})가 totalCount({total_count})와 불일치 — 이번 수집 중단")
     return items
-
-
-def fetch_detail_common(contentid: str) -> dict | None:
-    body = _request("detailCommon2", {"contentId": contentid})
-    items = _extract_items(body)
-    return items[0] if items else None
-
-
-def fetch_detail_intro(contentid: str, contenttypeid: str) -> dict | None:
-    body = _request("detailIntro2", {"contentId": contentid, "contentTypeId": contenttypeid})
-    items = _extract_items(body)
-    return items[0] if items else None
 
 
 def _changed_contentids(session, df: pd.DataFrame) -> set[int]:
@@ -153,6 +111,11 @@ def main() -> None:
             print(f"tour_spot_intro 상세 갱신: {len(detail_df)}건 (요청 {len(changed_ids)}건 중)")
         else:
             print("tour_spot_intro: 변경분 없음")
+
+        # areaBasedList2?areaCode=6 목록에 안 잡히는 랜드마크(원본 areacode 결측,
+        # harness/DECISIONS.md 2026-09-12 참고) 별도 보정
+        sync_missing_landmarks(session)
+        session.commit()
     except Exception:
         session.rollback()
         raise
