@@ -3,17 +3,20 @@
   "searchPlaceholder": "해운대, 광안리 등...",
   "typeTitle": "관광지 유형",
   "all": "전체",
+  "scoreRangeTitle": "NowGo Score 범위",
   "sidebarLabel": {
     "해변": "해변",
     "산": "자연 (산/공원)",
     "도심": "문화/역사",
-    "실내": "실내"
+    "실내": "실내",
+    "음식점": "음식점"
   },
   "envGroupLabel": {
     "해변": "해변",
     "산": "자연",
     "도심": "도심",
     "실내": "실내",
+    "음식점": "음식점",
     "기타": "기타"
   },
   "savedListsTitle": "보관함",

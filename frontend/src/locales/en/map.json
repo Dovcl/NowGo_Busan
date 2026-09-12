@@ -3,17 +3,20 @@
   "searchPlaceholder": "Haeundae, Gwangalli, etc...",
   "typeTitle": "Spot Type",
   "all": "All",
+  "scoreRangeTitle": "NowGo Score Range",
   "sidebarLabel": {
     "해변": "Beach",
     "산": "Nature (Mountain/Park)",
     "도심": "Culture/History",
-    "실내": "Indoor"
+    "실내": "Indoor",
+    "음식점": "Restaurants"
   },
   "envGroupLabel": {
     "해변": "Beach",
     "산": "Nature",
     "도심": "Urban",
     "실내": "Indoor",
+    "음식점": "Food",
     "기타": "Other"
   },
   "savedListsTitle": "Saved Lists",

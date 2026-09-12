@@ -12,6 +12,7 @@ class PlaceOut(BaseModel):
     lng: float
     firstimage: str | None  # tour_spot.firstimage (대표 이미지, TourAPI 원본)
     category_name: str | None  # category_code.cat3_name (소분류명, 예: "박물관")
+    cat1: str | None  # tour_spot.cat1 대분류 코드 (예: "A05"=음식) — 지도에서 음식점만 구분할 때 사용
 
     # tour_spot_env_classification 조인 결과
     env_group4: str  # 해변 / 산 / 도심 / 실내

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import KakaoMap from "../components/KakaoMap"
 import PlaceDetailPanel from "../components/PlaceDetailPanel"
 import ReorderablePlaceList from "../components/ReorderablePlaceList"
+import ScoreRangeSlider from "../components/ScoreRangeSlider"
 import { fetchPlaces } from "../services/placesService"
 import { fetchListItems, fetchMyLists, reorderList } from "../services/listsService"
 import { ENV_GROUP_STYLE } from "../lib/envGroup"
@@ -19,6 +20,7 @@ export default function MapView() {
   const [places, setPlaces] = useState([])
   const [selectedPlaceId, setSelectedPlaceId] = useState(null)
   const [activeGroups, setActiveGroups] = useState(() => new Set(ALL_GROUPS))
+  const [scoreRange, setScoreRange] = useState([0, 100])
   const [savedLists, setSavedLists] = useState([])
   const [activeRouteListId, setActiveRouteListId] = useState(null)
   const [routePlaces, setRoutePlaces] = useState(null)
@@ -63,10 +65,16 @@ export default function MapView() {
     setExpandedListId((prev) => (prev === listId ? null : listId))
   }
 
-  const filteredPlaces = useMemo(
-    () => (activeGroups.size === ALL_GROUPS.length ? places : places.filter((p) => activeGroups.has(p.envGroup4))),
-    [places, activeGroups]
-  )
+  // score는 NowGo Score 알고리즘 확정 전까지 항상 null(placesService.js 참고) — 점수 없는
+  // 장소는 범위와 무관하게 항상 통과시켜, 알고리즘이 채워지는 순간 그대로 동작하게 해둔다.
+  const filteredPlaces = useMemo(() => {
+    const [scoreMin, scoreMax] = scoreRange
+    return places.filter((p) => {
+      const groupMatch = activeGroups.size === ALL_GROUPS.length || activeGroups.has(p.mapGroup)
+      const scoreMatch = p.score == null || (p.score >= scoreMin && p.score <= scoreMax)
+      return groupMatch && scoreMatch
+    })
+  }, [places, activeGroups, scoreRange])
 
   const toggleGroup = (group) => {
     setActiveGroups((prev) => {
@@ -127,7 +135,12 @@ export default function MapView() {
     <div className="h-full flex overflow-hidden">
       {/* Sidebar: place detail panel replaces the filter sidebar when a marker is selected */}
       {selectedPlaceId ? (
-        <PlaceDetailPanel placeId={selectedPlaceId} onClose={() => setSelectedPlaceId(null)} />
+        <PlaceDetailPanel
+          placeId={selectedPlaceId}
+          anchorPlace={selectedPlace}
+          places={places}
+          onClose={() => setSelectedPlaceId(null)}
+        />
       ) : (
       <aside className="w-80 bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.05)] z-10 flex-col overflow-y-auto border-r border-outline-variant shrink-0 hidden md:flex">
         <div className="p-5 border-b border-outline-variant">
@@ -199,6 +212,10 @@ export default function MapView() {
               )
             })}
           </div>
+        </div>
+        <div className="p-5 border-b border-outline-variant">
+          <h3 className="font-body-md text-body-md font-bold mb-3">{t("scoreRangeTitle")}</h3>
+          <ScoreRangeSlider min={0} max={100} value={scoreRange} onChange={setScoreRange} />
         </div>
         {isLoggedIn && savedLists.length > 0 && (
           <div className="p-5 border-b border-outline-variant">

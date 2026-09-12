@@ -42,7 +42,9 @@ export function adaptPlace(place) {
     addr: place.addr1,
     category: place.category_name ?? place.env_group4,
     image: place.firstimage || null,
-    envGroup4: place.env_group4, // 해변 / 산 / 도심 / 실내
+    envGroup4: place.env_group4, // 해변 / 산 / 도심 / 실내 (백엔드 원본 분류, 그대로 보존)
+    // 지도 필터/마커 아이콘 전용 그룹 — 음식점(cat1=A05)만 "실내"에서 따로 빼서 보여준다.
+    mapGroup: place.cat1 === "A05" ? "음식점" : place.env_group4,
     envTypeCode: place.env_type_code,
     isEnvTarget: place.is_env_target, // 환경 신호등 점수 대상 여부 (실내는 항상 false)
     envTag: i18n.t(place.is_env_target ? "envTag.outdoor" : "envTag.indoor", { ns: "common" }),

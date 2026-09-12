@@ -9,7 +9,7 @@ const FADE_MS = 250
 // 관광지 1곳짜리 핀: 환경유형별 색깔 원 + 아이콘. 클릭하면 상세페이지로 이동.
 // fadeIn은 경로 모드에서 돌아왔을 때만 true — 매 zoom마다 깜빡이지 않게 평소엔 즉시 그린다.
 function createPinOverlay(kakao, map, place, onSelectPlace, fadeIn) {
-  const style = ENV_GROUP_STYLE[place.envGroup4] ?? DEFAULT_ENV_GROUP_STYLE
+  const style = ENV_GROUP_STYLE[place.mapGroup] ?? DEFAULT_ENV_GROUP_STYLE
 
   const content = document.createElement("div")
   content.className = `w-8 h-8 rounded-full flex items-center justify-center text-white shadow-md border-2 border-white cursor-pointer hover:scale-110 transition-transform ${

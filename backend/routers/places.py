@@ -17,6 +17,7 @@ def _place_query(db: Session, lang: str = "ko"):
         localized_column(TourSpot.addr1, TourSpot.addr1_en, TourSpot.addr1_zh, lang, "addr1"),
         TourSpot.sigungucode,
         TourSpot.firstimage,
+        TourSpot.cat1,
         CategoryCode.cat3_name.label("category_name"),
         func.ST_X(TourSpot.geom).label("lng"),
         func.ST_Y(TourSpot.geom).label("lat"),

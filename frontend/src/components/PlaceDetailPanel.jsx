@@ -6,7 +6,14 @@ import { useTranslation } from "react-i18next"
 import { usePlaceDetail } from "../hooks/usePlaceDetail"
 import { useSaveButton } from "../hooks/useSaveButton"
 import { ENV_ROWS } from "../lib/envRows"
+import { ENV_GROUP_STYLE, DEFAULT_ENV_GROUP_STYLE } from "../lib/envGroup"
+import { findNearbyPlaces } from "../lib/nearbyPlaces"
 import SaveToListModal from "./SaveToListModal"
+
+// NowGo Score 알고리즘 확정 전까지 실제 관광지의 score는 항상 null이라 이 기준은
+// 지금은 거의 안 걸림(mock 큐레이션 장소만 예외) — 알고리즘이 채워지면 그대로
+// 동작하도록 자리만 미리 잡아둔다. harness/DECISIONS.md 참고.
+const LOW_SCORE_THRESHOLD = 70
 
 const INFO_ROWS = [
   { key: "usetime", icon: "schedule" },
@@ -19,10 +26,15 @@ function directionsUrl(place) {
   return `https://map.kakao.com/link/to/${encodeURIComponent(place.name)},${place.lat},${place.lng}`
 }
 
-export default function PlaceDetailPanel({ placeId, onClose }) {
+export default function PlaceDetailPanel({ placeId, anchorPlace, places, onClose }) {
   const { t } = useTranslation("placeDetail")
   const { place, environment } = usePlaceDetail(placeId)
   const { isSaved, showModal, handleClick, closeModal } = useSaveButton(place?.id)
+
+  // anchorPlace(지도 마커의 실제 좌표)를 기준으로 찾는다 — place는 mock 큐레이션 장소일 때
+  // 좌표가 없을 수 있어서(usePlaceDetail 참고) 후보 검색엔 항상 실제 좌표를 쓴다.
+  const showAlternatives = place?.score != null && place.score <= LOW_SCORE_THRESHOLD
+  const alternatives = showAlternatives ? findNearbyPlaces(anchorPlace, places ?? []) : []
 
   return (
     <aside className="absolute md:relative inset-0 md:inset-auto z-20 w-full md:w-[400px] h-full shrink-0 bg-surface-container-lowest shadow-2xl flex flex-col overflow-y-auto">
@@ -150,6 +162,34 @@ export default function PlaceDetailPanel({ placeId, onClose }) {
                           <p className="text-sm font-bold">{value}</p>
                         </div>
                       </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {showAlternatives && alternatives.length > 0 && (
+              <div className="border-t border-outline-variant/30 pt-4">
+                <h3 className="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-3">
+                  {t("alternativesTitle")}
+                </h3>
+                <div className="flex flex-col gap-1">
+                  {alternatives.map((alt) => {
+                    const style = ENV_GROUP_STYLE[alt.mapGroup] ?? DEFAULT_ENV_GROUP_STYLE
+                    return (
+                      <Link
+                        key={alt.id}
+                        to={`/place/${alt.id}`}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low"
+                      >
+                        <div
+                          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: `${style.color}30`, color: style.color }}
+                        >
+                          <span className="material-symbols-outlined text-[18px]">{style.icon}</span>
+                        </div>
+                        <span className="text-sm font-bold text-on-surface flex-1 truncate">{alt.name}</span>
+                      </Link>
                     )
                   })}
                 </div>
