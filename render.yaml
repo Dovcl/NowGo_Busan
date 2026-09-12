@@ -100,3 +100,35 @@ services:
         sync: false
       - key: TOUR_API_KEY
         sync: false
+
+  # 관광지 목록/상세(+누락 랜드마크 화이트리스트)·영어/중국어 번역 매일 1회 수집.
+  # free 웹서비스의 in-process 스케줄러는 서비스가 슬립 중이면 새벽 배치가 조용히
+  # 스킵될 수 있어서(harness/DECISIONS.md 2026-09-12) 별도 Cron Job으로 분리.
+  - type: cron
+    name: nowgo-busan-fetch-tour-spots
+    plan: starter
+    region: singapore
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    schedule: "30 4 * * *"
+    startCommand: python -m etl.fetch_tour_spots_batch
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.11"
+      - key: DATABASE_NAME
+        value: nowgo_busan
+      - key: DATABASE_USER
+        value: nowgo
+      - key: DATABASE_HOST
+        sync: false
+      - key: DATABASE_PORT
+        value: "5432"
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: TOUR_API_KEY
+        sync: false
+      - key: ENG_SERVICE_API_KEY
+        sync: false
+      - key: CHN_SERVICE_API_KEY
+        sync: false
