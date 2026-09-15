@@ -59,6 +59,11 @@
     "walk": "步行{{minutes}}分钟 · {{dist}}",
     "drive": "驾车{{minutes}}分钟 · {{dist}}"
   },
+  "notFound": {
+    "title": "找不到该页面",
+    "description": "链接有误或该页面已不存在。",
+    "backHome": "返回首页"
+  },
   "weatherWarning": {
     "title": "气象特报",
     "badge": "气象特报发布",

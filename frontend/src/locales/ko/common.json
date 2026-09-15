@@ -59,6 +59,11 @@
     "walk": "도보 {{minutes}}분 · {{dist}}",
     "drive": "차량 {{minutes}}분 · {{dist}}"
   },
+  "notFound": {
+    "title": "페이지를 찾을 수 없어요",
+    "description": "주소가 잘못됐거나 삭제된 페이지예요.",
+    "backHome": "홈으로 돌아가기"
+  },
   "weatherWarning": {
     "title": "기상특보",
     "badge": "기상특보 발표",

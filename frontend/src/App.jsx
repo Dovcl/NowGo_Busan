@@ -13,6 +13,7 @@ import AdminEventReview from "./pages/AdminEventReview"
 import AdminUserManagement from "./pages/AdminUserManagement"
 import AdminDataInspector from "./pages/AdminDataInspector"
 import SearchResults from "./pages/SearchResults"
+import NotFound from "./pages/NotFound"
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/saved" element={<SavedLists />} />
         <Route path="/saved/:listId" element={<SavedListDetail />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
       {/* 메인 네비게이션에 안 걸어둠 — 관리자만 URL을 직접 알고 접근 */}
       <Route path="/admin/login" element={<AdminLogin />} />

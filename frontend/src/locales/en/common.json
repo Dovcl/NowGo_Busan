@@ -59,6 +59,11 @@
     "walk": "{{minutes}} min walk · {{dist}}",
     "drive": "{{minutes}} min drive · {{dist}}"
   },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The link is broken or this page no longer exists.",
+    "backHome": "Back to Home"
+  },
   "weatherWarning": {
     "title": "Weather Warnings",
     "badge": "Weather Warning Issued",
