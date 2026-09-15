@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext"
 import { useLanguage } from "../context/LanguageContext"
+import NotificationBell from "./NotificationBell"
 
 const NAV_ITEMS = [
   { to: "/", key: "home" },
@@ -82,9 +83,7 @@ export default function TopNavBar() {
             </div>
           )}
         </div>
-        <button className="p-2 hover:bg-surface-container-low rounded-full transition-colors" type="button">
-          <span className="material-symbols-outlined">notifications</span>
-        </button>
+        <NotificationBell />
         <button
           type="button"
           onClick={() => (isLoggedIn ? navigate("/profile") : openLoginModal())}

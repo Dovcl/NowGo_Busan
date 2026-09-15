@@ -1,4 +1,4 @@
-"""날씨·UV·대기질·이안류·공휴일 5개 ETL을 한 번에 실행하는 진입점.
+"""날씨·UV·대기질·이안류·기상특보·공휴일 6개 ETL을 한 번에 실행하는 진입점.
 
 Render Cron Job은 서비스 1개당 월 최소 $1이 청구돼서, 원래 갱신 주기가 다른
 (날씨/UV 3시간, 대기질 1시간, 이안류 15분) 4개를 개별 Cron Job으로 만드는 대신
@@ -9,18 +9,33 @@ Render Cron Job은 서비스 1개당 월 최소 $1이 청구돼서, 원래 갱�
 없어서 여기 얹었다 — 이 해가 이미 캐싱돼 있으면 내부적으로 API 호출 자체를 건너뛰므로
 매시간 같이 돌아도 비용이 늘지 않는다.
 
+기상특보(fetch_weather_warning)도 같은 이유로 여기 얹었다 — 원래 무료 웹서비스의
+in-process 스케줄러에서만 15분마다 돌아서 서비스가 슬립 중이면 갱신이 조용히
+스킵될 위험이 있었는데(harness/DECISIONS.md 2026-09-16), 안전 관련 데이터라
+개별 Cron Job(+월 $1)을 새로 파는 대신 이미 유료로 도는 이 배치에 묶어 1시간
+주기로 안정적으로 보장한다. in-process 스케줄러의 15분 주기는 그대로 남겨둬
+(다른 4개와 동일 패턴) 웹서비스가 깨어있을 때는 더 자주 갱신되는 보너스를 유지한다.
+
 하나가 실패해도 나머지는 계속 실행되도록 각각 독립적으로 예외 처리한다.
 
 실행: backend/ 디렉토리에서 `python -m etl.fetch_environment_batch`
 """
 
-from etl import fetch_air_quality, fetch_holidays, fetch_rip_current, fetch_uv, fetch_weather
+from etl import (
+    fetch_air_quality,
+    fetch_holidays,
+    fetch_rip_current,
+    fetch_uv,
+    fetch_weather,
+    fetch_weather_warning,
+)
 
 _JOBS = [
     ("weather", fetch_weather.main),
     ("uv", fetch_uv.main),
     ("air_quality", fetch_air_quality.main),
     ("rip_current", fetch_rip_current.main),
+    ("weather_warning", fetch_weather_warning.main),
     ("holidays", fetch_holidays.main),
 ]
 

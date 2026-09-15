@@ -56,6 +56,14 @@ export async function fetchEnvironment(lat, lng) {
   return adaptEnvironment(await res.json())
 }
 
+// 기상특보 발표 피드(최신순, 최대 20건) — 좌표 무관 부산 전역 단위
+export async function fetchWeatherWarnings() {
+  const res = await fetch(`${API_BASE_URL}/api/weather-warnings`)
+  if (!res.ok) throw new Error(`fetchWeatherWarnings failed: ${res.status}`)
+  const data = await res.json()
+  return data.map((w) => ({ title: w.title, issuedAt: w.issued_at }))
+}
+
 // "오늘 실측 vs 평소 baseline" 그래프용 — 24시간 전체, 값 없는 시간대는 null 그대로 유지
 // (프론트에서 그 구간만 선을 끊어 그리는 데 필요해서 0으로 메우지 않는다)
 export async function fetchTrafficHistory(lat, lng) {

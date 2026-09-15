@@ -59,6 +59,17 @@
     "walk": "도보 {{minutes}}분 · {{dist}}",
     "drive": "차량 {{minutes}}분 · {{dist}}"
   },
+  "weatherWarning": {
+    "title": "기상특보",
+    "badge": "기상특보 발표",
+    "empty": "최근 발표된 특보가 없습니다"
+  },
+  "timeAgo": {
+    "justNow": "방금 전",
+    "minutesAgo": "{{count}}분 전",
+    "hoursAgo": "{{count}}시간 전",
+    "daysAgo": "{{count}}일 전"
+  },
   "errors": {
     "createAccountFailed": "계정 생성에 실패했습니다",
     "roleChangeFailed": "권한 변경에 실패했습니다",

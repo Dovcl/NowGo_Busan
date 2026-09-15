@@ -59,6 +59,17 @@
     "walk": "{{minutes}} min walk · {{dist}}",
     "drive": "{{minutes}} min drive · {{dist}}"
   },
+  "weatherWarning": {
+    "title": "Weather Warnings",
+    "badge": "Weather Warning Issued",
+    "empty": "No recent warnings"
+  },
+  "timeAgo": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  },
   "errors": {
     "createAccountFailed": "Failed to create account",
     "roleChangeFailed": "Failed to change role",

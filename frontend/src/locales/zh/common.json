@@ -59,6 +59,17 @@
     "walk": "步行{{minutes}}分钟 · {{dist}}",
     "drive": "驾车{{minutes}}分钟 · {{dist}}"
   },
+  "weatherWarning": {
+    "title": "气象特报",
+    "badge": "气象特报发布",
+    "empty": "暂无最近发布的特报"
+  },
+  "timeAgo": {
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}}分钟前",
+    "hoursAgo": "{{count}}小时前",
+    "daysAgo": "{{count}}天前"
+  },
   "errors": {
     "createAccountFailed": "创建账户失败",
     "roleChangeFailed": "权限变更失败",
