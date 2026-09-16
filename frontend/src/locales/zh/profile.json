@@ -8,20 +8,15 @@
   "languageTitle": "语言",
   "notificationsTitle": "通知",
   "generalTitle": "通用",
-  "respiratoryMode": "呼吸道敏感模式",
-  "respiratoryModeDesc": "获取对空气质量·紫外线更敏感的推荐。",
   "personaTitle": "我的画像",
-  "personaDesc": "将反映在推荐标签页的筛选中。",
-  "personas": {
-    "20대": "20多岁",
-    "30대": "30多岁",
-    "40대+": "40多岁+"
+  "personaDesc": "选择您敏感的部分。计入评分的功能即将推出。",
+  "sensitivities": {
+    "respiratory": "呼吸道敏感",
+    "uv": "紫外线·皮肤敏感",
+    "water": "水质敏感"
   },
-  "withChildren": "携带儿童出行",
-  "notifDanger": "收藏地点风险提醒",
-  "notifDaily": "每日早晨推荐路线提醒",
-  "notifDust": "沙尘·高温预警提醒",
-  "darkMode": "深色模式",
+  "notifWeatherWarning": "气象特报提醒",
+  "notifWeatherWarningDesc": "有新特报发布时立即在屏幕上提醒您。关闭后仍可在提醒铃图标中查看。",
   "adminUsers": "会员管理",
   "adminData": "数据",
   "dataSource": "数据来源",

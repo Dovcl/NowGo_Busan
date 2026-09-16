@@ -8,20 +8,15 @@
   "languageTitle": "Language",
   "notificationsTitle": "Notifications",
   "generalTitle": "General",
-  "respiratoryMode": "Respiratory-Sensitive Mode",
-  "respiratoryModeDesc": "Get recommendations more sensitive to air quality and UV.",
   "personaTitle": "My Persona",
-  "personaDesc": "Reflected in the Recommend tab's filters.",
-  "personas": {
-    "20대": "20s",
-    "30대": "30s",
-    "40대+": "40s+"
+  "personaDesc": "Pick what you're sensitive to. Factoring this into your score is coming soon.",
+  "sensitivities": {
+    "respiratory": "Respiratory-sensitive",
+    "uv": "UV/skin-sensitive",
+    "water": "Water-quality-sensitive"
   },
-  "withChildren": "Traveling with kids",
-  "notifDanger": "Danger alerts for saved spots",
-  "notifDaily": "Daily morning route recommendations",
-  "notifDust": "Dust/heatwave advisory alerts",
-  "darkMode": "Dark Mode",
+  "notifWeatherWarning": "Weather warning alerts",
+  "notifWeatherWarningDesc": "Get an on-screen alert as soon as a new warning is issued. Turning this off still lets you check past ones from the bell icon.",
   "adminUsers": "Manage Users",
   "adminData": "Data",
   "dataSource": "Data Sources",

@@ -4,24 +4,41 @@ import { useTranslation } from "react-i18next"
 import Toggle from "../components/Toggle"
 import { useAuth } from "../context/AuthContext"
 import { useLanguage } from "../context/LanguageContext"
+import { useWeatherWarnings } from "../context/WeatherWarningContext"
 import { fetchMyLists, fetchListItems } from "../services/listsService"
 import { fetchPlaceById } from "../services/placesService"
 
-const PERSONAS = ["20대", "30대", "40대+"]
+const SENSITIVITY_KEY = "nowgo_sensitivity_profile"
+// 대기(s_air)/자외선(s_uv)/수질(s_water) 세 축 그대로 매핑 — 스코어 가중치에
+// 실제로 반영하는 건 NowGo Score 알고리즘 쪽(팀원 작업) 몫이라 여기서는 선택값을
+// 만들고 저장하는 것까지만 한다.
+const SENSITIVITIES = ["respiratory", "uv", "water"]
 const LANGUAGE_FLAGS = { ko: "🇰🇷", en: "🇺🇸", zh: "🇨🇳" }
+
+function loadSensitivities() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SENSITIVITY_KEY))
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
 
 export default function Profile() {
   const { t } = useTranslation("profile")
   const { t: tCommon } = useTranslation("common")
   const { user, isLoggedIn, openLoginModal, logout } = useAuth()
   const { language, setLanguage, supportedLanguages } = useLanguage()
-  const [respiratoryMode, setRespiratoryMode] = useState(true)
-  const [persona, setPersona] = useState("20대")
-  const [withChildren, setWithChildren] = useState(false)
-  const [notifDanger, setNotifDanger] = useState(true)
-  const [notifDaily, setNotifDaily] = useState(true)
-  const [notifDust, setNotifDust] = useState(true)
-  const [darkMode, setDarkMode] = useState(false)
+  const { notificationsEnabled, setNotificationsEnabled } = useWeatherWarnings()
+  const [sensitivities, setSensitivities] = useState(loadSensitivities)
+
+  useEffect(() => {
+    localStorage.setItem(SENSITIVITY_KEY, JSON.stringify(sensitivities))
+  }, [sensitivities])
+
+  const toggleSensitivity = (key) => {
+    setSensitivities((prev) => (prev.includes(key) ? prev.filter((s) => s !== key) : [...prev, key]))
+  }
 
   // 리스트별로 담긴 장소를 보여준다 ("즐겨찾기" 기본 리스트뿐 아니라 유저가
   // 직접 만든 리스트도 전부 — SaveToListModal에서 만든 리스트가 여기 안 보이면 안 됨).
@@ -88,43 +105,26 @@ export default function Profile() {
           {/* Column 1 */}
           <div className="flex flex-col gap-gutter">
             <SettingsCard icon="psychology" title={t("personalizationTitle")}>
-              <div className="flex justify-between items-start gap-4">
-                <div className="flex flex-col">
-                  <span className="font-body-md text-body-md font-bold text-on-surface">{t("respiratoryMode")}</span>
-                  <span className="font-label-sm text-label-sm text-on-surface-variant">
-                    {t("respiratoryModeDesc")}
-                  </span>
-                </div>
-                <Toggle checked={respiratoryMode} onChange={setRespiratoryMode} activeClass="peer-checked:bg-primary" />
-              </div>
-              <Divider />
               <div className="flex flex-col gap-2">
                 <span className="font-body-md text-body-md font-bold text-on-surface">{t("personaTitle")}</span>
                 <span className="font-label-sm text-label-sm text-on-surface-variant mb-2">
                   {t("personaDesc")}
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {PERSONAS.map((p) => (
+                  {SENSITIVITIES.map((key) => (
                     <button
-                      key={p}
+                      key={key}
                       type="button"
-                      onClick={() => setPersona(p)}
+                      onClick={() => toggleSensitivity(key)}
                       className={`px-4 py-2 rounded-full font-label-sm text-label-sm ${
-                        p === persona
+                        sensitivities.includes(key)
                           ? "border border-primary text-primary font-bold bg-primary-container/10"
                           : "border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
                       }`}
                     >
-                      {t(`personas.${p}`)}
+                      {t(`sensitivities.${key}`)}
                     </button>
                   ))}
-                </div>
-                <div className="flex justify-between items-center mt-3 bg-surface-container-low p-3 rounded-lg border border-outline-variant/50">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary">child_care</span>
-                    <span className="font-body-md text-body-md">{t("withChildren")}</span>
-                  </div>
-                  <Toggle checked={withChildren} onChange={setWithChildren} activeClass="peer-checked:bg-primary" />
                 </div>
               </div>
             </SettingsCard>
@@ -162,31 +162,22 @@ export default function Profile() {
           {/* Column 2 */}
           <div className="flex flex-col gap-gutter">
             <SettingsCard icon="notifications_active" title={t("notificationsTitle")}>
-              <div className="flex justify-between items-center gap-4">
-                <span className="font-body-md text-body-md text-on-surface">{t("notifDanger")}</span>
-                <Toggle checked={notifDanger} onChange={setNotifDanger} activeClass="peer-checked:bg-error" />
-              </div>
-              <Divider />
-              <div className="flex justify-between items-center gap-4">
-                <span className="font-body-md text-body-md text-on-surface">{t("notifDaily")}</span>
-                <Toggle checked={notifDaily} onChange={setNotifDaily} activeClass="peer-checked:bg-primary" />
-              </div>
-              <Divider />
-              <div className="flex justify-between items-center gap-4">
-                <span className="font-body-md text-body-md text-on-surface">{t("notifDust")}</span>
-                <Toggle checked={notifDust} onChange={setNotifDust} activeClass="peer-checked:bg-tertiary-container" />
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex flex-col">
+                  <span className="font-body-md text-body-md text-on-surface">{t("notifWeatherWarning")}</span>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant">
+                    {t("notifWeatherWarningDesc")}
+                  </span>
+                </div>
+                <Toggle
+                  checked={notificationsEnabled}
+                  onChange={setNotificationsEnabled}
+                  activeClass="peer-checked:bg-tertiary-container"
+                />
               </div>
             </SettingsCard>
 
             <SettingsCard icon="settings" title={t("generalTitle")}>
-              <div className="flex justify-between items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-on-surface-variant">dark_mode</span>
-                  <span className="font-body-md text-body-md text-on-surface">{t("darkMode")}</span>
-                </div>
-                <Toggle checked={darkMode} onChange={setDarkMode} activeClass="peer-checked:bg-inverse-surface" />
-              </div>
-              <Divider />
               {user?.role === "admin" && (
                 <>
                   <Link

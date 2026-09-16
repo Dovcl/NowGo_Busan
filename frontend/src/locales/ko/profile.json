@@ -8,20 +8,15 @@
   "languageTitle": "언어",
   "notificationsTitle": "알림",
   "generalTitle": "일반",
-  "respiratoryMode": "호흡기 약자 모드",
-  "respiratoryModeDesc": "대기질·자외선에 더 민감한 추천을 받아요.",
   "personaTitle": "내 페르소나",
-  "personaDesc": "Recommend 탭 추천 필터에 반영돼요.",
-  "personas": {
-    "20대": "20대",
-    "30대": "30대",
-    "40대+": "40대+"
+  "personaDesc": "민감한 부분을 선택해두세요. 스코어에 반영하는 기능은 준비 중이에요.",
+  "sensitivities": {
+    "respiratory": "호흡기 민감",
+    "uv": "자외선·피부 민감",
+    "water": "수질 민감"
   },
-  "withChildren": "아이 동반",
-  "notifDanger": "찜한 장소 위험 신호 알림",
-  "notifDaily": "매일 아침 추천 코스 알림",
-  "notifDust": "황사·폭염 특보 알림",
-  "darkMode": "다크 모드",
+  "notifWeatherWarning": "기상특보 알림받기",
+  "notifWeatherWarningDesc": "새 특보가 뜨면 화면에 바로 알려드려요. 꺼도 알림벨에서 다시 확인할 수 있어요.",
   "adminUsers": "회원 관리",
   "adminData": "데이터",
   "dataSource": "데이터 출처",
