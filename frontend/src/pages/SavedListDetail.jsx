@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { fetchListItems, fetchMyLists, reorderList } from "../services/listsService"
+import { fetchListItems, fetchMyLists, reorderList, removeFromList } from "../services/listsService"
 import { fetchPlaceById } from "../services/placesService"
 import ReorderablePlaceList from "../components/ReorderablePlaceList"
 
@@ -67,6 +67,10 @@ export default function SavedListDetail() {
             reorderList(listId, next.map((p) => Number(p.id)))
           }}
           onSelectPlace={(place) => navigate(`/place/${place.id}`)}
+          onDelete={(place, next) => {
+            setPlaces(next)
+            removeFromList(listId, Number(place.id))
+          }}
         />
       </div>
     </div>

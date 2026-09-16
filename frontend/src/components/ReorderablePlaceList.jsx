@@ -13,7 +13,7 @@ const DRAG_THRESHOLD = 6 // 이만큼 움직여야 "탭"이 아니라 "드래그
 const SETTLE_MS = 200
 const SETTLE_TRANSITION = `top ${SETTLE_MS}ms cubic-bezier(0.2, 0, 0, 1)`
 
-export default function ReorderablePlaceList({ places: initialPlaces, onReorder, onSelectPlace, compact = false }) {
+export default function ReorderablePlaceList({ places: initialPlaces, onReorder, onSelectPlace, onDelete, compact = false }) {
   const [places, setPlaces] = useState(initialPlaces)
   const [draggingId, setDraggingId] = useState(null)
 
@@ -158,6 +158,15 @@ export default function ReorderablePlaceList({ places: initialPlaces, onReorder,
     removeGhost()
   }
 
+  // 드래그(onReorder)와 같은 패턴 — 이 컴포넌트가 화면에 보이는 순서/목록의
+  // 진짜 소스라, 지워도 즉시 화면에 반영하고 나서 부모에게 알려 실제 삭제
+  // API 호출과 부모 쪽 개수 표시 등을 갱신하게 한다.
+  const handleDelete = (place) => {
+    const next = placesRef.current.filter((p) => p.id !== place.id)
+    setPlaces(next)
+    onDelete?.(place, next)
+  }
+
   useLayoutEffect(() => {
     window.addEventListener("pointerup", finishDrag)
     window.addEventListener("pointercancel", cancelDrag)
@@ -210,6 +219,21 @@ export default function ReorderablePlaceList({ places: initialPlaces, onReorder,
             </p>
             {!compact && <p className="font-label-sm text-label-sm text-on-surface-variant truncate">{place.category}</p>}
           </div>
+          {onDelete && (
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(place)
+              }}
+              className={`shrink-0 rounded-full text-outline-variant hover:text-error hover:bg-error-container/20 transition-colors flex items-center justify-center ${
+                compact ? "w-6 h-6" : "w-8 h-8"
+              }`}
+            >
+              <span className={`material-symbols-outlined ${compact ? "text-[16px]" : "text-[20px]"}`}>close</span>
+            </button>
+          )}
         </div>
       ))}
     </div>
