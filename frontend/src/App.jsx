@@ -12,6 +12,7 @@ import AdminLogin from "./pages/AdminLogin"
 import AdminEventReview from "./pages/AdminEventReview"
 import AdminUserManagement from "./pages/AdminUserManagement"
 import AdminDataInspector from "./pages/AdminDataInspector"
+import AdminDataSources from "./pages/AdminDataSources"
 import SearchResults from "./pages/SearchResults"
 import NotFound from "./pages/NotFound"
 
@@ -27,6 +28,7 @@ function App() {
         <Route path="/admin/events/review" element={<AdminEventReview />} />
         <Route path="/admin/users" element={<AdminUserManagement />} />
         <Route path="/admin/data" element={<AdminDataInspector />} />
+        <Route path="/admin/data-sources" element={<AdminDataSources />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/saved" element={<SavedLists />} />

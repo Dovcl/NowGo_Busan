@@ -156,5 +156,81 @@
         "该API仅在海水浴场开放期间(6~9月)提供数值,非季节期表为空属于正常。"
       ]
     }
+  },
+  "dataSources": {
+    "title": "数据来源",
+    "subtitle": "NowGo Busan 实际调用的全部公共·外部 API 列表。",
+    "items": [
+      {
+        "name": "TourAPI (KorService2)",
+        "provider": "韩国观光公社",
+        "usage": "景点列表·详细信息(位置、开放时间、停车等)"
+      },
+      {
+        "name": "TourAPI 英文·中文服务",
+        "provider": "韩国观光公社",
+        "usage": "景点名称·简介的英文、简体中文翻译"
+      },
+      {
+        "name": "TourAPI 节庆信息",
+        "provider": "韩国观光公社",
+        "usage": "节庆·活动列表"
+      },
+      {
+        "name": "地区访客数",
+        "provider": "韩国观光公社大数据",
+        "usage": "实时拥挤度(s_traffic)数据不足时使用的备用基准值"
+      },
+      {
+        "name": "多봄(BusanCultureThemeService)",
+        "provider": "釜山文化门户",
+        "usage": "演出·展览信息"
+      },
+      {
+        "name": "演出·节庆列表",
+        "provider": "KOPIS(公演艺术综合电算网)",
+        "usage": "演唱会、音乐剧、话剧等售票演出信息"
+      },
+      {
+        "name": "超短期预报",
+        "provider": "韩国气象厅",
+        "usage": "实时天气(气温、天空状况、降水)"
+      },
+      {
+        "name": "生活气象指数",
+        "provider": "韩国气象厅",
+        "usage": "紫外线指数"
+      },
+      {
+        "name": "气象特报查询服务",
+        "provider": "韩国气象厅",
+        "usage": "暴雨、大风、风浪等气象特报发布信息"
+      },
+      {
+        "name": "实时空气质量测定信息",
+        "provider": "AirKorea(韩国环境公团)",
+        "usage": "PM10、PM2.5、臭氧测定值"
+      },
+      {
+        "name": "离岸流信息服务",
+        "provider": "国立海洋调查院",
+        "usage": "海云台、松亭、林浪离岸流风险指数"
+      },
+      {
+        "name": "路段交通信息",
+        "provider": "釜山广域市",
+        "usage": "道路路段实时通行速度(用于计算拥挤度)"
+      },
+      {
+        "name": "特殊日信息",
+        "provider": "韩国天文研究院",
+        "usage": "公休日日期(用于拥挤度基准值校正)"
+      },
+      {
+        "name": "Kakao 地图 SDK",
+        "provider": "Kakao",
+        "usage": "地图显示、坐标、路线导航"
+      }
+    ]
   }
 }

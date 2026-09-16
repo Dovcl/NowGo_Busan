@@ -156,5 +156,81 @@
         "This API only returns values during beach season (Jun-Sep), so an empty table off-season is expected."
       ]
     }
+  },
+  "dataSources": {
+    "title": "Data Sources",
+    "subtitle": "Every public/external API NowGo Busan actually calls.",
+    "items": [
+      {
+        "name": "TourAPI (KorService2)",
+        "provider": "Korea Tourism Organization",
+        "usage": "Tourist spot listings and details (location, hours, parking, etc.)"
+      },
+      {
+        "name": "TourAPI English/Chinese service",
+        "provider": "Korea Tourism Organization",
+        "usage": "English and Simplified Chinese translations of spot names/descriptions"
+      },
+      {
+        "name": "TourAPI festival info",
+        "provider": "Korea Tourism Organization",
+        "usage": "Festival and event listings"
+      },
+      {
+        "name": "Regional visitor counts",
+        "provider": "KTO Big Data",
+        "usage": "Fallback baseline when live congestion (s_traffic) data is insufficient"
+      },
+      {
+        "name": "Dabom (BusanCultureThemeService)",
+        "provider": "Busan Culture Portal",
+        "usage": "Performance and exhibition info"
+      },
+      {
+        "name": "Performance/festival listings",
+        "provider": "KOPIS (Korea Performing Arts Box Office Info System)",
+        "usage": "Ticketed shows: concerts, musicals, plays, etc."
+      },
+      {
+        "name": "Ultra-short-term forecast",
+        "provider": "Korea Meteorological Administration",
+        "usage": "Live weather (temperature, sky condition, precipitation)"
+      },
+      {
+        "name": "Living weather index",
+        "provider": "Korea Meteorological Administration",
+        "usage": "UV index"
+      },
+      {
+        "name": "Weather warning service",
+        "provider": "Korea Meteorological Administration",
+        "usage": "Heavy rain, wind, wave, etc. warning feed"
+      },
+      {
+        "name": "Real-time air quality",
+        "provider": "AirKorea (Korea Environment Corporation)",
+        "usage": "PM10, PM2.5, ozone readings"
+      },
+      {
+        "name": "Rip current info service",
+        "provider": "Korea Hydrographic and Oceanographic Agency",
+        "usage": "Rip current risk at Haeundae, Songjeong, Imnang"
+      },
+      {
+        "name": "Link traffic info",
+        "provider": "Busan Metropolitan City",
+        "usage": "Real-time road-segment speeds (for congestion scoring)"
+      },
+      {
+        "name": "Special day info",
+        "provider": "Korea Astronomy and Space Science Institute",
+        "usage": "Public holiday dates (for congestion baseline correction)"
+      },
+      {
+        "name": "Kakao Map SDK",
+        "provider": "Kakao",
+        "usage": "Map display, coordinates, directions"
+      }
+    ]
   }
 }

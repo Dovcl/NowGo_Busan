@@ -156,5 +156,81 @@
         "해수욕장 개장 기간(6~9월)에만 값이 나오는 API라, 비시즌엔 테이블이 비어있는 게 정상이에요."
       ]
     }
+  },
+  "dataSources": {
+    "title": "데이터 출처",
+    "subtitle": "NowGo Busan이 실제로 호출하는 공공·외부 API 전체 목록이에요.",
+    "items": [
+      {
+        "name": "TourAPI (KorService2)",
+        "provider": "한국관광공사",
+        "usage": "관광지 목록·상세 정보(위치, 이용시간, 주차 등)"
+      },
+      {
+        "name": "TourAPI 영어·중국어 서비스",
+        "provider": "한국관광공사",
+        "usage": "관광지명·설명 영어·중국어(간체) 번역"
+      },
+      {
+        "name": "TourAPI 축제 정보",
+        "provider": "한국관광공사",
+        "usage": "축제·행사 목록"
+      },
+      {
+        "name": "지역별 방문자수",
+        "provider": "한국관광공사 빅데이터",
+        "usage": "혼잡도(s_traffic) 데이터가 부족할 때 쓰는 대체 baseline"
+      },
+      {
+        "name": "다봄(BusanCultureThemeService)",
+        "provider": "부산문화포털",
+        "usage": "공연·전시 정보"
+      },
+      {
+        "name": "공연목록·축제목록",
+        "provider": "KOPIS(공연예술통합전산망)",
+        "usage": "콘서트·뮤지컬·연극 등 티켓 공연 정보"
+      },
+      {
+        "name": "초단기예보",
+        "provider": "기상청",
+        "usage": "실시간 날씨(기온, 하늘상태, 강수)"
+      },
+      {
+        "name": "생활기상지수",
+        "provider": "기상청",
+        "usage": "자외선 지수"
+      },
+      {
+        "name": "기상특보 조회서비스",
+        "provider": "기상청",
+        "usage": "호우·강풍·풍랑 등 기상특보 발표 피드"
+      },
+      {
+        "name": "대기질 실시간 측정정보",
+        "provider": "에어코리아(한국환경공단)",
+        "usage": "미세먼지·초미세먼지·오존 측정값"
+      },
+      {
+        "name": "이안류 정보서비스",
+        "provider": "국립해양조사원",
+        "usage": "해운대·송정·임랑 이안류 위험지수"
+      },
+      {
+        "name": "링크소통정보",
+        "provider": "부산광역시",
+        "usage": "도로 구간별 실시간 통행속도(혼잡도 산정)"
+      },
+      {
+        "name": "특일 정보",
+        "provider": "한국천문연구원",
+        "usage": "공휴일 날짜(혼잡도 baseline 보정용)"
+      },
+      {
+        "name": "카카오맵 SDK",
+        "provider": "카카오",
+        "usage": "지도 표시, 좌표, 길찾기"
+      }
+    ]
   }
 }

@@ -204,13 +204,23 @@ export default function Profile() {
                   <Divider />
                 </>
               )}
-              <div className="flex justify-between items-center gap-4 py-1">
-                <div className="flex flex-col">
+              {user?.role === "admin" ? (
+                <Link
+                  to="/admin/data-sources"
+                  className="flex justify-between items-center gap-4 py-1 hover:opacity-70 transition-opacity"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-body-md text-body-md text-on-surface">{t("dataSource")}</span>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant">{t("dataSourceValue")}</span>
+                  </div>
+                  <span className="material-symbols-outlined text-outline-variant">chevron_right</span>
+                </Link>
+              ) : (
+                <div className="flex flex-col py-1">
                   <span className="font-body-md text-body-md text-on-surface">{t("dataSource")}</span>
                   <span className="font-label-sm text-label-sm text-on-surface-variant">{t("dataSourceValue")}</span>
                 </div>
-                <span className="material-symbols-outlined text-outline-variant">chevron_right</span>
-              </div>
+              )}
               <Divider />
               <div className="flex justify-between items-center gap-4 py-1">
                 <span className="font-body-md text-body-md text-on-surface">{t("appVersion")}</span>
