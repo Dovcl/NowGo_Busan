@@ -115,11 +115,23 @@ export default function BusanBumbim() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="px-4 md:px-container-margin py-4 md:py-8 pb-24 md:pb-8 max-w-[1440px] mx-auto w-full flex gap-gutter flex-col md:flex-row">
-        {/* 지역 선택 */}
+        {/* 지역 선택 — 모바일은 16개 구·군 세로 목록이 본문 위를 다 차지해버려서 드롭다운으로,
+            데스크톱은 옆 사이드바 공간이 충분해서 기존 목록 그대로. */}
         <aside className="w-full md:w-56 flex-shrink-0">
           <div className="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/20 p-4">
             <h2 className="font-label-sm text-label-sm text-on-surface-variant font-bold mb-3 px-2">{t("districtSelectTitle")}</h2>
-            <ul className="space-y-1 text-sm max-h-[70vh] overflow-y-auto">
+            <select
+              value={districtCode}
+              onChange={(e) => setDistrictCode(Number(e.target.value))}
+              className="md:hidden w-full border border-outline-variant rounded-lg px-3 py-2.5 font-body-md text-body-md bg-surface-container-lowest text-on-surface"
+            >
+              {DISTRICTS.map((d) => (
+                <option key={d.code} value={d.code}>
+                  {t(`districts.${d.code}`)}
+                </option>
+              ))}
+            </select>
+            <ul className="hidden md:block space-y-1 text-sm max-h-[70vh] overflow-y-auto">
               {DISTRICTS.map((d) => (
                 <li key={d.code}>
                   <button
