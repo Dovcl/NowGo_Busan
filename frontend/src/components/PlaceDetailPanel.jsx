@@ -8,6 +8,7 @@ import { useSaveButton } from "../hooks/useSaveButton"
 import { ENV_ROWS } from "../lib/envRows"
 import { ENV_GROUP_STYLE, DEFAULT_ENV_GROUP_STYLE } from "../lib/envGroup"
 import { findNearbyPlaces } from "../lib/nearbyPlaces"
+import { STATUS, scoreToStatus } from "../lib/status"
 import SaveToListModal from "./SaveToListModal"
 
 // place.score는 여러 활동 중 가장 낮은 점수(placesService.js::worstActivity) —
@@ -27,6 +28,7 @@ function directionsUrl(place) {
 
 export default function PlaceDetailPanel({ placeId, anchorPlace, places, onClose }) {
   const { t } = useTranslation("placeDetail")
+  const { t: tCommon } = useTranslation("common")
   const { place, environment } = usePlaceDetail(placeId)
   const { isSaved, showModal, handleClick, closeModal } = useSaveButton(place?.id)
 
@@ -34,6 +36,9 @@ export default function PlaceDetailPanel({ placeId, anchorPlace, places, onClose
   // 좌표가 없을 수 있어서(usePlaceDetail 참고) 후보 검색엔 항상 실제 좌표를 쓴다.
   const showAlternatives = place?.score != null && place.score <= LOW_SCORE_THRESHOLD
   const alternatives = showAlternatives ? findNearbyPlaces(anchorPlace, places ?? []) : []
+
+  const hasScore = place?.score != null
+  const scoreStatus = hasScore ? STATUS[place.status ?? scoreToStatus(place.score)] : null
 
   return (
     <aside className="absolute md:relative inset-0 md:inset-auto z-20 w-full md:w-[400px] h-full shrink-0 bg-surface-container-lowest shadow-2xl flex flex-col overflow-y-auto">
@@ -65,6 +70,14 @@ export default function PlaceDetailPanel({ placeId, anchorPlace, places, onClose
             >
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
+            {hasScore && (
+              <div className="absolute top-4 right-4 bg-white rounded-lg px-3 py-1.5 shadow-lg flex items-baseline gap-1">
+                <span className={`font-score-display text-lg font-bold ${scoreStatus.text}`}>{place.score}</span>
+                <span className={`text-[10px] font-bold ${scoreStatus.text}`}>
+                  ({tCommon(`status.${place.status ?? scoreToStatus(place.score)}`)})
+                </span>
+              </div>
+            )}
             <div className="absolute bottom-4 left-4 right-4 text-white">
               <h1 className="text-headline-lg-mobile font-headline-lg-mobile leading-tight mb-1">{place.name}</h1>
               <p className="text-label-sm font-label-sm opacity-90">{place.category}</p>
