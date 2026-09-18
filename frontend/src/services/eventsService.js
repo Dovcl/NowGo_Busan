@@ -46,7 +46,9 @@ export async function fetchEventById(id) {
     venue: e.venue,
     address: e.address,
     image: e.image_url,
-    sourceUrls: e.source_urls ?? [],
+    // [{source: 'dabom'|'kopis'|'tourapi', url}] — 병합된 행사는 소스가 여러 개일 수 있어
+    // EventDetailModal이 어느 사이트로 가는 링크인지 라벨로 구분해 보여준다.
+    sourceUrls: (e.source_urls ?? []).map((s) => ({ source: s.source, url: s.url })),
   }
 }
 

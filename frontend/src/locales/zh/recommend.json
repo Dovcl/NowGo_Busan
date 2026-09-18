@@ -44,6 +44,12 @@
   "titlePlaceholder": "日程标题(例:海云台家庭旅行)",
   "notFound": "找不到该活动信息。",
   "viewDetails": "查看详情",
+  "viewDetailsAt": "在{{source}}查看",
+  "eventSource": {
+    "tourapi": "TourAPI",
+    "dabom": "多봄",
+    "kopis": "KOPIS"
+  },
   "saved": "已收藏",
   "wantToGo": "想去"
 }

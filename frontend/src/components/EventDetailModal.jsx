@@ -108,7 +108,7 @@ function EventDetailBody({ event, saved, onToggleSaved, onClose, onOpenCalendar 
 
         {event.sourceUrls.length > 0 && (
           <div className="flex flex-col gap-2">
-            {event.sourceUrls.map((url) => (
+            {event.sourceUrls.map(({ source, url }) => (
               <a
                 key={url}
                 href={url}
@@ -116,7 +116,12 @@ function EventDetailBody({ event, saved, onToggleSaved, onClose, onOpenCalendar 
                 rel="noreferrer"
                 className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-outline-variant text-on-surface font-label-sm text-[13px] font-bold hover:bg-surface-container transition-colors"
               >
-                {t("viewDetails")}
+                {/* 병합된 행사는 링크가 2개 이상일 수 있어(다봄+KOPIS 등) 어느 사이트로
+                    가는지 소스명을 붙인다 — 하나뿐이면 굳이 "TourAPI에서 보기"라고
+                    안 밝혀도 되니 그냥 "자세히 보기"만 보여준다. */}
+                {event.sourceUrls.length > 1
+                  ? t("viewDetailsAt", { source: t(`eventSource.${source}`, { defaultValue: source }) })
+                  : t("viewDetails")}
                 <span className="material-symbols-outlined text-[16px]">open_in_new</span>
               </a>
             ))}

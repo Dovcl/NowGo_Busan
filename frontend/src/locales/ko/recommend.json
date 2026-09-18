@@ -44,6 +44,12 @@
   "titlePlaceholder": "일정 제목 (예: 해운대 가족여행)",
   "notFound": "행사 정보를 찾을 수 없어요.",
   "viewDetails": "자세히 보기",
+  "viewDetailsAt": "{{source}}에서 보기",
+  "eventSource": {
+    "tourapi": "TourAPI",
+    "dabom": "다봄",
+    "kopis": "KOPIS"
+  },
   "saved": "담았어요",
   "wantToGo": "가고싶어요"
 }

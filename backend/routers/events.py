@@ -39,7 +39,7 @@ def get_event(event_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="행사를 찾을 수 없습니다")
 
     source_urls = (
-        db.query(EventRaw.source_url)
+        db.query(EventRaw.source, EventRaw.source_url)
         .join(
             EventSourceMap,
             (EventSourceMap.source == EventRaw.source) & (EventSourceMap.source_event_id == EventRaw.source_event_id),
@@ -49,4 +49,6 @@ def get_event(event_id: int, db: Session = Depends(get_db)):
         .all()
     )
 
-    return EventDetailOut.model_validate({**row._mapping, "source_urls": [u[0] for u in source_urls]})
+    return EventDetailOut.model_validate(
+        {**row._mapping, "source_urls": [{"source": s, "url": u} for s, u in source_urls]}
+    )

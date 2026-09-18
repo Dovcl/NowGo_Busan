@@ -44,6 +44,12 @@
   "titlePlaceholder": "Schedule title (e.g. Haeundae family trip)",
   "notFound": "Couldn't find that event.",
   "viewDetails": "View Details",
+  "viewDetailsAt": "View on {{source}}",
+  "eventSource": {
+    "tourapi": "TourAPI",
+    "dabom": "Dabom",
+    "kopis": "KOPIS"
+  },
   "saved": "Saved",
   "wantToGo": "Add to My List"
 }
