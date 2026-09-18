@@ -10,8 +10,8 @@ etl/seed_weather_obs_grid.py로 미리 시딩)에서 최근접 매칭으로 찾�
 (.env에 KMA_API_KEY 필요 — data.go.kr WEATHER_API_KEY와는 다른 키, API허브 전용)
 """
 
+import array
 import logging
-import re
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -41,26 +41,35 @@ def _base_tm(now: datetime) -> datetime:
 
 
 def _parse_grid(text: str) -> np.ndarray:
-    """API허브 ASCII 실황격자 응답 -> 2차원 배열. 헤더 첫 줄에 (nx, ny), 본문은 '='로
-    줄바꿈이 섞여 들어오는 값 나열. 결측치는 -999로 옴."""
+    """API허브 ASCII 실황격자 응답 -> 2차원 배열. 헤더 첫 줄에 (nx, ny), 본문은 한 줄에
+    10개씩(응답 전체로는 42만 줄) 쉼표로 끊어 나온다. 결측치는 -999로 옴.
+
+    한 번에 문자열 전체를 토큰화하면(예전 방식) nx*ny(약 420만)개짜리 파이썬 문자열
+    리스트가 생기는데, 이게 관측종류 3개(ta_chi/rn_60m/ws_10m)만큼 쌓이면서 cron
+    메모리 한도(512MB)를 넘겨 실제로 배치가 죽는 걸 프로덕션에서 확인함(2026-09-19).
+    그래서 줄 단위로 즉시 array.array(더블 배열, 파이썬 객체 오버헤드 없음)에 흘려
+    넣어 한 번에 살아있는 토큰 개수를 "그 줄만큼"으로 줄인다."""
     stripped = text.strip()
     if not stripped or stripped.lower().startswith("error"):
         raise ValueError(f"API허브 응답 오류: {stripped[:200]}")
 
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    lines = text.splitlines()
     header = [x for x in lines[0].replace("=", "").split(",") if x.strip()]
     if len(header) < 2:
         raise ValueError(f"격자 헤더를 읽을 수 없습니다: {lines[0]}")
     nx, ny = int(header[0]), int(header[1])
 
-    # 값이 쉼표로 구분되고 줄바꿈엔 공백 없이 '='만 섞여 오므로, 공백/쉼표 둘 다 구분자로 split.
-    data_text = " ".join(lines[1:]).replace("=", " ")
-    tokens = [t for t in re.split(r"[\s,]+", data_text) if t]
-    values = np.asarray(tokens, dtype=float)
-    if values.size != nx * ny:
-        raise ValueError(f"격자 개수 불일치: {values.size} != {nx * ny}")
+    values = array.array("d")
+    for line in lines[1:]:
+        line = line.strip().replace("=", "")
+        if not line:
+            continue
+        values.extend(float(tok) for tok in line.split(",") if tok)
 
-    grid = values.reshape(ny, nx)
+    if len(values) != nx * ny:
+        raise ValueError(f"격자 개수 불일치: {len(values)} != {nx * ny}")
+
+    grid = np.frombuffer(values, dtype=np.float64).reshape(ny, nx).copy()
     grid[np.isclose(grid, -999.0)] = np.nan
     return grid
 
