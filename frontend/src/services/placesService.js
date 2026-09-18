@@ -104,3 +104,14 @@ export async function fetchPlaceById(contentid) {
   if (!res.ok) throw new Error(`fetchPlaceById failed: ${res.status}`)
   return adaptPlace(await res.json())
 }
+
+// 홈 화면 "TOP 10"용 — NowGo Score가 있는 곳(is_env_target) 중 점수 높은 순.
+// score가 없는 곳(음식점 등)은 순위를 매길 수 없으니 애초에 후보에서 뺀다.
+export async function fetchTopPlaces(limit = 10) {
+  const places = await fetchPlaces()
+  return places
+    .filter((place) => place.score != null)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((place, index) => ({ ...place, rank: index + 1 }))
+}
