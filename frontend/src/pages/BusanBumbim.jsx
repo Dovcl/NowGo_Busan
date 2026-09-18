@@ -371,6 +371,9 @@ function RealHistoryChart({ hours }) {
   const x = (h) => 40 + (h / 23) * 760
   const y = (v) => 180 - (v / maxSpeed) * 160
   const nowHour = new Date().getHours()
+  // "지금" 라벨(너비 36)이 viewBox(0~800) 밖으로 안 튀어나가게 중심 x를 clamp —
+  // nowHour가 23시에 가까우면 라벨이 오른쪽 경계를 넘어가 잘려 보이던 버그.
+  const chipX = Math.min(Math.max(x(nowHour), 18), 782)
 
   function segmentsFor(key) {
     const segments = []
@@ -412,8 +415,8 @@ function RealHistoryChart({ hours }) {
           <polyline key={`a${i}`} fill="none" points={seg.join(" ")} className="text-primary" stroke="currentColor" strokeWidth="2" />
         ))}
         <line x1={x(nowHour)} x2={x(nowHour)} y1="20" y2="180" stroke="#434653" strokeDasharray="2" strokeWidth="1" />
-        <rect fill="#273143" height="20" rx="4" width="36" x={x(nowHour) - 18} y="0" />
-        <text className="text-[10px] fill-white" textAnchor="middle" x={x(nowHour)} y="14">
+        <rect fill="#273143" height="20" rx="4" width="36" x={chipX - 18} y="0" />
+        <text className="text-[10px] fill-white" textAnchor="middle" x={chipX} y="14">
           {t("nowLabel")}
         </text>
       </svg>
