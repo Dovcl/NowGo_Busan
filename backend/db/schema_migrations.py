@@ -27,3 +27,10 @@ def ensure_schema() -> None:
         conn.execute(text("ALTER TABLE tour_spot ADD COLUMN IF NOT EXISTS addr1_zh VARCHAR"))
         conn.execute(text("ALTER TABLE tour_spot_intro ADD COLUMN IF NOT EXISTS overview_en TEXT"))
         conn.execute(text("ALTER TABLE tour_spot_intro ADD COLUMN IF NOT EXISTS overview_zh TEXT"))
+        # air_score(services/environment/air_score.py) 계산용 — 기존 pm10/pm25/o3는 그대로 두고
+        # CAI 산정에 필요한 나머지 오염물질 + PM 24시간 이동평균만 추가
+        conn.execute(text("ALTER TABLE air_quality_cache ADD COLUMN IF NOT EXISTS so2 FLOAT"))
+        conn.execute(text("ALTER TABLE air_quality_cache ADD COLUMN IF NOT EXISTS no2 FLOAT"))
+        conn.execute(text("ALTER TABLE air_quality_cache ADD COLUMN IF NOT EXISTS co FLOAT"))
+        conn.execute(text("ALTER TABLE air_quality_cache ADD COLUMN IF NOT EXISTS pm10_24 FLOAT"))
+        conn.execute(text("ALTER TABLE air_quality_cache ADD COLUMN IF NOT EXISTS pm25_24 FLOAT"))

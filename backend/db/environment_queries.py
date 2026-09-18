@@ -9,12 +9,15 @@ from sqlalchemy.orm import Session
 
 from db.models import (
     AirQualityCache,
+    BeachIndexCache,
     Event,
     RipCurrentCache,
     RoadLinkCache,
     RoadLinkTrafficCache,
     RoadLinkBaseline,
+    SurfIndexCache,
     TourSpot,
+    WeatherObsGridCell,
 )
 
 
@@ -29,12 +32,54 @@ def nearest_air_quality_station(session: Session, lat: float, lon: float) -> Air
     )
 
 
+def all_air_quality_stations(session: Session) -> list[dict]:
+    """모든 측정소 캐시 + 좌표(lat/lon). air_score.py의 Modified IDW는 최근접 1곳이 아니라
+    전체 측정소 거리분포가 필요해서 nearest_air_quality_station과 별도로 둔다."""
+    rows = session.query(
+        AirQualityCache,
+        func.ST_Y(AirQualityCache.geom).label("lat"),
+        func.ST_X(AirQualityCache.geom).label("lon"),
+    ).all()
+    return [
+        {
+            "station_name": a.station_name,
+            "lat": lat,
+            "lon": lon,
+            "pm10_24": a.pm10_24,
+            "pm25_24": a.pm25_24,
+            "so2": a.so2,
+            "no2": a.no2,
+            "o3": a.o3,
+            "co": a.co,
+            "fetched_at": a.fetched_at,
+        }
+        for a, lat, lon in rows
+    ]
+
+
+def nearest_weather_obs_grid_cell(session: Session, lat: float, lon: float) -> WeatherObsGridCell | None:
+    """좌표에서 가장 가까운 API허브 관측격자 참조 셀. 이 격자는 좌표<->격자 변환식이
+    없어(weather_obs_grid_cell 참고) 최근접 매칭으로 대체한다. etl/fetch_weather_observation.py가
+    "어느 셀을 수집할지" 정할 때, services/environment/weather_score.py가 좌표 하나의
+    관측값을 조회할 때 둘 다 이 함수를 쓴다."""
+    point = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+    return (
+        session.query(WeatherObsGridCell)
+        .order_by(WeatherObsGridCell.geom.op("<->")(point))
+        .first()
+    )
+
+
 def nearest_rip_current_station(
-    session: Session, lat: float, lon: float, max_distance_m: int = 5000
+    session: Session, lat: float, lon: float, max_distance_m: int = 1500
 ) -> RipCurrentCache | None:
     """좌표에서 가장 가까운 이안류 관측 해수욕장. 부산엔 3곳뿐이라 대기질처럼 무제한
     최근접 매칭을 하면 엉뚱한 관광지(예: 태종대)에도 먼 해변의 위험도가 붙어버릴 수
-    있음 — 그 해변이거나 바로 근처(반경 5km)일 때만 의미 있는 데이터라 그 밖이면 None."""
+    있음 — 그 해변이거나 바로 근처일 때만 의미 있는 데이터라 그 밖이면 None.
+    반경은 원래 5km였으나, 해운대~광안리처럼 서로 다른 해변인데도 5km 이내라
+    해운대 관측치가 광안리에 잘못 붙는 사례를 marine_score.py 작업 중 실측으로 발견해
+    1.5km로 좁힘 — 실제 해운대/송정/임랑 관측점은 각자 해당 해변과 30~150m 거리라
+    영향 없음(2026-09-18)."""
     point = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
     return (
         session.query(RipCurrentCache)
@@ -44,6 +89,33 @@ def nearest_rip_current_station(
             )
         )
         .order_by(RipCurrentCache.geom.op("<->")(point))
+        .first()
+    )
+
+
+def nearest_beach_index(
+    session: Session, lat: float, lon: float, max_distance_m: int = 5000
+) -> BeachIndexCache | None:
+    """좌표에서 가장 가까운 해수욕지수 예보. 이안류와 같은 이유로 반경 5km 컷오프를
+    둔다 — 무제한 최근접 매칭이면 먼 관광지에도 엉뚱한 해수욕장 상태가 붙어버림."""
+    point = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+    return (
+        session.query(BeachIndexCache)
+        .filter(func.ST_DWithin(BeachIndexCache.geom.cast(Geography), func.cast(point, Geography), max_distance_m))
+        .order_by(BeachIndexCache.geom.op("<->")(point))
+        .first()
+    )
+
+
+def nearest_surf_index(
+    session: Session, lat: float, lon: float, max_distance_m: int = 5000
+) -> SurfIndexCache | None:
+    """좌표에서 가장 가까운 서핑지수 예보. nearest_beach_index와 동일한 이유로 반경 컷오프."""
+    point = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+    return (
+        session.query(SurfIndexCache)
+        .filter(func.ST_DWithin(SurfIndexCache.geom.cast(Geography), func.cast(point, Geography), max_distance_m))
+        .order_by(SurfIndexCache.geom.op("<->")(point))
         .first()
     )
 

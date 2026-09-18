@@ -1,6 +1,23 @@
 from pydantic import BaseModel, ConfigDict
 
 
+class NowgoActivityOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    activity_type: str  # general / swim / surf / marine_trip
+    activity_name: str  # 일반 관광 / 해수욕 / 서핑 / 바다여행
+    activity_score: float | None  # 해당 활동 자체의 원점수 (general은 없음)
+    nowscore: float | None  # 최종 합성 점수 (0~100)
+    status: str | None  # safe / caution / danger
+
+
+class NowgoScoreOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    tour_type: str  # urban / coastal
+    activities: list[NowgoActivityOut]  # coastal이고 활동이 여럿이면 2개 이상
+
+
 class PlaceOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -22,6 +39,10 @@ class PlaceOut(BaseModel):
     # tour_spot_intro 조인 결과 — 검색결과 카드에 이용시간을 보여주기 위해 목록에도 포함
     usetime: str | None  # 이용시간
     restdate: str | None  # 휴무일
+
+    # nowgo_score_cache 조인 결과. is_env_target=false이거나 아직 배치가 안 돌았으면 None
+    # (services/environment/nowgo_score.py — compose 로직/가중치는 그쪽 docstring 참고)
+    nowgo: NowgoScoreOut | None
 
 
 class NearbyFoodOut(BaseModel):

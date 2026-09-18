@@ -111,7 +111,8 @@ class TourSpotEnvClassification(Base):
 
     # BEACH / MOUNTAIN / WATER / URBAN / INDOOR (5분류 원본값)
     env_type_code = Column(String, nullable=False)
-    # 해변 / 산 / 도심 / 실내 (score-algorithm.md 가중치가 갈라지는 4분류)
+    # 해변 / 산 / 도심 / 실내 (지도 마커 색상 구분용 4분류 — NowGo Score 가중치는
+    # 이제 이 값이 아니라 해양활동 점수 보유 여부로 갈린다, services/environment/nowgo_score.py)
     env_group4 = Column(String, nullable=False)
 
     is_outdoor = Column(Boolean, nullable=False)
@@ -120,6 +121,23 @@ class TourSpotEnvClassification(Base):
     water_quality_zone = Column(Boolean, nullable=False)
 
     tour_spot = relationship("TourSpot", back_populates="env_classification")
+
+
+class NowgoScoreCache(Base):
+    """관광지별 NowGo Score 배치 캐시(services/environment/nowgo_score.py 결과).
+    요청마다 대기/기온/자외선/해양 점수를 재계산하면 `/api/places`가 한 번에 수백 곳을
+    돌 때 비용이 커서(특히 air_score의 Modified IDW), 다른 environment 캐시들과 같은
+    배치 주기(1시간, fetch_environment_batch.py)로 미리 계산해두고 API는 읽기만 한다."""
+
+    __tablename__ = "nowgo_score_cache"
+
+    contentid = Column(BigInteger, ForeignKey("tour_spot.contentid"), primary_key=True)
+
+    tour_type = Column(String, nullable=False)  # urban / coastal
+    # [{activity_type, activity_name, activity_score, nowscore, status}, ...]
+    activities = Column(JSONB, nullable=False)
+
+    computed_at = Column(DateTime, nullable=False)
 
 
 class TourSpotIntro(Base):
@@ -288,6 +306,36 @@ class WeatherCache(Base):
     fetched_at = Column(DateTime, nullable=False)
 
 
+class WeatherObsGridCell(Base):
+    """기상청 API허브 지상관측 실황격자(전국 2049x2049, weather_cache의 nx/ny 격자와는
+    다른 좌표계) 중 부산 권역 셀의 위경도 참조표. 이 격자는 비균일 재투영이라 좌표<->격자
+    변환식이 없어, 팀에서 미리 뽑아둔 정의 파일을 그대로 시딩한다(etl/seed_weather_obs_grid.py,
+    정적 데이터라 배치 갱신 없음) — 좌표 하나가 들어오면 이 표에서 최근접 셀을 찾아 쓴다."""
+
+    __tablename__ = "weather_obs_grid_cell"
+
+    grid_x = Column(Integer, primary_key=True)
+    grid_y = Column(Integer, primary_key=True)
+    geom = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
+
+
+class WeatherObsCache(Base):
+    """기상청 API허브 지상관측 실황(기온/1시간강수량/10분풍속) 배치 캐시. weather_cache
+    (단기예보)와 API·격자좌표계가 달라 별도 테이블로 둔다 — services/environment/weather_score.py
+    (s_weather 원형: 체감온도/강수 점수) 계산 전용."""
+
+    __tablename__ = "weather_obs_cache"
+
+    grid_x = Column(Integer, primary_key=True)
+    grid_y = Column(Integer, primary_key=True)
+
+    temperature = Column(Float)  # ta_chi, ℃
+    rainfall_60m = Column(Float)  # rn_60m, mm
+    wind_speed = Column(Float)  # ws_10m, m/s
+
+    fetched_at = Column(DateTime, nullable=False)
+
+
 class UvIndexCache(Base):
     """기상청 생활기상지수(getUVIdxV5) 배치 캐시. 구·군 단위(areaNo)로도 나올 수 있지만
     MVP는 부산 전체 1행(area_no='2600000000')만 사용."""
@@ -330,6 +378,14 @@ class AirQualityCache(Base):
     pm10_grade = Column(SmallInteger)
     pm25_grade = Column(SmallInteger)
 
+    # air_score(services/environment/air_score.py) 계산 전용. so2/no2/co는 CAI 산정에
+    # 1시간 값을 그대로 쓰지만, pm10/pm25는 공식 CAI 기준이 24시간 이동평균이라 별도로 둔다.
+    so2 = Column(Float)
+    no2 = Column(Float)
+    co = Column(Float)
+    pm10_24 = Column(Float)
+    pm25_24 = Column(Float)
+
     fetched_at = Column(DateTime, nullable=False)
 
 
@@ -349,6 +405,76 @@ class RipCurrentCache(Base):
     wave_height = Column(Float)  # wvhgt, m
     water_temp = Column(Float)  # wtem, ℃
     observed_at = Column(DateTime)  # obsrvnDt
+
+    fetched_at = Column(DateTime, nullable=False)
+
+
+class BeachIndexCache(Base):
+    """국립해양조사원 해수욕지수 예보(GetFcstBeachApiServicev2) 배치 캐시. 이안류와
+    달리 beachCode 파라미터가 없이 전국 해수욕장을 한 번에 반환해서, 부산 7곳만 걸러
+    좌표 기반 최근접 매칭으로 조회한다(nearest_rip_current_station과 동일 패턴,
+    db/environment_queries.py::nearest_beach_index). 예보 자료라 매 슬롯(오전/오후)마다
+    갱신되며, ETL은 "오늘" 슬롯 1건만 골라 저장한다(etl/fetch_beach_index.py)."""
+
+    __tablename__ = "beach_index_cache"
+
+    station_name = Column(String, primary_key=True)  # bbchNm
+    geom = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
+
+    wave_height = Column(Float)  # maxWvhgt, m
+    water_temp = Column(Float)  # avgWtem, ℃
+    air_temp = Column(Float)  # avgArtmp, ℃
+    wind_speed = Column(Float)  # maxWspd, m/s
+    open_status = Column(String)  # opnStat: 개장/폐장, 원문 그대로
+    total_index = Column(String)  # totalIndex: 매우좋음~매우나쁨 5단계, 원문 그대로(기준값 임의 재정의 안 함)
+    forecast_date = Column(Date)  # predcYmd
+    forecast_half = Column(String)  # predcNoonSeCd: 오전/오후/일
+
+    fetched_at = Column(DateTime, nullable=False)
+
+
+class SurfIndexCache(Base):
+    """국립해양조사원 서핑지수 예보(GetFcstSurfingApiServicev2) 배치 캐시.
+    beach_index_cache와 같은 구조이되 서핑 전용 필드(파주기·숙련도등급)만 다르다."""
+
+    __tablename__ = "surf_index_cache"
+
+    station_name = Column(String, primary_key=True)  # surfPlcNm
+    geom = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
+
+    wave_height = Column(Float)  # avgWvhgt, m
+    wave_period = Column(Float)  # avgWvpd, s
+    water_temp = Column(Float)  # avgWtem, ℃
+    wind_speed = Column(Float)  # avgWspd, m/s
+    skill_grade = Column(String)  # grdCn: 초급/중급/상급, 원문 그대로
+    total_index = Column(String)  # totalIndex, 원문 그대로
+    forecast_date = Column(Date)  # predcYmd
+    forecast_half = Column(String)  # predcNoonSeCd
+
+    fetched_at = Column(DateTime, nullable=False)
+
+
+class SeaTripIndexCache(Base):
+    """국립해양조사원 바다여행지수 예보(GetFcstSeaTripApiServicev2) 배치 캐시.
+    해수욕/서핑과 달리 특정 해변이 아니라 구·군을 묶은 넓은 권역(부산은 "부산북동"/
+    "부산남서" 2곳뿐) 단위라, beach/surf처럼 반경 컷오프 없이 무제한 최근접 매칭으로
+    조회한다(대기질과 같은 이유 — 넓은 권역 지표라 "그 근처"라는 개념 자체가 없음)."""
+
+    __tablename__ = "sea_trip_index_cache"
+
+    region_name = Column(String, primary_key=True)  # sareaDtlNm, 예: 부산북동/부산남서
+    geom = Column(Geometry(geometry_type="POINT", srid=4326), nullable=False)
+
+    air_temp = Column(Float)  # avgArtmp, ℃
+    wind_speed = Column(Float)  # avgWspd, m/s
+    water_temp = Column(Float)  # avgWtem, ℃
+    wave_height = Column(Float)  # avgWvhgt, m
+    current_speed = Column(Float)  # avgCrsp, m/s (유속)
+    tide_phase = Column(String)  # tdlvHrCn: 대조기/중조기/소조기, 원문 그대로
+    weather_text = Column(String)  # weather: 맑음/흐림 등, 원문 그대로
+    total_index = Column(String)  # totalIndex, 원문 그대로
+    forecast_date = Column(Date)  # predcYmd
+    forecast_half = Column(String)  # predcNoonSeCd
 
     fetched_at = Column(DateTime, nullable=False)
 

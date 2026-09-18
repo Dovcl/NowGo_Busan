@@ -94,6 +94,8 @@ services:
         sync: false
       - key: WEATHER_API_KEY
         sync: false
+      - key: KMA_API_KEY
+        sync: false
       - key: AIR_KOREA_API_KEY
         sync: false
       - key: TOUR_API_KEY_IAN

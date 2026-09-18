@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from db.models import CategoryCode, TourSpot, TourSpotEnvClassification, TourSpotIntro
+from db.models import CategoryCode, NowgoScoreCache, TourSpot, TourSpotEnvClassification, TourSpotIntro
 from db.places_queries import localized_column, nearby_food_places
 from db.session import get_db
 from schemas.places import PlaceDetailOut, PlaceOut
@@ -26,6 +26,8 @@ def _place_query(db: Session, lang: str = "ko"):
         TourSpotEnvClassification.is_env_target,
         TourSpotIntro.usetime,
         TourSpotIntro.restdate,
+        NowgoScoreCache.tour_type.label("nowgo_tour_type"),
+        NowgoScoreCache.activities.label("nowgo_activities"),
     ).join(
         TourSpotEnvClassification,
         TourSpotEnvClassification.contentid == TourSpot.contentid,
@@ -37,7 +39,21 @@ def _place_query(db: Session, lang: str = "ko"):
         # tour_spot_intro는 일부 레코드에 없을 수 있어 INNER가 아니라 OUTER JOIN
         TourSpotIntro,
         TourSpotIntro.contentid == TourSpot.contentid,
+    ).outerjoin(
+        # is_env_target=false거나 배치가 아직 안 돌았으면 없을 수 있어 OUTER JOIN
+        NowgoScoreCache,
+        NowgoScoreCache.contentid == TourSpot.contentid,
     )
+
+
+def _to_place_dict(row) -> dict:
+    """행 하나를 PlaceOut 입력 dict로. nowgo_tour_type/nowgo_activities 평면 컬럼
+    2개를 PlaceOut.nowgo 하나로 묶는다 — 값이 없으면(캐시 미존재) nowgo는 None."""
+    data = dict(row._mapping)
+    tour_type = data.pop("nowgo_tour_type")
+    activities = data.pop("nowgo_activities")
+    data["nowgo"] = {"tour_type": tour_type, "activities": activities} if tour_type is not None else None
+    return data
 
 
 @router.get("/places", response_model=list[PlaceOut], tags=["Places"])
@@ -59,7 +75,7 @@ def list_places(
         query = query.filter(TourSpot.sigungucode == sigungucode)
     if env_group4 is not None:
         query = query.filter(TourSpotEnvClassification.env_group4 == env_group4)
-    return [PlaceOut.model_validate(row._mapping) for row in query.all()]
+    return [PlaceOut.model_validate(_to_place_dict(row)) for row in query.all()]
 
 
 @router.get("/places/{contentid}", response_model=PlaceDetailOut, tags=["Places"])
@@ -74,6 +90,6 @@ def get_place(contentid: int, lang: str = "ko", db: Session = Depends(get_db)):
     row = query.filter(TourSpot.contentid == contentid).first()
     if row is None:
         raise HTTPException(status_code=404, detail="관광지를 찾을 수 없습니다")
-    data = dict(row._mapping)
+    data = _to_place_dict(row)
     data["nearby_food"] = [dict(r._mapping) for r in nearby_food_places(db, contentid, lang)]
     return PlaceDetailOut.model_validate(data)

@@ -20,9 +20,9 @@ import requests
 from geoalchemy2 import WKTElement
 
 from core.config import settings
-from db.base import Base
 from db.models import AirQualityCache
-from db.session import SessionLocal, engine
+from db.schema_migrations import ensure_schema
+from db.session import SessionLocal
 from etl.seed_tour_spots import upsert
 
 _STATION_URL = "https://apis.data.go.kr/B552584/MsrstnInfoInqireSvc/getMsrstnList"
@@ -93,13 +93,19 @@ def _fetch_measurements() -> dict[str, dict]:
             # 등급(pm10Grade1h)을 쓴다 — "지금 이 시간" 표시 목적에도 이쪽이 더 맞음.
             "pm10_grade": _int_or_none(item.get("pm10Grade1h")),
             "pm25_grade": _int_or_none(item.get("pm25Grade1h")),
+            # air_score용 — 같은 응답에 이미 포함돼 있어 추가 호출 없음.
+            "so2": _num_or_none(item.get("so2Value")),
+            "no2": _num_or_none(item.get("no2Value")),
+            "co": _num_or_none(item.get("coValue")),
+            "pm10_24": _num_or_none(item.get("pm10Value24")),
+            "pm25_24": _num_or_none(item.get("pm25Value24")),
         }
         for item in items
     }
 
 
 def main() -> None:
-    Base.metadata.create_all(engine)  # air_quality_cache만 신규 생성, 기존 테이블은 no-op
+    ensure_schema()  # air_quality_cache 신규 생성 + so2/no2/co/pm10_24/pm25_24 컬럼 보강
 
     stations = _fetch_stations()
     measurements = _fetch_measurements()

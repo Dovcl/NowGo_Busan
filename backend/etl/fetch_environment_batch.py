@@ -1,4 +1,5 @@
-"""날씨·UV·대기질·이안류·기상특보·공휴일 6개 ETL을 한 번에 실행하는 진입점.
+"""날씨·UV·대기질·이안류·기상특보·공휴일·기온강수관측·해수욕지수·서핑지수·바다여행지수·
+NowGo Score 계산 11개 작업을 한 번에 실행하는 진입점.
 
 Render Cron Job은 서비스 1개당 월 최소 $1이 청구돼서, 원래 갱신 주기가 다른
 (날씨/UV 3시간, 대기질 1시간, 이안류 15분) 4개를 개별 Cron Job으로 만드는 대신
@@ -18,25 +19,38 @@ in-process 스케줄러에서만 15분마다 돌아서 서비스가 슬립 중�
 
 하나가 실패해도 나머지는 계속 실행되도록 각각 독립적으로 예외 처리한다.
 
+`compute_nowgo_scores`는 외부 API를 안 부르고 위 캐시들만 읽어서 계산하므로 반드시
+맨 마지막에 실행돼야 한다 — 그래야 그날 갱신된 최신값으로 NowGo Score를 계산한다.
+
 실행: backend/ 디렉토리에서 `python -m etl.fetch_environment_batch`
 """
 
 from etl import (
+    compute_nowgo_scores,
     fetch_air_quality,
+    fetch_beach_index,
     fetch_holidays,
     fetch_rip_current,
+    fetch_sea_trip_index,
+    fetch_surf_index,
     fetch_uv,
     fetch_weather,
+    fetch_weather_observation,
     fetch_weather_warning,
 )
 
 _JOBS = [
     ("weather", fetch_weather.main),
+    ("weather_observation", fetch_weather_observation.main),
     ("uv", fetch_uv.main),
     ("air_quality", fetch_air_quality.main),
     ("rip_current", fetch_rip_current.main),
+    ("beach_index", fetch_beach_index.main),
+    ("surf_index", fetch_surf_index.main),
+    ("sea_trip_index", fetch_sea_trip_index.main),
     ("weather_warning", fetch_weather_warning.main),
     ("holidays", fetch_holidays.main),
+    ("nowgo_scores", compute_nowgo_scores.main),  # 항상 마지막 — 위 캐시들을 읽기만 함
 ]
 
 
