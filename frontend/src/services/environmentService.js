@@ -1,7 +1,8 @@
 // Data-access layer for the `/api/environment` endpoint (좌표 기반 날씨·대기질·자외선).
 // placesService.js와 같은 패턴: 백엔드 응답(snake_case)을 프론트가 쓰는 camelCase로 변환.
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080"
+// 운영 빌드에서 값이 없으면 같은 도메인(프론트 Redirects/Rewrites가 백엔드로 프록시)으로 보낸다.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8080" : "")
 
 export function adaptEnvironment(data) {
   return {

@@ -2,7 +2,8 @@
 // 여기는 그냥 그 API를 호출만 한다(프론트 쪽 role 체크는 UX용일 뿐).
 import i18n from "../lib/i18n"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080"
+// 운영 빌드에서 값이 없으면 같은 도메인(프론트 Redirects/Rewrites가 백엔드로 프록시)으로 보낸다.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8080" : "")
 
 export async function fetchDedupCandidates() {
   const res = await fetch(`${API_BASE_URL}/api/admin/dedup-candidates`, { credentials: "include" })

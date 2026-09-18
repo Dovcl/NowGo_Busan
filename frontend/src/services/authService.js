@@ -2,7 +2,8 @@
 // 'include'를 매번 넣어야 브라우저가 쿠키를 같이 보낸다.
 import i18n from "../lib/i18n"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"
+// 운영 빌드에서 값이 없으면 같은 도메인(프론트 Redirects/Rewrites가 백엔드로 프록시)으로 보낸다.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "")
 
 export function goToKakaoLogin() {
   window.location.href = `${API_BASE_URL}/auth/kakao/login`

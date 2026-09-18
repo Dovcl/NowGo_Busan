@@ -4,7 +4,8 @@
 // announcements(공지 배너)는 아직 백엔드에 대응하는 소스가 없어 mock 그대로.
 import { announcements } from "../mock/events"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080"
+// 운영 빌드에서 값이 없으면 같은 도메인(프론트 Redirects/Rewrites가 백엔드로 프록시)으로 보낸다.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8080" : "")
 
 // 백엔드 Event(id/start_date/end_date/venue/lat/lng/...)를 프론트가 쓰는 모양
 // (id/startDate/endDate/location/...)으로 옮긴다. tags는 아직 백엔드에 없어서 빈 값.

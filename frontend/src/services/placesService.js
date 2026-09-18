@@ -13,7 +13,8 @@
 
 import i18n from "../lib/i18n"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"
+// 운영 빌드에서 값이 없으면 같은 도메인(프론트 Redirects/Rewrites가 백엔드로 프록시)으로 보낸다.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "")
 
 // 도보/차량 여부를 거리로 대략 나누고(1.2km 기준), 각각 평균 속도(도보 4km/h,
 // 도심 주행 30km/h)로 소요 시간을 추정한다 — mock 데이터("도보 10분 · 700m")와

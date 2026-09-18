@@ -1,7 +1,8 @@
 // 구글 지도 "목록에 저장" 기능의 데이터 계층. 세션이 httpOnly 쿠키라 매 요청에
 // credentials: 'include'가 필요하다 (authService.js와 같은 패턴).
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"
+// 운영 빌드에서 값이 없으면 같은 도메인(프론트 Redirects/Rewrites가 백엔드로 프록시)으로 보낸다.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "")
 
 function adaptList(list) {
   return {
