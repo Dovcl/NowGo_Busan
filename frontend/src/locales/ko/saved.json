@@ -16,5 +16,6 @@
   "saveToListTitle": "목록에 저장",
   "placeCountInList": "{{count}}개 장소",
   "newList": "새 목록",
-  "done": "완료"
+  "done": "완료",
+  "deleteListConfirm": "\"{{name}}\" 리스트를 삭제할까요? 담긴 관광지 정보도 함께 사라져요."
 }

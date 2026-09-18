@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { fetchListItems, fetchMyLists, reorderList, removeFromList } from "../services/listsService"
+import { fetchListItems, fetchMyLists, reorderList, removeFromList, renameList, deleteList } from "../services/listsService"
 import { fetchPlaceById } from "../services/placesService"
 import ReorderablePlaceList from "../components/ReorderablePlaceList"
 
@@ -12,20 +12,43 @@ export default function SavedListDetail() {
   const { t, i18n } = useTranslation("saved")
   const { listId } = useParams()
   const navigate = useNavigate()
-  const [listName, setListName] = useState(null)
+  const [list, setList] = useState(null)
   const [places, setPlaces] = useState(null)
+  const [renaming, setRenaming] = useState(false)
+  const [nameDraft, setNameDraft] = useState("")
 
   useEffect(() => {
     fetchMyLists().then((lists) => {
-      const match = lists.find((l) => String(l.id) === listId)
-      setListName(match?.name ?? null)
+      setList(lists.find((l) => String(l.id) === listId) ?? null)
     })
     fetchListItems(listId)
       .then((contentids) => Promise.all(contentids.map(fetchPlaceById)))
       .then((result) => setPlaces(result.filter(Boolean)))
   }, [listId, i18n.language])
 
-  if (places === null) return null
+  const startRename = () => {
+    setNameDraft(list.name)
+    setRenaming(true)
+  }
+
+  const submitRename = async (e) => {
+    e.preventDefault()
+    const name = nameDraft.trim()
+    if (!name || name === list.name) return setRenaming(false)
+    const updated = await renameList(listId, name)
+    setList((prev) => ({ ...prev, name: updated.name }))
+    setRenaming(false)
+  }
+
+  // 담긴 장소가 많을수록 되돌리기 부담이 큰 동작이라(항목 하나 빼기와 달리 리스트
+  // 전체가 사라짐), 커스텀 모달 없이도 확실히 막아주는 네이티브 confirm을 쓴다.
+  const handleDeleteList = async () => {
+    if (!window.confirm(t("deleteListConfirm", { name: list.name }))) return
+    await deleteList(listId)
+    navigate("/saved")
+  }
+
+  if (places === null || list === null) return null
 
   return (
     <div className="h-full overflow-y-auto">
@@ -38,12 +61,48 @@ export default function SavedListDetail() {
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
-          <div>
-            <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-bold text-on-surface">
-              {listName ?? t("defaultListName")}
-            </h1>
+          <div className="flex-1 min-w-0">
+            {renaming ? (
+              <form onSubmit={submitRename} className="flex items-center gap-2">
+                <input
+                  autoFocus
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={() => setRenaming(false)}
+                  placeholder={t("listNamePlaceholder")}
+                  className="flex-1 min-w-0 bg-surface border border-outline-variant rounded-lg px-3 py-1.5 font-headline-lg-mobile text-headline-lg-mobile md:text-headline-lg focus:outline-none focus:border-primary"
+                />
+                <button type="submit" onMouseDown={(e) => e.preventDefault()} className="text-primary font-body-md font-bold shrink-0">
+                  {t("done")}
+                </button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-bold text-on-surface truncate">
+                  {list.name}
+                </h1>
+                {!list.isDefault && (
+                  <button
+                    type="button"
+                    onClick={startRename}
+                    className="w-8 h-8 rounded-full hover:bg-surface-container-low flex items-center justify-center shrink-0"
+                  >
+                    <span className="material-symbols-outlined text-[18px] text-on-surface-variant">edit</span>
+                  </button>
+                )}
+              </div>
+            )}
             <p className="font-label-sm text-label-sm text-on-surface-variant">{t("placeCount", { count: places.length })}</p>
           </div>
+          {!list.isDefault && (
+            <button
+              type="button"
+              onClick={handleDeleteList}
+              className="w-10 h-10 rounded-full hover:bg-error-container/20 flex items-center justify-center shrink-0"
+            >
+              <span className="material-symbols-outlined text-error">delete</span>
+            </button>
+          )}
         </div>
 
         {places.length > 0 && (

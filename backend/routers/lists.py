@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from db.models import PlaceList, PlaceListItem, User
 from db.session import get_db
 from routers.auth import get_current_user
-from schemas.lists import AddItemRequest, CreateListRequest, PlaceListOut, ReorderRequest
+from schemas.lists import AddItemRequest, CreateListRequest, PlaceListOut, RenameListRequest, ReorderRequest
 
 router = APIRouter(prefix="/lists", tags=["Lists"])
 
@@ -108,6 +108,26 @@ def create_list(body: CreateListRequest, user: User = Depends(get_current_user),
     db.commit()
     db.refresh(place_list)
     return PlaceListOut(id=place_list.id, name=place_list.name, is_default=False, item_count=0, contains=False)
+
+
+@router.patch("/{list_id}", response_model=PlaceListOut)
+def rename_list(list_id: int, body: RenameListRequest, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    place_list = _owned_list(db, user, list_id)
+    if place_list.is_default:
+        raise HTTPException(status_code=400, detail="기본 리스트는 이름을 바꿀 수 없습니다")
+    place_list.name = body.name
+    db.commit()
+    item_count = db.query(func.count(PlaceListItem.contentid)).filter(PlaceListItem.list_id == list_id).scalar()
+    return PlaceListOut(id=place_list.id, name=place_list.name, is_default=False, item_count=item_count, contains=False)
+
+
+@router.delete("/{list_id}", status_code=204)
+def delete_list(list_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    place_list = _owned_list(db, user, list_id)
+    if place_list.is_default:
+        raise HTTPException(status_code=400, detail="기본 리스트는 삭제할 수 없습니다")
+    db.delete(place_list)  # cascade="all, delete-orphan"으로 담긴 항목도 같이 지워짐
+    db.commit()
 
 
 @router.post("/{list_id}/items", status_code=204)

@@ -38,6 +38,26 @@ export async function createList(name) {
   return adaptList(await res.json())
 }
 
+// 기본 리스트("즐겨찾기")는 백엔드가 이름변경/삭제 둘 다 400으로 거부한다.
+export async function renameList(listId, name) {
+  const res = await fetch(`${API_BASE_URL}/api/lists/${listId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ name }),
+  })
+  if (!res.ok) throw new Error(`renameList failed: ${res.status}`)
+  return adaptList(await res.json())
+}
+
+export async function deleteList(listId) {
+  const res = await fetch(`${API_BASE_URL}/api/lists/${listId}`, {
+    method: "DELETE",
+    credentials: "include",
+  })
+  if (!res.ok) throw new Error(`deleteList failed: ${res.status}`)
+}
+
 export async function addToList(listId, contentid) {
   const res = await fetch(`${API_BASE_URL}/api/lists/${listId}/items`, {
     method: "POST",

@@ -16,5 +16,6 @@
   "saveToListTitle": "保存到列表",
   "placeCountInList": "{{count}}个地点",
   "newList": "新建列表",
-  "done": "完成"
+  "done": "完成",
+  "deleteListConfirm": "要删除\"{{name}}\"吗？其中保存的景点也会一并删除。"
 }

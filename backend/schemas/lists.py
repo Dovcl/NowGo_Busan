@@ -15,6 +15,10 @@ class CreateListRequest(BaseModel):
     name: str
 
 
+class RenameListRequest(BaseModel):
+    name: str
+
+
 class AddItemRequest(BaseModel):
     contentid: int
 

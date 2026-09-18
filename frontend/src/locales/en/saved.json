@@ -16,5 +16,6 @@
   "saveToListTitle": "Save to List",
   "placeCountInList": "{{count}} places",
   "newList": "New List",
-  "done": "Done"
+  "done": "Done",
+  "deleteListConfirm": "Delete \"{{name}}\"? The spots saved in it will be removed too."
 }
