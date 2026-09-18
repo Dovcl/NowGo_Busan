@@ -93,7 +93,7 @@ export default function TopNavBar() {
           onClick={() => (isLoggedIn ? navigate("/profile") : openLoginModal())}
           className="p-2 hover:bg-surface-container-low rounded-full transition-colors"
         >
-          <span className="material-symbols-outlined">account_circle</span>
+          <span className={`material-symbols-outlined ${isLoggedIn ? "filled-icon text-primary" : ""}`}>account_circle</span>
         </button>
       </div>
     </header>
