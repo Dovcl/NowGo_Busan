@@ -134,7 +134,16 @@ class NowgoScoreCache(Base):
     contentid = Column(BigInteger, ForeignKey("tour_spot.contentid"), primary_key=True)
 
     tour_type = Column(String, nullable=False)  # urban / coastal
-    # [{activity_type, activity_name, activity_score, nowscore, status}, ...]
+
+    # 공통 4축 원점수 — "항목별로 몇 점 받았는지" 상세 표시용(활동마다 안 바뀌는 값이라
+    # activities 안에 반복 저장 안 하고 여기 한 번만 둔다)
+    air_score = Column(Float)
+    temp_score = Column(Float)
+    rain_score = Column(Float)
+    uv_score = Column(Float)
+
+    # [{activity_type, activity_name, activity_score, nowscore, status,
+    #   best_axis, best_score, worst_axis, worst_score}, ...]
     activities = Column(JSONB, nullable=False)
 
     computed_at = Column(DateTime, nullable=False)

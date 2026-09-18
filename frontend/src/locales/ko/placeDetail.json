@@ -2,6 +2,8 @@
   "notFound": "해당 관광지를 찾을 수 없어요.",
   "scoreRow": {
     "air": "대기질",
+    "temp": "기온",
+    "rain": "강수",
     "weather": "기상",
     "uv": "자외선",
     "ripCurrentOrWater": "이안류/수질",
@@ -52,6 +54,12 @@
     "swim": "해수욕",
     "surf": "서핑",
     "marine_trip": "바다여행"
+  },
+  "scoreReasonTitle": "왜 이 점수일까요?",
+  "scoreReason": {
+    "safe": "{{label}} 조건이 가장 좋아요 ({{score}}점) — 지금 방문하기 좋은 상태예요.",
+    "caution": "{{label}} 조건이 다소 아쉬워요 ({{score}}점) — 유의해서 방문하세요.",
+    "danger": "{{label}} 조건이 좋지 않아요 ({{score}}점) — 지금은 방문을 피하는 게 좋아요."
   },
   "tipsTitle": "방문객 팁 & 리뷰",
   "nearbyFoodTitle": "주변 추천 맛집 & 카페",

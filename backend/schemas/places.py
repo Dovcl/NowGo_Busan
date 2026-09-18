@@ -10,11 +10,24 @@ class NowgoActivityOut(BaseModel):
     nowscore: float | None  # 최종 합성 점수 (0~100)
     status: str | None  # safe / caution / danger
 
+    # "왜 이 점수인지" 설명용 — 이 활동의 가중합에 실제로 들어간 축(air/temp/rain/uv/
+    # activity) 중 가장 높은/낮은 것 하나씩. 문장 조립은 프론트가 담당(activity_type과
+    # 같은 방식으로 축 이름을 다국어 번역).
+    best_axis: str | None
+    best_score: float | None
+    worst_axis: str | None
+    worst_score: float | None
+
 
 class NowgoScoreOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     tour_type: str  # urban / coastal
+    # 공통 4축 원점수 — "항목별로 몇 점 받았는지" 배점 표시용 (활동마다 안 바뀜)
+    air_score: float | None
+    temp_score: float | None
+    rain_score: float | None
+    uv_score: float | None
     activities: list[NowgoActivityOut]  # coastal이고 활동이 여럿이면 2개 이상
 
 

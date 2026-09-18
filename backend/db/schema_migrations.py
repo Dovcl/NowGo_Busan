@@ -34,3 +34,8 @@ def ensure_schema() -> None:
         conn.execute(text("ALTER TABLE air_quality_cache ADD COLUMN IF NOT EXISTS co FLOAT"))
         conn.execute(text("ALTER TABLE air_quality_cache ADD COLUMN IF NOT EXISTS pm10_24 FLOAT"))
         conn.execute(text("ALTER TABLE air_quality_cache ADD COLUMN IF NOT EXISTS pm25_24 FLOAT"))
+        # nowgo_score.py 점수 근거("왜 이 점수인지") 표시용 공통 4축 원점수
+        conn.execute(text("ALTER TABLE nowgo_score_cache ADD COLUMN IF NOT EXISTS air_score FLOAT"))
+        conn.execute(text("ALTER TABLE nowgo_score_cache ADD COLUMN IF NOT EXISTS temp_score FLOAT"))
+        conn.execute(text("ALTER TABLE nowgo_score_cache ADD COLUMN IF NOT EXISTS rain_score FLOAT"))
+        conn.execute(text("ALTER TABLE nowgo_score_cache ADD COLUMN IF NOT EXISTS uv_score FLOAT"))

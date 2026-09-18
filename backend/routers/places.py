@@ -27,6 +27,10 @@ def _place_query(db: Session, lang: str = "ko"):
         TourSpotIntro.usetime,
         TourSpotIntro.restdate,
         NowgoScoreCache.tour_type.label("nowgo_tour_type"),
+        NowgoScoreCache.air_score.label("nowgo_air_score"),
+        NowgoScoreCache.temp_score.label("nowgo_temp_score"),
+        NowgoScoreCache.rain_score.label("nowgo_rain_score"),
+        NowgoScoreCache.uv_score.label("nowgo_uv_score"),
         NowgoScoreCache.activities.label("nowgo_activities"),
     ).join(
         TourSpotEnvClassification,
@@ -47,12 +51,18 @@ def _place_query(db: Session, lang: str = "ko"):
 
 
 def _to_place_dict(row) -> dict:
-    """행 하나를 PlaceOut 입력 dict로. nowgo_tour_type/nowgo_activities 평면 컬럼
-    2개를 PlaceOut.nowgo 하나로 묶는다 — 값이 없으면(캐시 미존재) nowgo는 None."""
+    """행 하나를 PlaceOut 입력 dict로. nowgo_* 평면 컬럼들을 PlaceOut.nowgo 하나로
+    묶는다 — 값이 없으면(캐시 미존재) nowgo는 None."""
     data = dict(row._mapping)
     tour_type = data.pop("nowgo_tour_type")
-    activities = data.pop("nowgo_activities")
-    data["nowgo"] = {"tour_type": tour_type, "activities": activities} if tour_type is not None else None
+    nowgo_fields = {
+        "air_score": data.pop("nowgo_air_score"),
+        "temp_score": data.pop("nowgo_temp_score"),
+        "rain_score": data.pop("nowgo_rain_score"),
+        "uv_score": data.pop("nowgo_uv_score"),
+        "activities": data.pop("nowgo_activities"),
+    }
+    data["nowgo"] = {"tour_type": tour_type, **nowgo_fields} if tour_type is not None else None
     return data
 
 

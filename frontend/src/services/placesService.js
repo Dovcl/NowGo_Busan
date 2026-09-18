@@ -85,6 +85,15 @@ export function adaptPlace(place) {
     // 상세 페이지는 이 대표값 대신 활동별로 전부 보여준다(PlaceDetail.jsx) — nowgo가
     // 없으면(is_env_target=false) undefined라 place.nowgo && ... 가드로 걸러진다.
     nowgoActivities: place.nowgo?.activities,
+    // 항목별 배점 표시용 공통 4축(활동이 여럿이어도 이 값들은 동일).
+    nowgoBreakdown: place.nowgo
+      ? {
+          air: place.nowgo.air_score,
+          temp: place.nowgo.temp_score,
+          rain: place.nowgo.rain_score,
+          uv: place.nowgo.uv_score,
+        }
+      : undefined,
     breakdown: null,
   }
 }

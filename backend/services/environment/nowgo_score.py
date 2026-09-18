@@ -27,6 +27,12 @@ PlaceDetail "주변 혼잡도")에서 이미 별도로 다루고 있어서 중�
 
 신호등(safe/caution/danger) 경계값은 팀원 코드에 없어 사용자 확인으로 정함
 (2026-09-18): 70점 이상 safe, 40~69 caution, 40 미만 danger.
+
+각 activity에 딸린 best_axis/worst_axis는 "왜 이 점수가 나왔는지" 설명용
+(2026-09-19 추가) — LLM 없이, 그 activity의 가중합에 실제로 들어간 축들 중
+가장 높은/낮은 것을 그대로 찾아서 알려준다. 문장으로 조립하는 건 프론트
+담당(활동 이름은 프론트가 activity_type enum으로 다국어 처리하는 기존 방식과
+통일하기 위해 여기서는 "air"/"temp"/"rain"/"uv"/"activity" 축 이름만 반환).
 """
 
 _URBAN_WEIGHTS = {"air_score": 0.25, "temp_score": 0.25, "rain_score": 0.25, "uv_score": 0.25}
@@ -35,6 +41,10 @@ _COASTAL_ACTIVITY_WEIGHT = 0.20
 
 _ACTIVITY_NAME = {"swim_score": "해수욕", "surf_score": "서핑", "marine_trip_score": "바다여행"}
 _ACTIVITY_TYPE = {"swim_score": "swim", "surf_score": "surf", "marine_trip_score": "marine_trip"}
+
+# 가중합에 쓰인 원본 키(air_score 등) -> 프론트에 노출할 축 이름. 해양활동 키
+# (swim_score 등)는 activity_type이 이미 있으니 뭉뚱그려 "activity"로 표시.
+_AXIS_LABEL = {"air_score": "air", "temp_score": "temp", "rain_score": "rain", "uv_score": "uv"}
 
 _STATUS_SAFE_MIN = 70
 _STATUS_CAUTION_MIN = 40
@@ -62,6 +72,17 @@ def _weighted_sum(scores: dict, weights: dict) -> float | None:
     return round(total, 2)
 
 
+def _best_worst_axes(scores: dict) -> dict:
+    """scores(가중합에 실제로 들어간 축들)에서 가장 높은/낮은 축 하나씩."""
+    ranked = sorted(((_AXIS_LABEL.get(k, "activity"), v) for k, v in scores.items()), key=lambda kv: kv[1])
+    worst_axis, worst_score = ranked[0]
+    best_axis, best_score = ranked[-1]
+    return {"best_axis": best_axis, "best_score": best_score, "worst_axis": worst_axis, "worst_score": worst_score}
+
+
+_NO_AXES = {"best_axis": None, "best_score": None, "worst_axis": None, "worst_score": None}
+
+
 def compute_nowgo_score(
     air_score: float | None,
     temp_score: float | None,
@@ -74,23 +95,30 @@ def compute_nowgo_score(
     marine_scores: {"swim_score": .., "surf_score": .., "marine_trip_score": ..} —
         관광지가 실제로 보유한 축만 넣는다(코드가 아예 없는 축은 키를 빼거나 None).
 
-    반환: {"tour_type": "urban"|"coastal", "activities": [{"activity_type",
-    "activity_name", "activity_score", "nowscore", "status"}, ...]}
-    urban은 activities가 activity_type="general" 1개짜리 리스트.
+    반환: {"tour_type", "air_score"/"temp_score"/"rain_score"/"uv_score"(공통 4축
+    원점수 — 항목별 배점 표시용), "activities": [{"activity_type", "activity_name",
+    "activity_score", "nowscore", "status", "best_axis", "best_score", "worst_axis",
+    "worst_score"}, ...]}. urban은 activities가 activity_type="general" 1개짜리 리스트.
     """
     base_scores = {"air_score": air_score, "temp_score": temp_score, "rain_score": rain_score, "uv_score": uv_score}
     present_marine = {k: v for k, v in marine_scores.items() if v is not None}
 
     if not present_marine:
         nowscore = _weighted_sum(base_scores, _URBAN_WEIGHTS)
+        axes = _best_worst_axes(base_scores) if nowscore is not None else _NO_AXES
         return {
             "tour_type": "urban",
+            "air_score": air_score,
+            "temp_score": temp_score,
+            "rain_score": rain_score,
+            "uv_score": uv_score,
             "activities": [{
                 "activity_type": "general",
                 "activity_name": "일반 관광",
                 "activity_score": None,
                 "nowscore": nowscore,
                 "status": _status(nowscore),
+                **axes,
             }],
         }
 
@@ -99,12 +127,21 @@ def compute_nowgo_score(
         weights = {**_COASTAL_BASE_WEIGHTS, key: _COASTAL_ACTIVITY_WEIGHT}
         scores = {**base_scores, key: score}
         nowscore = _weighted_sum(scores, weights)
+        axes = _best_worst_axes(scores) if nowscore is not None else _NO_AXES
         activities.append({
             "activity_type": _ACTIVITY_TYPE[key],
             "activity_name": _ACTIVITY_NAME[key],
             "activity_score": score,
             "nowscore": nowscore,
             "status": _status(nowscore),
+            **axes,
         })
 
-    return {"tour_type": "coastal", "activities": activities}
+    return {
+        "tour_type": "coastal",
+        "air_score": air_score,
+        "temp_score": temp_score,
+        "rain_score": rain_score,
+        "uv_score": uv_score,
+        "activities": activities,
+    }

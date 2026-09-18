@@ -16,9 +16,9 @@ from datetime import datetime
 
 from sqlalchemy import func
 
-from db.base import Base
 from db.models import NowgoScoreCache, TourSpot, TourSpotEnvClassification
-from db.session import SessionLocal, engine
+from db.schema_migrations import ensure_schema
+from db.session import SessionLocal
 from etl.seed_tour_spots import upsert
 from services.environment.air_score import air_score
 from services.environment.marine_score import sea_trip_score, surf_score, swim_score
@@ -41,7 +41,7 @@ def _target_spots(session) -> list[tuple[int, float, float]]:
 
 
 def main() -> None:
-    Base.metadata.create_all(engine)  # nowgo_score_cache만 신규 생성, 기존 테이블은 no-op
+    ensure_schema()  # nowgo_score_cache 신규 생성 + air/temp/rain/uv_score 컬럼 보강
 
     session = SessionLocal()
     try:
@@ -71,6 +71,10 @@ def main() -> None:
             records.append({
                 "contentid": contentid,
                 "tour_type": result["tour_type"],
+                "air_score": result["air_score"],
+                "temp_score": result["temp_score"],
+                "rain_score": result["rain_score"],
+                "uv_score": result["uv_score"],
                 "activities": result["activities"],
                 "computed_at": now,
             })

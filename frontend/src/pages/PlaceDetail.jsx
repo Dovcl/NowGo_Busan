@@ -7,7 +7,7 @@ import { STATUS, scoreToStatus } from "../lib/status"
 import { weatherCondition } from "../lib/weather"
 import SaveToListModal from "../components/SaveToListModal"
 
-const SCORE_ROWS = ["air", "weather", "uv", "ripCurrentOrWater", "crowd"]
+const SCORE_ROWS = ["air", "temp", "rain", "uv"]
 
 const INFO_ROWS = [
   { key: "usetime", icon: "schedule" },
@@ -104,6 +104,35 @@ function PlaceDetailView({ placeId }) {
               </div>
             </div>
 
+            {/* Why this score */}
+            {place.nowgoActivities?.some((a) => a.nowscore != null) && (
+              <section className="bg-surface-container-lowest rounded-xl p-card-padding shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30">
+                <h2 className="font-body-md font-bold mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">psychology</span>
+                  {t("scoreReasonTitle")}
+                </h2>
+                <div className="flex flex-col gap-2">
+                  {place.nowgoActivities.map((activity) => {
+                    if (activity.nowscore == null) return null
+                    // safe면 가장 좋았던 축을, caution/danger면 가장 낮았던 축을 근거로 든다.
+                    const useBest = activity.status === "safe"
+                    const axis = useBest ? activity.best_axis : activity.worst_axis
+                    const score = useBest ? activity.best_score : activity.worst_score
+                    const label = axis === "activity" ? t(`activityType.${activity.activity_type}`) : t(`scoreRow.${axis}`)
+                    const rowStatus = STATUS[activity.status]
+                    return (
+                      <p key={activity.activity_type} className={`text-sm ${rowStatus.text}`}>
+                        {activity.activity_type !== "general" && (
+                          <strong>{t(`activityType.${activity.activity_type}`)}: </strong>
+                        )}
+                        {t(`scoreReason.${activity.status}`, { label, score })}
+                      </p>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
+
             {/* Visitor tips */}
             {place.tips && (
               <section className="bg-surface-container-lowest rounded-xl p-card-padding shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30">
@@ -199,12 +228,18 @@ function PlaceDetailView({ placeId }) {
                   </section>
                 )}
 
-                {place.breakdown && (
+                {(() => {
+                  // 실제 관광지는 nowgoBreakdown(air/temp/rain/uv), mock 큐레이션
+                  // 장소는 예전 breakdown(air/weather/uv/water/crowd) — 키가 다른
+                  // 축(temp/rain 등)은 mock 쪽에 없어서 자연히 안 그려질 뿐 에러는 안 남.
+                  const scores = place.nowgoBreakdown ?? place.breakdown
+                  if (!scores) return null
+                  return (
                   <section className="border-t border-outline-variant/30 pt-6">
                     <h2 className="font-body-md font-bold mb-4">{t("breakdownTitle")}</h2>
                     <div className="space-y-3">
                       {SCORE_ROWS.map((key) => {
-                        const value = place.breakdown?.[key]
+                        const value = scores[key]
                         if (value == null) return null
                         const rowStatus = STATUS[scoreToStatus(value)]
                         return (
@@ -219,7 +254,8 @@ function PlaceDetailView({ placeId }) {
                       })}
                     </div>
                   </section>
-                )}
+                  )
+                })()}
 
                 {/* 해안 관광지는 활동(해수욕/서핑/바다여행)마다 점수가 다를 수 있어 하나로
                     합치지 않고 전부 보여준다 — 히어로 카드의 대표 점수는 그중 최저값(placesService.js). */}

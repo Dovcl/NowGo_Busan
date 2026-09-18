@@ -2,6 +2,8 @@
   "notFound": "Couldn't find that spot.",
   "scoreRow": {
     "air": "Air Quality",
+    "temp": "Temperature",
+    "rain": "Rainfall",
     "weather": "Weather",
     "uv": "UV",
     "ripCurrentOrWater": "Rip Current/Water",
@@ -52,6 +54,12 @@
     "swim": "Swimming",
     "surf": "Surfing",
     "marine_trip": "Sea Trip"
+  },
+  "scoreReasonTitle": "Why this score?",
+  "scoreReason": {
+    "safe": "{{label}} conditions are the best factor here ({{score}} pts) — a great time to visit.",
+    "caution": "{{label}} conditions aren't ideal ({{score}} pts) — visit with a bit of care.",
+    "danger": "{{label}} conditions are poor ({{score}} pts) — best to avoid visiting right now."
   },
   "tipsTitle": "Visitor Tips & Reviews",
   "nearbyFoodTitle": "Nearby Food & Cafes",
