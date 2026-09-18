@@ -1,0 +1,24 @@
+{
+  "name": "NowGo Busan",
+  "short_name": "NowGo Busan",
+  "description": "실시간 환경·혼잡도로 지금 가기 좋은 부산 관광지를 추천해요",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9f9ff",
+  "theme_color": "#00328a",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
