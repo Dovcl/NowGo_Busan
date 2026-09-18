@@ -221,6 +221,32 @@ function PlaceDetailView({ placeId }) {
                   </section>
                 )}
 
+                {/* 해안 관광지는 활동(해수욕/서핑/바다여행)마다 점수가 다를 수 있어 하나로
+                    합치지 않고 전부 보여준다 — 히어로 카드의 대표 점수는 그중 최저값(placesService.js). */}
+                {place.nowgoActivities?.length > 0 && (
+                  <section className="border-t border-outline-variant/30 pt-6">
+                    <h2 className="font-body-md font-bold mb-4">{t("activitiesTitle")}</h2>
+                    <div className="space-y-3">
+                      {place.nowgoActivities.map((activity) => {
+                        if (activity.nowscore == null) return null
+                        const rowStatus = STATUS[activity.status]
+                        return (
+                          <div key={activity.activity_type} className="flex items-center justify-between">
+                            <span className="text-sm">{t(`activityType.${activity.activity_type}`)}</span>
+                            <div className={`flex-grow mx-3 h-1.5 rounded-full ${rowStatus.trackBg}`}>
+                              <div
+                                className={`h-full rounded-full ${rowStatus.bg}`}
+                                style={{ width: `${activity.nowscore}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-bold">{activity.nowscore}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )}
+
                 {environment?.weather?.forecast?.length > 0 && (
                   <section className="border-t border-outline-variant/30 pt-6">
                     <h2 className="font-body-md font-bold mb-2">{t("forecastTitle")}</h2>

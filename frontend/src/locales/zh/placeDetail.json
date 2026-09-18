@@ -46,6 +46,13 @@
     "caution": "可能较为拥挤,请注意",
     "safe": "现在正是游览的好时机!"
   },
+  "activitiesTitle": "各活动 NowGo 指数",
+  "activityType": {
+    "general": "一般游览",
+    "swim": "海水浴",
+    "surf": "冲浪",
+    "marine_trip": "海上旅行"
+  },
   "tipsTitle": "游客提示与点评",
   "nearbyFoodTitle": "附近推荐美食&咖啡厅",
   "infoTitle": "景点信息",

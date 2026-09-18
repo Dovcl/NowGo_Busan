@@ -46,6 +46,13 @@
     "caution": "혼잡할 수 있어요, 참고하세요",
     "safe": "지금 방문하기 좋은 상태예요!"
   },
+  "activitiesTitle": "활동별 NowGo Score",
+  "activityType": {
+    "general": "일반 관광",
+    "swim": "해수욕",
+    "surf": "서핑",
+    "marine_trip": "바다여행"
+  },
   "tipsTitle": "방문객 팁 & 리뷰",
   "nearbyFoodTitle": "주변 추천 맛집 & 카페",
   "infoTitle": "관광지 정보",

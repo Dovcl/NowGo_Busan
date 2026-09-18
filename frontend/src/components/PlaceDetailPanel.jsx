@@ -10,9 +10,8 @@ import { ENV_GROUP_STYLE, DEFAULT_ENV_GROUP_STYLE } from "../lib/envGroup"
 import { findNearbyPlaces } from "../lib/nearbyPlaces"
 import SaveToListModal from "./SaveToListModal"
 
-// NowGo Score 알고리즘 확정 전까지 실제 관광지의 score는 항상 null이라 이 기준은
-// 지금은 거의 안 걸림(mock 큐레이션 장소만 예외) — 알고리즘이 채워지면 그대로
-// 동작하도록 자리만 미리 잡아둔다. harness/DECISIONS.md 참고.
+// place.score는 여러 활동 중 가장 낮은 점수(placesService.js::worstActivity) —
+// 신호등 caution/danger 경계와 동일한 70점 기준으로 대체 관광지를 제안한다.
 const LOW_SCORE_THRESHOLD = 70
 
 const INFO_ROWS = [

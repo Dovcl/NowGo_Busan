@@ -1,15 +1,20 @@
 // Data-access layer for the `/api/places` endpoint (관광지 목록/상세, DB 기반).
 //
 // This is separate from scoreService.js on purpose: scoreService deals with
-// NowGo Score data (still mocked, algorithm not decided yet), while this file
-// talks to the real backend place data that already exists in Postgres.
+// curated mock places (tips/forecast/alternatives, still no real source),
+// while this file talks to the real backend place data in Postgres.
 //
 // adaptPlace() is the seam between the backend's DB-shaped response
 // (contentid/title/env_group4/...) and the view model pages consume
 // (id/name/category/...). Real DB fields (image, category name) are read
-// straight from the backend. score/status/breakdown are NowGo Score fields —
-// there's no algorithm yet, so they're left null here instead of being faked
-// on the backend. See harness/DECISIONS.md for why.
+// straight from the backend. `place.nowgo` (from nowgo_score_cache) is null
+// for places that aren't NowGo Score targets (is_env_target=false — food,
+// lodging, shopping, indoor) or haven't been computed by the hourly batch
+// yet. A coastal place can offer several activities (swim/surf/marine_trip)
+// each with its own score — surfaces that can only show one color per place
+// (map marker, search card badge) use the worst (lowest-scoring) activity so
+// they never look safer than the riskiest thing you could do there; the
+// detail page shows every activity separately instead of collapsing them.
 
 import i18n from "../lib/i18n"
 import { secureImageUrl } from "../lib/image"
@@ -27,6 +32,14 @@ function formatDistance(meters) {
   return i18n.t(isWalk ? "distance.walk" : "distance.drive", { ns: "common", minutes, dist })
 }
 
+// 배치가 아직 못 채운 값(예: 기온·강수 축이 API 승인 대기 중이면 nowscore가 null)이
+// 섞여 있을 수 있어 점수 있는 활동만 후보로 본다. 전부 없으면 대표값도 없음(null).
+function worstActivity(activities) {
+  const scored = (activities ?? []).filter((a) => a.nowscore != null)
+  if (!scored.length) return null
+  return scored.reduce((worst, a) => (a.nowscore < worst.nowscore ? a : worst))
+}
+
 export function adaptPlace(place) {
   // usetime/restdate/parking/usefee만 /places/{contentid}(상세)에 있고
   // /places(목록)에는 없어서 전부 undefined일 수 있다 — 하나라도 있을 때만 info를 채운다.
@@ -37,6 +50,7 @@ export function adaptPlace(place) {
     usefee: place.usefee,
   }
   const hasInfo = Object.values(info).some(Boolean)
+  const representative = worstActivity(place.nowgo?.activities)
 
   return {
     id: String(place.contentid),
@@ -64,9 +78,13 @@ export function adaptPlace(place) {
           distance: formatDistance(food.distance_m),
         }))
       : undefined,
-    // NowGo Score 필드 — 알고리즘 결정 전까지 placeholder
-    score: null,
-    status: null,
+    // 지도 마커·목록 배지처럼 장소당 색 하나만 보여줄 수 있는 자리용 대표값 —
+    // 활동이 여럿이면 그중 제일 낮은 점수(worstActivity, 위 참고)를 쓴다.
+    score: representative?.nowscore ?? null,
+    status: representative?.status ?? null,
+    // 상세 페이지는 이 대표값 대신 활동별로 전부 보여준다(PlaceDetail.jsx) — nowgo가
+    // 없으면(is_env_target=false) undefined라 place.nowgo && ... 가드로 걸러진다.
+    nowgoActivities: place.nowgo?.activities,
     breakdown: null,
   }
 }

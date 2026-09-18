@@ -46,6 +46,13 @@
     "caution": "May be crowded, keep this in mind",
     "safe": "Great time to visit!"
   },
+  "activitiesTitle": "NowGo Score by Activity",
+  "activityType": {
+    "general": "General",
+    "swim": "Swimming",
+    "surf": "Surfing",
+    "marine_trip": "Sea Trip"
+  },
   "tipsTitle": "Visitor Tips & Reviews",
   "nearbyFoodTitle": "Nearby Food & Cafes",
   "infoTitle": "Spot Info",

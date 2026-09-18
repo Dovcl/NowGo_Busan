@@ -174,8 +174,8 @@ export default function SearchResults() {
 function PlaceCard({ place }) {
   const { t } = useTranslation("search")
   const { t: tCommon } = useTranslation("common")
-  // score는 NowGo Score 알고리즘 확정 전까지 항상 null(placesService.js 참고) —
-  // 값이 있을 때만 배지를 그려서 나중에 알고리즘이 붙어도 이 컴포넌트는 그대로 재사용된다.
+  // is_env_target=false인 장소(음식점 등)는 score가 null(placesService.js 참고) —
+  // 값이 있을 때만 배지를 그린다.
   const statusKey = place.status ?? scoreToStatus(place.score)
   const status = place.score != null ? STATUS[statusKey] : null
 
