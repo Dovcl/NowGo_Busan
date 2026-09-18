@@ -28,13 +28,17 @@ export default function TopNavBar() {
   }
 
   return (
-    <header className="hidden md:flex bg-surface/80 backdrop-blur-md border-b border-outline-variant justify-between items-center px-container-margin h-16 w-full shrink-0 sticky top-0 z-50">
-      <div className="flex items-center gap-8">
-        <NavLink to="/" className="font-display-lg text-headline-lg font-bold text-primary flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-3xl filled-icon">water</span>
+    <header className="flex bg-surface/80 backdrop-blur-md border-b border-outline-variant justify-between items-center px-4 md:px-container-margin h-16 w-full shrink-0 sticky top-0 z-50">
+      <div className="flex items-center gap-8 min-w-0">
+        <NavLink
+          to="/"
+          className="font-display-lg text-body-md md:text-headline-lg font-bold text-primary flex items-center gap-1.5 md:gap-2 whitespace-nowrap shrink-0"
+        >
+          <span className="material-symbols-outlined text-primary text-xl md:text-3xl filled-icon">water</span>
           NowGo Busan
         </NavLink>
-        <nav className="flex gap-6">
+        {/* 링크는 모바일에서 하단 탭바가 이미 담당해서 중복 안 되게 데스크톱에만 노출 */}
+        <nav className="hidden md:flex gap-6">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}

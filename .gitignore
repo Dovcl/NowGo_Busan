@@ -54,9 +54,9 @@ dist-ssr/
 
 
 
-# PWA 캐시 & 빌드 아티팩트
+# PWA 빌드 아티팩트 — vite-plugin-pwa 등으로 자동 생성되면 여기 해당. 지금
+# frontend/public/sw.js는 직접 손으로 짠 최소 서비스워커라 커밋 대상(추적함).
 
-frontend/public/sw.js
 frontend/public/workbox-*.js
 
 
