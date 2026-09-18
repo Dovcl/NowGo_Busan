@@ -3,6 +3,7 @@
 // placesService.js처럼 항상 실제 백엔드를 호출한다.
 // announcements(공지 배너)는 아직 백엔드에 대응하는 소스가 없어 mock 그대로.
 import { announcements } from "../mock/events"
+import { secureImageUrl } from "../lib/image"
 
 // 운영 빌드에서 값이 없으면 같은 도메인(프론트 Redirects/Rewrites가 백엔드로 프록시)으로 보낸다.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8080" : "")
@@ -20,7 +21,7 @@ function adaptEvent(e) {
     endDate: e.end_date ?? e.start_date,
     location: e.venue || e.address || "",
     tags: [],
-    image: e.image_url,
+    image: secureImageUrl(e.image_url),
   }
 }
 
@@ -46,7 +47,7 @@ export async function fetchEventById(id) {
     endDate: e.end_date ?? e.start_date,
     venue: e.venue,
     address: e.address,
-    image: e.image_url,
+    image: secureImageUrl(e.image_url),
     // [{source: 'dabom'|'kopis'|'tourapi', url}] — 병합된 행사는 소스가 여러 개일 수 있어
     // EventDetailModal이 어느 사이트로 가는 링크인지 라벨로 구분해 보여준다.
     sourceUrls: (e.source_urls ?? []).map((s) => ({ source: s.source, url: s.url })),

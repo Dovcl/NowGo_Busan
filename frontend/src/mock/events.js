@@ -65,12 +65,6 @@ export const EVENT_CATEGORIES = {
   },
 }
 
-// 리스트 화면 상단 공지 배너용.
-export const announcements = [
-  {
-    id: "biff-ticket",
-    eventId: "biff-2026",
-    title: "부산국제영화제 티켓 예매 안내",
-    body: "7월 1일 오전 10시부터 공식 홈페이지에서 예매가 시작돼요.",
-  },
-]
+// 리스트 화면 상단 공지 배너용 — 실제 소스 연결 전까지는 빈 배열 유지(날짜 있는 mock을
+// 그대로 두면 지난 날짜가 실제 사용자에게 그대로 노출됨).
+export const announcements = []

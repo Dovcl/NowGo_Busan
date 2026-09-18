@@ -12,6 +12,7 @@
 // on the backend. See harness/DECISIONS.md for why.
 
 import i18n from "../lib/i18n"
+import { secureImageUrl } from "../lib/image"
 
 // 운영 빌드에서 값이 없으면 같은 도메인(프론트 Redirects/Rewrites가 백엔드로 프록시)으로 보낸다.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "")
@@ -42,7 +43,7 @@ export function adaptPlace(place) {
     name: place.title,
     addr: place.addr1,
     category: place.category_name ?? place.env_group4,
-    image: place.firstimage || null,
+    image: secureImageUrl(place.firstimage) || null,
     envGroup4: place.env_group4, // 해변 / 산 / 도심 / 실내 (백엔드 원본 분류, 그대로 보존)
     // 지도 필터/마커 아이콘 전용 그룹 — 음식점(cat1=A05)만 "실내"에서 따로 빼서 보여준다.
     mapGroup: place.cat1 === "A05" ? "음식점" : place.env_group4,
@@ -59,7 +60,7 @@ export function adaptPlace(place) {
     nearbyFood: place.nearby_food?.length
       ? place.nearby_food.map((food) => ({
           name: food.title,
-          image: food.firstimage || null,
+          image: secureImageUrl(food.firstimage) || null,
           distance: formatDistance(food.distance_m),
         }))
       : undefined,

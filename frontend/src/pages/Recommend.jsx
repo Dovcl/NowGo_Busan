@@ -300,12 +300,16 @@ function NoteworthyCard({ event, onOpenCalendar, onOpenDetail }) {
       >
         {t(`eventStatus.${status.stateKey}`, { days: status.days })}
       </span>
-      <div className="h-40 w-full overflow-hidden relative">
-        <img
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          src={event.image}
-          alt={event.title}
-        />
+      <div className="h-40 w-full overflow-hidden relative bg-surface-container-high flex items-center justify-center">
+        {event.image ? (
+          <img
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            src={event.image}
+            alt={event.title}
+          />
+        ) : (
+          <span className="material-symbols-outlined text-4xl text-outline-variant">image</span>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
       </div>
       <div className="p-card-padding flex flex-col gap-3 flex-1">
@@ -347,8 +351,12 @@ function EventRow({ event, saved, onToggleSaved, onOpenDetail }) {
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpenDetail()}
       className="text-left flex bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-shadow border border-outline-variant/10 p-3 gap-3 cursor-pointer"
     >
-      <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0">
-        <img className="w-full h-full object-cover" src={event.image} alt={event.title} />
+      <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-surface-container-high flex items-center justify-center">
+        {event.image ? (
+          <img className="w-full h-full object-cover" src={event.image} alt={event.title} />
+        ) : (
+          <span className="material-symbols-outlined text-2xl text-outline-variant">image</span>
+        )}
       </div>
       <div className="flex flex-col justify-between flex-1 min-w-0">
         <div className="flex flex-col gap-0.5">
