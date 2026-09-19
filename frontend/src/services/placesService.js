@@ -94,6 +94,8 @@ export function adaptPlace(place) {
           uv: place.nowgo.uv_score,
         }
       : undefined,
+    // 행동 지침 코드 목록(예: ["uv_high", "rip_current"]) — tip.<code> i18n 키로 번역.
+    nowgoTips: place.nowgo?.tips,
     breakdown: null,
   }
 }

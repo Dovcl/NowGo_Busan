@@ -29,6 +29,8 @@ class NowgoScoreOut(BaseModel):
     rain_score: float | None
     uv_score: float | None
     activities: list[NowgoActivityOut]  # coastal이고 활동이 여럿이면 2개 이상
+    # 행동 지침 코드 목록(예: ["uv_high", "rip_current"]) — 문장은 프론트 tip.* i18n 담당
+    tips: list[str]
 
 
 class PlaceOut(BaseModel):

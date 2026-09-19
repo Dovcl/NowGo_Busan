@@ -16,13 +16,14 @@ from datetime import datetime
 
 from sqlalchemy import func
 
+from db.environment_queries import nearest_rip_current_station
 from db.models import NowgoScoreCache, TourSpot, TourSpotEnvClassification
 from db.schema_migrations import ensure_schema
 from db.session import SessionLocal
 from etl.seed_tour_spots import upsert
 from services.environment.air_score import air_score
 from services.environment.marine_score import sea_trip_score, surf_score, swim_score
-from services.environment.nowgo_score import compute_nowgo_score
+from services.environment.nowgo_score import compute_nowgo_score, generate_tips
 from services.environment.uv_score import uv_score_lookup
 from services.environment.weather_score import weather_score
 
@@ -68,6 +69,15 @@ def main() -> None:
                 air["air_score"], weather["temp_score"], weather["rain_score"], uv["uv_score"], marine_scores
             )
 
+            rip = nearest_rip_current_station(session, lat, lon)
+            tips = generate_tips(
+                uv_index=uv["uv_index"],
+                temperature=weather["temperature"],
+                rainfall_60m=weather["rainfall_60m"],
+                air_score=air["air_score"],
+                rip_level=rip.risk_level if rip else None,
+            )
+
             records.append({
                 "contentid": contentid,
                 "tour_type": result["tour_type"],
@@ -76,6 +86,7 @@ def main() -> None:
                 "rain_score": result["rain_score"],
                 "uv_score": result["uv_score"],
                 "activities": result["activities"],
+                "tips": tips,
                 "computed_at": now,
             })
 

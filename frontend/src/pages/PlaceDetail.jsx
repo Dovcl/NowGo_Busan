@@ -130,6 +130,16 @@ function PlaceDetailView({ placeId }) {
                     )
                   })}
                 </div>
+                {place.nowgoTips?.length > 0 && (
+                  <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-outline-variant/20">
+                    {place.nowgoTips.map((code) => (
+                      <p key={code} className="text-sm text-on-surface-variant flex items-start gap-2">
+                        <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">tips_and_updates</span>
+                        {t(`tip.${code}`)}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </section>
             )}
 

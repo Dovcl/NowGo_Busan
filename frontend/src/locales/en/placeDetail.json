@@ -61,6 +61,20 @@
     "caution": "{{label}} conditions aren't ideal ({{score}} pts) — visit with a bit of care.",
     "danger": "{{label}} conditions are poor ({{score}} pts) — best to avoid visiting right now."
   },
+  "tip": {
+    "uv_moderate": "UV is moderate — sunscreen is a good idea",
+    "uv_high": "UV is high — bring sunscreen and a hat",
+    "uv_extreme": "UV is extreme — avoid long outdoor exposure and bring sunscreen & a hat",
+    "air_bad": "Air quality is poor — a mask is recommended",
+    "air_very_bad": "Air quality is very poor — limit outdoor time and wear a mask",
+    "rain_light": "Light rain possible — bring an umbrella",
+    "rain_heavy": "Heavy rain expected — be careful if heading out",
+    "heat": "It's hot — stay hydrated",
+    "heat_extreme": "Extreme heat — limit outdoor activity and drink plenty of water",
+    "cold": "It's chilly — dress warmly",
+    "cold_extreme": "Very cold — bundle up well",
+    "rip_current": "High rip current risk — be careful in the water"
+  },
   "tipsTitle": "Visitor Tips & Reviews",
   "nearbyFoodTitle": "Nearby Food & Cafes",
   "infoTitle": "Spot Info",

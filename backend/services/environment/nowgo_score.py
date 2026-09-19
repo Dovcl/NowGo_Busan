@@ -33,6 +33,13 @@ PlaceDetail "주변 혼잡도")에서 이미 별도로 다루고 있어서 중�
 가장 높은/낮은 것을 그대로 찾아서 알려준다. 문장으로 조립하는 건 프론트
 담당(활동 이름은 프론트가 activity_type enum으로 다국어 처리하는 기존 방식과
 통일하기 위해 여기서는 "air"/"temp"/"rain"/"uv"/"activity" 축 이름만 반환).
+
+`generate_tips()`는 "그래서 뭘 챙겨야 하는지" 행동 지침용(2026-09-19 추가,
+사용자 요청 — "자외선 높으면 선크림, 물놀이면 이안류 조심" 같은 구체적인 문구).
+이것도 LLM이 아니라 원본 관측값(uv_index/기온/강수량/이안류 위험도)을 그대로
+임계값 비교만 해서 코드 배열로 반환 — 점수(0~100)만으로는 기온처럼 "더워서
+나쁜지 추워서 나쁜지" 방향을 알 수 없는 축이 있어서, 점수가 아니라 원본 관측값을
+받는다. 문장 자체는 프론트 i18n이 담당(tip.* 키).
 """
 
 _URBAN_WEIGHTS = {"air_score": 0.25, "temp_score": 0.25, "rain_score": 0.25, "uv_score": 0.25}
@@ -145,3 +152,51 @@ def compute_nowgo_score(
         "uv_score": uv_score,
         "activities": activities,
     }
+
+
+def generate_tips(
+    *,
+    uv_index: float | None,
+    temperature: float | None,
+    rainfall_60m: float | None,
+    air_score: float | None,
+    rip_level: str | None,
+) -> list[str]:
+    """원본 관측값 임계값 비교로 행동 지침 코드 목록 생성. 각 코드는 프론트 i18n의
+    `tip.<code>` 키로 번역된다. 신호가 없으면(값 없음/정상 범위) 그 축은 그냥 빠진다."""
+    tips: list[str] = []
+
+    if uv_index is not None:
+        if uv_index > 10:
+            tips.append("uv_extreme")
+        elif uv_index > 7:
+            tips.append("uv_high")
+        elif uv_index > 5:
+            tips.append("uv_moderate")
+
+    if air_score is not None:
+        if air_score < 30:
+            tips.append("air_very_bad")
+        elif air_score < 70:
+            tips.append("air_bad")
+
+    if rainfall_60m is not None:
+        if rainfall_60m >= 30:
+            tips.append("rain_heavy")
+        elif rainfall_60m > 0:
+            tips.append("rain_light")
+
+    if temperature is not None:
+        if temperature >= 33:
+            tips.append("heat_extreme")
+        elif temperature >= 30:
+            tips.append("heat")
+        elif temperature <= 0:
+            tips.append("cold_extreme")
+        elif temperature <= 5:
+            tips.append("cold")
+
+    if rip_level in ("경계", "위험"):
+        tips.append("rip_current")
+
+    return tips

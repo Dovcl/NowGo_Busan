@@ -32,6 +32,7 @@ def _place_query(db: Session, lang: str = "ko"):
         NowgoScoreCache.rain_score.label("nowgo_rain_score"),
         NowgoScoreCache.uv_score.label("nowgo_uv_score"),
         NowgoScoreCache.activities.label("nowgo_activities"),
+        NowgoScoreCache.tips.label("nowgo_tips"),
     ).join(
         TourSpotEnvClassification,
         TourSpotEnvClassification.contentid == TourSpot.contentid,
@@ -61,6 +62,8 @@ def _to_place_dict(row) -> dict:
         "rain_score": data.pop("nowgo_rain_score"),
         "uv_score": data.pop("nowgo_uv_score"),
         "activities": data.pop("nowgo_activities"),
+        # 이 컬럼을 새로 추가하기 전 계산된 캐시 행은 tips가 NULL일 수 있어 빈 목록으로 폴백
+        "tips": data.pop("nowgo_tips") or [],
     }
     data["nowgo"] = {"tour_type": tour_type, **nowgo_fields} if tour_type is not None else None
     return data

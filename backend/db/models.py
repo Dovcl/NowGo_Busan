@@ -146,6 +146,10 @@ class NowgoScoreCache(Base):
     #   best_axis, best_score, worst_axis, worst_score}, ...]
     activities = Column(JSONB, nullable=False)
 
+    # 행동 지침 코드 목록(예: ["uv_high", "rip_current"]) — 문장은 프론트 tip.* i18n
+    # 키가 담당. services/environment/nowgo_score.py::generate_tips() 참고.
+    tips = Column(JSONB)
+
     computed_at = Column(DateTime, nullable=False)
 
 

@@ -39,3 +39,4 @@ def ensure_schema() -> None:
         conn.execute(text("ALTER TABLE nowgo_score_cache ADD COLUMN IF NOT EXISTS temp_score FLOAT"))
         conn.execute(text("ALTER TABLE nowgo_score_cache ADD COLUMN IF NOT EXISTS rain_score FLOAT"))
         conn.execute(text("ALTER TABLE nowgo_score_cache ADD COLUMN IF NOT EXISTS uv_score FLOAT"))
+        conn.execute(text("ALTER TABLE nowgo_score_cache ADD COLUMN IF NOT EXISTS tips JSONB"))
