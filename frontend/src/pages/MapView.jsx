@@ -36,8 +36,11 @@ export default function MapView() {
   const [dangerFilter, setDangerFilter] = useState("all")
   const mapRef = useRef(null)
 
+  // 실내는 NowGo Score 대상이 아니라(is_env_target=false, 항상 score=null) 점수 범위
+  // 필터가 걸려도 항상 통과해버려서 "범위를 좁혀도 안 줄어든다"는 오해를 줬음 — 지도
+  // 자체가 NowGo Score 기반 화면이라 아예 지도에서 빼기로 결정(사용자 확인).
   useEffect(() => {
-    fetchPlaces().then(setPlaces)
+    fetchPlaces().then((data) => setPlaces(data.filter((p) => p.mapGroup !== "실내")))
   }, [i18n.language])
 
   // 상세 패널이 열려있을 때 Esc로 닫기 — 패널이 사이드바 자리를 차지하고 있어서
