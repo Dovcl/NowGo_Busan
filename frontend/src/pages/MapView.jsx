@@ -27,6 +27,13 @@ export default function MapView() {
   const [expandedListId, setExpandedListId] = useState(null)
   const [expandedPlaces, setExpandedPlaces] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
+  // 필터 사이드바 자체가 데스크톱 전용(hidden md:flex)이라, 모바일에선 NowGo Score
+  // 범위·정렬·위험 필터가 아예 화면에 없어서 "작동 안 한다"는 오해로 이어졌음 —
+  // 모바일에서는 오버레이(바텀시트)로 같은 사이드바를 열고 닫는 토글.
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  // "all" | "onlyDanger" | "excludeDanger" — 체크박스 두 개가 각각 독립 상태였던 걸
+  // 하나로 합쳐 상호 배타적으로 만든다(둘 다 동시에 켜지는 건 의미가 없어서).
+  const [dangerFilter, setDangerFilter] = useState("all")
   const mapRef = useRef(null)
 
   useEffect(() => {
@@ -76,16 +83,24 @@ export default function MapView() {
     setExpandedListId((prev) => (prev === listId ? null : listId))
   }
 
-  // score는 NowGo Score 알고리즘 확정 전까지 항상 null(placesService.js 참고) — 점수 없는
-  // 장소는 범위와 무관하게 항상 통과시켜, 알고리즘이 채워지는 순간 그대로 동작하게 해둔다.
+  // 점수 없는 장소(음식점 등, is_env_target=false)는 애초에 안전도 평가 대상이 아니라서
+  // 범위·위험 필터와 무관하게 항상 통과시킨다 — "왜 식당이 사라지지?"를 피하기 위함.
   const filteredPlaces = useMemo(() => {
     const [scoreMin, scoreMax] = scoreRange
     return places.filter((p) => {
       const groupMatch = activeGroups.size === ALL_GROUPS.length || activeGroups.has(p.mapGroup)
       const scoreMatch = p.score == null || (p.score >= scoreMin && p.score <= scoreMax)
-      return groupMatch && scoreMatch
+      const dangerMatch =
+        dangerFilter === "all" ||
+        p.status == null ||
+        (dangerFilter === "onlyDanger" ? p.status === "danger" : p.status !== "danger")
+      return groupMatch && scoreMatch && dangerMatch
     })
-  }, [places, activeGroups, scoreRange])
+  }, [places, activeGroups, scoreRange, dangerFilter])
+
+  // 모바일 필터 버튼에 "지금 뭔가 켜져 있다" 표시용.
+  const hasActiveFilters =
+    activeGroups.size !== ALL_GROUPS.length || scoreRange[0] !== 0 || scoreRange[1] !== 100 || dangerFilter !== "all"
 
   // 사이드바 체크박스용 — 단순 토글(누른 것만 켜지거나 꺼지고 나머지는 그대로).
   const toggleGroup = (group) => {
@@ -109,6 +124,7 @@ export default function MapView() {
 
   const handleSelectPlace = (place) => {
     setSelectedPlaceId(place.id)
+    setMobileFiltersOpen(false)
     mapRef.current?.panTo(place.lat, place.lng)
   }
 
@@ -157,7 +173,21 @@ export default function MapView() {
           onClose={() => setSelectedPlaceId(null)}
         />
       ) : (
-      <aside className="w-80 bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.05)] z-10 flex-col overflow-y-auto border-r border-outline-variant shrink-0 hidden md:flex">
+      <aside
+        className={`bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex-col overflow-y-auto border-r border-outline-variant shrink-0 md:static md:z-10 md:w-80 md:flex ${
+          mobileFiltersOpen ? "fixed inset-0 z-40 flex w-full" : "hidden"
+        }`}
+      >
+        <div className="p-5 border-b border-outline-variant flex items-center justify-between md:hidden">
+          <h2 className="font-body-md text-body-md font-bold">{t("filtersTitle")}</h2>
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen(false)}
+            className="w-9 h-9 rounded-full hover:bg-surface-container-low flex items-center justify-center"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
         <div className="p-5 border-b border-outline-variant">
           <h2 className="font-body-md text-body-md font-bold mb-4">{t("searchTitle")}</h2>
           <div className="relative w-full">
@@ -323,11 +353,21 @@ export default function MapView() {
           <div className="mt-6 pt-6 border-t border-outline-variant flex flex-col gap-3">
             <label className="flex items-center justify-between cursor-pointer">
               <span className="text-on-surface font-body-md text-body-md">{t("dangerOnly")}</span>
-              <input className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
+              <input
+                checked={dangerFilter === "onlyDanger"}
+                onChange={() => setDangerFilter((prev) => (prev === "onlyDanger" ? "all" : "onlyDanger"))}
+                className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary"
+                type="checkbox"
+              />
             </label>
             <label className="flex items-center justify-between cursor-pointer">
               <span className="text-on-surface font-body-md text-body-md">{t("excludeDanger")}</span>
-              <input className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
+              <input
+                checked={dangerFilter === "excludeDanger"}
+                onChange={() => setDangerFilter((prev) => (prev === "excludeDanger" ? "all" : "excludeDanger"))}
+                className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary"
+                type="checkbox"
+              />
             </label>
           </div>
         </div>
@@ -386,6 +426,18 @@ export default function MapView() {
         )}
 
         <div className="absolute right-4 top-4 flex flex-col gap-2 z-10">
+          {/* 필터 사이드바 자체가 md 미만에서 hidden이라, 모바일 전용 진입점을 따로 둔다. */}
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen(true)}
+            className={`md:hidden w-10 h-10 rounded-lg shadow-md border flex items-center justify-center transition-colors relative ${
+              hasActiveFilters
+                ? "bg-primary border-primary text-white"
+                : "bg-surface border-outline-variant text-on-surface hover:bg-surface-container-low"
+            }`}
+          >
+            <span className="material-symbols-outlined">tune</span>
+          </button>
           <div className="bg-surface rounded-lg shadow-md border border-outline-variant flex flex-col overflow-hidden">
             <button
               type="button"
