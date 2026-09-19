@@ -1,0 +1,6 @@
+{
+  "title": "Outdoor Spots — NowGo Score Ranking",
+  "resultUnit": "{{count}} spots",
+  "empty": "No spots have a score yet.",
+  "loadMore": "Showing {{visible}}/{{total}} · Load more"
+}

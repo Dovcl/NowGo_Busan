@@ -22,5 +22,6 @@
   "crowdLabel": "拥挤度",
   "foreignCount": "外国游客 {{count}}名",
   "domesticCount": "本国游客 {{count}}名",
-  "top10Title": "釜山现在最值得去的TOP 10景点"
+  "top10Title": "釜山现在最值得去的TOP 10景点",
+  "viewAllRanking": "查看全部排名"
 }

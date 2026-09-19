@@ -12,6 +12,7 @@ import recommendKo from "../locales/ko/recommend.json"
 import savedKo from "../locales/ko/saved.json"
 import authKo from "../locales/ko/auth.json"
 import adminKo from "../locales/ko/admin.json"
+import rankingKo from "../locales/ko/ranking.json"
 
 import commonEn from "../locales/en/common.json"
 import homeEn from "../locales/en/home.json"
@@ -24,6 +25,7 @@ import recommendEn from "../locales/en/recommend.json"
 import savedEn from "../locales/en/saved.json"
 import authEn from "../locales/en/auth.json"
 import adminEn from "../locales/en/admin.json"
+import rankingEn from "../locales/en/ranking.json"
 
 import commonZh from "../locales/zh/common.json"
 import homeZh from "../locales/zh/home.json"
@@ -36,6 +38,7 @@ import recommendZh from "../locales/zh/recommend.json"
 import savedZh from "../locales/zh/saved.json"
 import authZh from "../locales/zh/auth.json"
 import adminZh from "../locales/zh/admin.json"
+import rankingZh from "../locales/zh/ranking.json"
 
 export const SUPPORTED_LANGUAGES = ["ko", "en", "zh"]
 export const STORAGE_KEY = "nowgo_lang"
@@ -53,9 +56,9 @@ function detectInitialLanguage() {
 
 i18n.use(initReactI18next).init({
   resources: {
-    ko: { common: commonKo, home: homeKo, search: searchKo, placeDetail: placeDetailKo, map: mapKo, bumbim: bumbimKo, profile: profileKo, recommend: recommendKo, saved: savedKo, auth: authKo, admin: adminKo },
-    en: { common: commonEn, home: homeEn, search: searchEn, placeDetail: placeDetailEn, map: mapEn, bumbim: bumbimEn, profile: profileEn, recommend: recommendEn, saved: savedEn, auth: authEn, admin: adminEn },
-    zh: { common: commonZh, home: homeZh, search: searchZh, placeDetail: placeDetailZh, map: mapZh, bumbim: bumbimZh, profile: profileZh, recommend: recommendZh, saved: savedZh, auth: authZh, admin: adminZh },
+    ko: { common: commonKo, home: homeKo, search: searchKo, placeDetail: placeDetailKo, map: mapKo, bumbim: bumbimKo, profile: profileKo, recommend: recommendKo, saved: savedKo, auth: authKo, admin: adminKo, ranking: rankingKo },
+    en: { common: commonEn, home: homeEn, search: searchEn, placeDetail: placeDetailEn, map: mapEn, bumbim: bumbimEn, profile: profileEn, recommend: recommendEn, saved: savedEn, auth: authEn, admin: adminEn, ranking: rankingEn },
+    zh: { common: commonZh, home: homeZh, search: searchZh, placeDetail: placeDetailZh, map: mapZh, bumbim: bumbimZh, profile: profileZh, recommend: recommendZh, saved: savedZh, auth: authZh, admin: adminZh, ranking: rankingZh },
   },
   lng: detectInitialLanguage(),
   fallbackLng: "ko",

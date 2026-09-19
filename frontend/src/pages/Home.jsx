@@ -172,6 +172,13 @@ export default function Home() {
             <h2 className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">
               {t("top10Title")}
             </h2>
+            <Link
+              to="/ranking"
+              className="font-label-sm text-label-sm text-primary font-bold hover:underline whitespace-nowrap flex items-center gap-0.5 shrink-0"
+            >
+              {t("viewAllRanking")}
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+            </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-gutter">
             {places.map((place) => {

@@ -22,5 +22,6 @@
   "crowdLabel": "Crowd Level",
   "foreignCount": "{{count}} foreign visitors",
   "domesticCount": "{{count}} domestic visitors",
-  "top10Title": "Busan's Top 10 Spots to Visit Right Now"
+  "top10Title": "Busan's Top 10 Spots to Visit Right Now",
+  "viewAllRanking": "View Full Ranking"
 }

@@ -1,0 +1,6 @@
+{
+  "title": "야외 관광지 NowGo Score 순위",
+  "resultUnit": "{{count}}곳",
+  "empty": "아직 점수가 계산된 관광지가 없어요.",
+  "loadMore": "{{visible}}/{{total}}곳 · 더 보기"
+}

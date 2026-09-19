@@ -14,6 +14,7 @@ import AdminUserManagement from "./pages/AdminUserManagement"
 import AdminDataInspector from "./pages/AdminDataInspector"
 import AdminDataSources from "./pages/AdminDataSources"
 import SearchResults from "./pages/SearchResults"
+import ScoreRanking from "./pages/ScoreRanking"
 import NotFound from "./pages/NotFound"
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
         <Route path="/admin/data" element={<AdminDataInspector />} />
         <Route path="/admin/data-sources" element={<AdminDataSources />} />
         <Route path="/search" element={<SearchResults />} />
+        <Route path="/ranking" element={<ScoreRanking />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/saved" element={<SavedLists />} />
         <Route path="/saved/:listId" element={<SavedListDetail />} />

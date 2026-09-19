@@ -22,5 +22,6 @@
   "crowdLabel": "혼잡도",
   "foreignCount": "외국인 {{count}}명",
   "domesticCount": "내국인 {{count}}명",
-  "top10Title": "지금 가기 좋은 부산 관광지 TOP 10"
+  "top10Title": "지금 가기 좋은 부산 관광지 TOP 10",
+  "viewAllRanking": "전체 순위 보기"
 }
