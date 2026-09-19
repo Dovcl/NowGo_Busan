@@ -6,14 +6,19 @@ import { fetchTopPlaces } from "../services/placesService"
 import { fetchEnvironment } from "../services/environmentService"
 import { STATUS, scoreToStatus, pmGradeToStatus, uvToLevel, ripLevelToStatus } from "../lib/status"
 import { weatherCondition } from "../lib/weather"
+import { nearestRipBeach } from "../lib/ripBeaches"
 
 // 부산시청 좌표 — 홈 화면 "지금 부산 날씨"는 관광지 하나가 아니라 도시 전체 요약이라
 // 대표 지점 하나를 기준으로 조회한다(대기질은 이 근처 최근접 측정소로 매칭됨).
 const BUSAN_CITY_HALL = { lat: 35.1796, lng: 129.0756 }
 
-// 이안류 카드는 "부산 전체"가 아니라 원래부터 해운대 고정 표시라(mock도 그랬음),
-// 부산시청 좌표로는 반경 5km 밖이라 안 잡혀서 해운대 좌표로 따로 조회한다.
-const HAEUNDAE = { lat: 35.1587, lng: 129.1604 }
+// 혼잡도 s_traffic(1=원활, 0=정체) -> 카드 표시용 단계·신호등 (PlaceDetail 주변 혼잡도와 같은 경계값)
+function crowdLevel(traffic) {
+  if (!traffic || traffic.status === "data_collecting") return null
+  const congestion = 1 - (traffic.sTraffic || 0)
+  if (congestion < 0.33) return { key: "low", status: "safe" }
+  return congestion < 0.67 ? { key: "moderate", status: "caution" } : { key: "high", status: "danger" }
+}
 
 function fmt(value, unit = "") {
   return value != null ? `${value}${unit}` : "-"
@@ -25,7 +30,9 @@ export default function Home() {
   const navigate = useNavigate()
   const [summary, setSummary] = useState(null)
   const [environment, setEnvironment] = useState(null)
-  const [haeundae, setHaeundae] = useState(null)
+  const [location, setLocation] = useState(null) // GPS 위치(거부·실패 시 null -> 해운대/시청 기본값)
+  const [ripEnv, setRipEnv] = useState(null)
+  const [crowdEnv, setCrowdEnv] = useState(null)
   const [places, setPlaces] = useState([])
   const [searchInput, setSearchInput] = useState("")
 
@@ -39,8 +46,20 @@ export default function Home() {
     fetchHomeSummary().then(setSummary)
     fetchTopPlaces().then(setPlaces)
     fetchEnvironment(BUSAN_CITY_HALL.lat, BUSAN_CITY_HALL.lng).then(setEnvironment)
-    fetchEnvironment(HAEUNDAE.lat, HAEUNDAE.lng).then(setHaeundae)
+    navigator.geolocation?.getCurrentPosition(
+      (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {}, // 거부·실패하면 기본값 그대로 표시
+    )
   }, [])
+
+  // 이안류: GPS에서 가장 가까운 해변 / 혼잡도: GPS 지점 주변 (위치가 바뀌면 다시 조회)
+  const beach = nearestRipBeach(location)
+  useEffect(() => {
+    let stale = false // 위치가 바뀐 뒤 늦게 도착한 이전 응답이 덮어쓰지 않도록
+    fetchEnvironment(beach.lat, beach.lng).then((env) => !stale && setRipEnv(env))
+    fetchEnvironment(location?.lat ?? BUSAN_CITY_HALL.lat, location?.lng ?? BUSAN_CITY_HALL.lng).then((env) => !stale && setCrowdEnv(env))
+    return () => { stale = true }
+  }, [location, beach.lat, beach.lng])
 
   return (
     <div className="h-full overflow-y-auto">
@@ -93,8 +112,11 @@ export default function Home() {
           const uvStatus = STATUS[uv.status]
           // 비시즌(10~5월)엔 API 자체가 값을 안 줘서 rip가 null일 수 있음 — 그때는
           // 색상 없이 "정보 없음"으로 표시(멀쩡한 status를 억지로 끼워맞추지 않음).
-          const rip = haeundae?.ripCurrent
+          const rip = ripEnv?.ripCurrent
           const ripStatus = rip ? STATUS[ripLevelToStatus(rip.riskLevel)] : null
+          const traffic = crowdEnv?.trafficCongestion
+          const crowd = crowdLevel(traffic)
+          const crowdStatus = crowd ? STATUS[crowd.status] : null
 
           return (
           <section className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-gutter">
@@ -134,33 +156,34 @@ export default function Home() {
               </div>
             </StatCard>
 
-            <StatCard label={t("ripLabel")} sub={t("haeundae")} icon="waves" iconClass={ripStatus ? ripStatus.text : "text-primary"}>
+            <StatCard label={t("ripLabel")} sub={`(${t(`beaches.${beach.key}`)})`} icon="waves" iconClass={ripStatus ? ripStatus.text : "text-primary"}>
               <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none mb-1 ${ripStatus ? ripStatus.text : "text-on-surface-variant"}`}>
                 {rip ? tCommon(`ripLevel.${rip.riskLevel}`) : t("noInfo")}
               </span>
               {ripStatus && <span className={`w-2 h-2 rounded-full ${ripStatus.bg} inline-block`} />}
               <div className="mt-2 pt-2 border-t border-outline-variant/30">
                 <span className="font-label-sm text-xs text-outline-variant">
-                  {rip ? t("waveInfo", { height: rip.waveHeight, temp: rip.waterTemp }) : t("seasonOnly")}
+                  {rip ? t("waveInfo", { height: rip.waveHeight, temp: rip.waterTemp ?? "-" }) : t("seasonOnly")}
                 </span>
               </div>
             </StatCard>
 
             <StatCard
               label={t("crowdLabel")}
-              sub={`(${summary.crowdLevel.area})`}
+              sub={`(${location ? t("myLocation") : t("busanCityHall")})`}
               icon="groups"
-              iconClass="text-error"
+              iconClass={crowdStatus ? crowdStatus.text : "text-primary"}
               className="hidden lg:flex"
             >
-              <span className="font-headline-lg-mobile text-headline-lg-mobile text-error leading-none mb-1">
-                {summary.crowdLevel.level}
+              <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none mb-1 ${crowdStatus ? crowdStatus.text : "text-on-surface-variant"}`}>
+                {crowd ? t(`crowdLevel.${crowd.key}`) : traffic ? t("crowdCollecting") : t("noInfo")}
               </span>
-              <span className="w-2 h-2 rounded-full bg-error-container inline-block" />
-              <StatFooter
-                left={[t("foreignCount", { count: summary.crowdLevel.foreign.toLocaleString() })]}
-                right={[t("domesticCount", { count: summary.crowdLevel.domestic.toLocaleString() })]}
-              />
+              {crowdStatus && <span className={`w-2 h-2 rounded-full ${crowdStatus.bg} inline-block`} />}
+              {traffic?.currentSpeed != null && (
+                <StatFooter
+                  single={[t("currentSpeed", { value: traffic.currentSpeed.toFixed(0) }), t("baselineSpeed", { value: traffic.baselineSpeed?.toFixed(0) ?? "-" })]}
+                />
+              )}
             </StatCard>
           </section>
           )

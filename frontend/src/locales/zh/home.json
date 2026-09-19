@@ -15,13 +15,25 @@
   "uvLabel": "紫外线指数",
   "sunscreenTip": "外出时请记得涂防晒霜!",
   "ripLabel": "离岸流风险",
-  "haeundae": "(海云台)",
   "noInfo": "暂无信息",
   "waveInfo": "浪高 {{height}}m · 水温 {{temp}}℃",
   "seasonOnly": "仅在观测季节(6~9月)提供",
   "crowdLabel": "拥挤度",
-  "foreignCount": "外国游客 {{count}}名",
-  "domesticCount": "本国游客 {{count}}名",
   "top10Title": "釜山现在最值得去的TOP 10景点",
-  "viewAllRanking": "查看全部排名"
+  "viewAllRanking": "查看全部排名",
+  "beaches": {
+    "haeundae": "海云台",
+    "songjeong": "松亭",
+    "imrang": "林浪"
+  },
+  "myLocation": "我的位置附近",
+  "busanCityHall": "釜山市政府附近",
+  "crowdLevel": {
+    "low": "宽松",
+    "moderate": "一般",
+    "high": "拥挤"
+  },
+  "crowdCollecting": "数据收集中",
+  "currentSpeed": "当前平均 {{value}}km/h",
+  "baselineSpeed": "平时 {{value}}km/h"
 }

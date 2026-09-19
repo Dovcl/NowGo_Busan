@@ -15,13 +15,25 @@
   "uvLabel": "UV Index",
   "sunscreenTip": "Don't forget sunscreen when going out!",
   "ripLabel": "Rip Current Risk",
-  "haeundae": "(Haeundae)",
   "noInfo": "No data",
   "waveInfo": "Wave {{height}}m · Water temp {{temp}}℃",
   "seasonOnly": "Only available during observation season (Jun–Sep)",
   "crowdLabel": "Crowd Level",
-  "foreignCount": "{{count}} foreign visitors",
-  "domesticCount": "{{count}} domestic visitors",
   "top10Title": "Busan's Top 10 Spots to Visit Right Now",
-  "viewAllRanking": "View Full Ranking"
+  "viewAllRanking": "View Full Ranking",
+  "beaches": {
+    "haeundae": "Haeundae",
+    "songjeong": "Songjeong",
+    "imrang": "Imrang"
+  },
+  "myLocation": "Near you",
+  "busanCityHall": "Near Busan City Hall",
+  "crowdLevel": {
+    "low": "Quiet",
+    "moderate": "Moderate",
+    "high": "Crowded"
+  },
+  "crowdCollecting": "Collecting data",
+  "currentSpeed": "Now {{value}}km/h avg",
+  "baselineSpeed": "Usually {{value}}km/h"
 }
