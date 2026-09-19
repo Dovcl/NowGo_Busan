@@ -18,7 +18,7 @@
   "noInfo": "暂无信息",
   "waveInfo": "浪高 {{height}}m · 水温 {{temp}}℃",
   "seasonOnly": "仅在观测季节(6~9月)提供",
-  "crowdLabel": "拥挤度",
+  "crowdLabel": "周边道路拥堵",
   "top10Title": "釜山现在最值得去的TOP 10景点",
   "viewAllRanking": "查看全部排名",
   "beaches": {
@@ -29,9 +29,9 @@
   "myLocation": "我的位置附近",
   "busanCityHall": "釜山市政府附近",
   "crowdLevel": {
-    "low": "宽松",
+    "low": "畅通",
     "moderate": "一般",
-    "high": "拥挤"
+    "high": "拥堵"
   },
   "crowdCollecting": "数据收集中",
   "currentSpeed": "当前平均 {{value}}km/h",

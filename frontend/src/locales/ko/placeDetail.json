@@ -25,7 +25,7 @@
     "pm25": "초미세먼지",
     "uvIndex": "자외선지수",
     "ripRisk": "이안류 위험도",
-    "trafficCongestion": "주변 혼잡도"
+    "trafficCongestion": "주변 도로 혼잡"
   },
   "precipitationType": {
     "none": "없음",

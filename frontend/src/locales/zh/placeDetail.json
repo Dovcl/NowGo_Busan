@@ -25,7 +25,7 @@
     "pm25": "PM2.5",
     "uvIndex": "紫外线指数",
     "ripRisk": "离岸流风险",
-    "trafficCongestion": "周边拥堵度"
+    "trafficCongestion": "周边道路拥堵"
   },
   "precipitationType": {
     "none": "无",

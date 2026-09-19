@@ -18,7 +18,7 @@
   "noInfo": "No data",
   "waveInfo": "Wave {{height}}m · Water temp {{temp}}℃",
   "seasonOnly": "Only available during observation season (Jun–Sep)",
-  "crowdLabel": "Crowd Level",
+  "crowdLabel": "Nearby Road Traffic",
   "top10Title": "Busan's Top 10 Spots to Visit Right Now",
   "viewAllRanking": "View Full Ranking",
   "beaches": {
@@ -29,9 +29,9 @@
   "myLocation": "Near you",
   "busanCityHall": "Near Busan City Hall",
   "crowdLevel": {
-    "low": "Quiet",
+    "low": "Smooth",
     "moderate": "Moderate",
-    "high": "Crowded"
+    "high": "Congested"
   },
   "crowdCollecting": "Collecting data",
   "currentSpeed": "Now {{value}}km/h avg",

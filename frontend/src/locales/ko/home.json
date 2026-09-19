@@ -18,7 +18,7 @@
   "noInfo": "정보 없음",
   "waveInfo": "파고 {{height}}m · 수온 {{temp}}℃",
   "seasonOnly": "관측 시즌(6~9월)에만 제공돼요",
-  "crowdLabel": "혼잡도",
+  "crowdLabel": "주변 도로 혼잡",
   "top10Title": "지금 가기 좋은 부산 관광지 TOP 10",
   "viewAllRanking": "전체 순위 보기",
   "beaches": {
@@ -29,9 +29,9 @@
   "myLocation": "내 위치 주변",
   "busanCityHall": "부산시청 주변",
   "crowdLevel": {
-    "low": "여유",
+    "low": "원활",
     "moderate": "보통",
-    "high": "혼잡"
+    "high": "정체"
   },
   "crowdCollecting": "정보 수집 중",
   "currentSpeed": "현재 평균 {{value}}km/h",
