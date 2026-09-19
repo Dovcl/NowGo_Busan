@@ -2,5 +2,7 @@
   "title": "户外景点 NowGo指数排名",
   "resultUnit": "{{count}}处",
   "empty": "还没有计算出指数的景点。",
-  "loadMore": "{{visible}}/{{total}}处 · 加载更多"
+  "loadMore": "{{visible}}/{{total}}处 · 加载更多",
+  "typeLabel": "类型",
+  "resetLabel": "重置"
 }
