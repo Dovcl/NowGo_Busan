@@ -1,12 +1,9 @@
 """자외선 점수(s_uv 원형) 계산 — 팀 제공 노트북(Data_Preprocess.ipynb, `UVScoreCalculator`)
 중 점수 변환 부분만 이식.
 
-원본은 구·군별(areaNo) UV 예보를 전체 조회해 h0/h3/h6... 시간대 중 하나를 골라 쓰는
-클래스였다. 하지만 우리는 2026-08-12 결정대로 구·군 세분화 없이 부산 전체 1개 값
-(uv_index_cache, area_no='2600000000')만 캐싱하는 아키텍처를 그대로 유지한다 — 그래서
-좌표/구·군 구분 없이 이미 캐싱된 값 하나에 임계값 변환만 적용하는 함수로 단순화했다.
-나중에 구·군 세분화로 바뀌어도 uv_score() 자체(순수 변환)는 그대로 두고 호출부(캐시
-조회)만 바뀌면 된다.
+원본과 같이 관광지 주소로 찾은 행정구역(areaNo, uv_area.py)의 UV 지수에 임계값 변환을
+적용한다(2026-09-19: 기존 "부산 전체 1개 값" 단순화를 되돌려 노트북 방식으로 맞춤 —
+사용자 요청, 동네별로 지수가 실제로 다름). 지역 캐시는 etl/fetch_uv.py.
 
 compose(유형별 가중합·신호등 판정)는 아직 미정이라 이 모듈은 손대지 않는다
 (harness/DECISIONS.md 참고).
@@ -15,6 +12,7 @@ compose(유형별 가중합·신호등 판정)는 아직 미정이라 이 모듈
 from sqlalchemy.orm import Session
 
 from db.models import UvIndexCache
+from services.environment.uv_area import find_area_no
 
 _BUSAN_AREA_NO = "2600000000"  # services/environment/lookup.py와 동일 — 부산 전체 1개 값만 사용
 
@@ -29,6 +27,14 @@ def uv_score(uv_index: float) -> float:
         if uv_index <= threshold:
             return score
     return _UV_EXTREME_SCORE
+
+
+def uv_score_for_address(uv_by_area: dict[str, int | None], address: str | None) -> dict:
+    """관광지 주소 -> areaNo -> 그 지역 UV 지수/점수. 지역을 못 찾거나 값이 없으면 None
+    (노트북도 NaN — 그 관광지의 총점은 계산되지 않는다). uv_by_area는 배치가 한 번만
+    읽어둔 {area_no: uv_index}."""
+    uv_index = uv_by_area.get(find_area_no(address) or "")
+    return {"uv_index": uv_index, "uv_score": uv_score(uv_index) if uv_index is not None else None}
 
 
 def uv_score_lookup(session: Session) -> dict:

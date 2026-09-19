@@ -23,7 +23,7 @@ from db.models import (
     WeatherCache,
 )
 from db.session import get_db
-from etl import compute_nowgo_scores
+from etl import compute_nowgo_scores, fetch_uv
 from routers.auth import require_admin
 
 router = APIRouter(prefix="/admin/data", tags=["Admin"])
@@ -90,9 +90,10 @@ def recompute_nowgo_scores(db: Session = Depends(get_db), _: User = Depends(requ
     """nowgo_score_cache를 지금 즉시 재계산 — 원래는 시간당 배치
     (fetch_environment_batch -> compute_nowgo_scores)의 마지막 단계에서만 갱신되는데,
     safe/caution/danger 경계값처럼 배치 스케줄과 무관하게 바로 반영을 확인해야 할 때를
-    위한 수동 트리거. 외부 API를 안 불러서(이미 있는 대기/기온강수/UV/해양 캐시만 읽음)
-    요청-응답 안에서 동기 실행해도 부담 없음(관광지 200여 건 기준 수 초)."""
+    위한 수동 트리거. UV 캐시만 먼저 새로 받고(외부 호출 1회), 점수 계산 자체는 이미 있는
+    대기/기온강수/UV/해양 캐시만 읽어서 요청-응답 안에서 동기 실행해도 부담 없음."""
     try:
+        fetch_uv.main()  # UV가 지역별 캐시라 점수 재계산 전에 최신 값부터 채운다(외부 호출 1회)
         compute_nowgo_scores.main()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"재계산 실패: {e}") from e

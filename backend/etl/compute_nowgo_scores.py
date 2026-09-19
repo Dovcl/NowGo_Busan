@@ -24,15 +24,16 @@ from etl.seed_tour_spots import upsert
 from services.environment.air_score import air_score
 from services.environment.marine_score import sea_trip_score, surf_score, swim_score
 from services.environment.nowgo_score import compute_nowgo_score, generate_tips
-from services.environment.uv_score import uv_score_lookup
+from db.models import UvIndexCache
+from services.environment.uv_score import uv_score_for_address
 from services.environment.weather_score import weather_score
 
 logger = logging.getLogger(__name__)
 
 
-def _target_spots(session) -> list[tuple[int, float, float]]:
+def _target_spots(session) -> list[tuple[int, float, float, str | None]]:
     rows = (
-        session.query(TourSpot.contentid, func.ST_Y(TourSpot.geom), func.ST_X(TourSpot.geom))
+        session.query(TourSpot.contentid, func.ST_Y(TourSpot.geom), func.ST_X(TourSpot.geom), TourSpot.addr1)
         .join(TourSpotEnvClassification, TourSpotEnvClassification.contentid == TourSpot.contentid)
         .filter(TourSpotEnvClassification.is_env_target.is_(True))
         .filter(TourSpot.geom.isnot(None))
@@ -51,12 +52,13 @@ def main() -> None:
             logger.warning("compute_nowgo_scores: 대상 관광지 없음")
             return
 
-        # UV는 부산 전체 1개 값이라 관광지마다 다시 조회할 필요 없이 한 번만 계산
-        uv = uv_score_lookup(session)
+        # UV는 지역(구·군·동)별 캐시 전체를 한 번만 읽어두고 관광지마다 주소로 골라 쓴다
+        uv_by_area = {r.area_no: r.uv_index for r in session.query(UvIndexCache).all()}
 
         now = datetime.now()
         records = []
-        for contentid, lat, lon in spots:
+        for contentid, lat, lon, addr1 in spots:
+            uv = uv_score_for_address(uv_by_area, addr1)
             air = air_score(session, lat, lon)
             weather = weather_score(session, lat, lon)
             marine_scores = {
