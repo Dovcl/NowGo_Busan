@@ -175,7 +175,9 @@ export default function MapView() {
       ) : (
       <aside
         className={`bg-surface-container-lowest shadow-[0_4px_20px_rgba(0,0,0,0.05)] flex-col overflow-y-auto border-r border-outline-variant shrink-0 md:static md:z-10 md:w-80 md:flex ${
-          mobileFiltersOpen ? "fixed inset-0 z-40 flex w-full" : "hidden"
+          // top-16: TopNavBar(h-16, z-50)가 더 위 z라 inset-0을 쓰면 첫 줄("필터" 제목+닫기)이
+          // 헤더 뒤에 가려짐 — 헤더 높이만큼 아래에서 시작하게 한다.
+          mobileFiltersOpen ? "fixed inset-x-0 top-16 bottom-0 z-40 flex w-full" : "hidden"
         }`}
       >
         <div className="p-5 border-b border-outline-variant flex items-center justify-between md:hidden">
