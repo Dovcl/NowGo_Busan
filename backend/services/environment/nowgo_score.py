@@ -26,7 +26,9 @@ PlaceDetail "주변 혼잡도")에서 이미 별도로 다루고 있어서 중�
 사용자 확인(2026-09-18).
 
 신호등(safe/caution/danger) 경계값은 팀원 코드에 없어 사용자 확인으로 정함
-(2026-09-18): 70점 이상 safe, 40~69 caution, 40 미만 danger.
+(2026-09-18: 70점 이상 safe / 2026-09-19: 실제 점수가 68~88점대에 몰려있어
+70점 기준으로는 거의 다 safe로 떠서 변별력이 없다는 사용자 피드백으로 80점
+상향): 80점 이상 safe, 40~79 caution, 40 미만 danger.
 
 각 activity에 딸린 best_axis/worst_axis는 "왜 이 점수가 나왔는지" 설명용
 (2026-09-19 추가) — LLM 없이, 그 activity의 가중합에 실제로 들어간 축들 중
@@ -53,7 +55,7 @@ _ACTIVITY_TYPE = {"swim_score": "swim", "surf_score": "surf", "marine_trip_score
 # (swim_score 등)는 activity_type이 이미 있으니 뭉뚱그려 "activity"로 표시.
 _AXIS_LABEL = {"air_score": "air", "temp_score": "temp", "rain_score": "rain", "uv_score": "uv"}
 
-_STATUS_SAFE_MIN = 70
+_STATUS_SAFE_MIN = 80
 _STATUS_CAUTION_MIN = 40
 
 
