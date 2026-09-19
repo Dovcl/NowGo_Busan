@@ -6,12 +6,14 @@ s_traffic/공휴일 보정 작업 참고). 화면 노출용이 아니라 운영 
 않고 원본 그대로 페이지네이션해서 보여준다. `require_admin`이 실제 보안 경계."""
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from db.models import (
     AirQualityCache,
     DistrictVisitorBaseline,
     HolidayCache,
+    NowgoScoreCache,
     RipCurrentCache,
     RoadLinkBaseline,
     RoadLinkTrafficCache,
@@ -21,6 +23,7 @@ from db.models import (
     WeatherCache,
 )
 from db.session import get_db
+from etl import compute_nowgo_scores
 from routers.auth import require_admin
 
 router = APIRouter(prefix="/admin/data", tags=["Admin"])
@@ -80,3 +83,20 @@ def list_table_rows(
         "page": page,
         "page_size": page_size,
     }
+
+
+@router.post("/recompute-nowgo-scores")
+def recompute_nowgo_scores(db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    """nowgo_score_cache를 지금 즉시 재계산 — 원래는 시간당 배치
+    (fetch_environment_batch -> compute_nowgo_scores)의 마지막 단계에서만 갱신되는데,
+    safe/caution/danger 경계값처럼 배치 스케줄과 무관하게 바로 반영을 확인해야 할 때를
+    위한 수동 트리거. 외부 API를 안 불러서(이미 있는 대기/기온강수/UV/해양 캐시만 읽음)
+    요청-응답 안에서 동기 실행해도 부담 없음(관광지 200여 건 기준 수 초)."""
+    try:
+        compute_nowgo_scores.main()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"재계산 실패: {e}") from e
+
+    computed_count = db.query(NowgoScoreCache).count()
+    latest = db.query(func.max(NowgoScoreCache.computed_at)).scalar()
+    return {"computed_count": computed_count, "computed_at": latest}
