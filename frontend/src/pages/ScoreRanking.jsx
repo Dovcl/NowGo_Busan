@@ -88,9 +88,9 @@ export default function ScoreRanking() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-gutter">
+                <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/20 overflow-hidden">
                   {visible.map((place) => (
-                    <RankedPlaceCard key={place.id} place={place} />
+                    <RankedPlaceRow key={place.id} place={place} />
                   ))}
                 </div>
                 {visibleCount < filtered.length && (
@@ -113,40 +113,32 @@ export default function ScoreRanking() {
   )
 }
 
-function RankedPlaceCard({ place }) {
+// 음악 차트류 UI처럼 순위·이름·점수만 한 줄에 압축 — 카드형(큰 이미지)이라 스크롤이
+// 너무 길어진다는 피드백으로 교체. 썸네일은 식별용으로 작게만 남긴다.
+function RankedPlaceRow({ place }) {
   const { t: tCommon } = useTranslation("common")
   const status = STATUS[place.status]
 
   return (
     <Link
       to={`/place/${place.id}`}
-      className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all cursor-pointer border border-outline-variant/10 group flex flex-col"
+      className="flex items-center gap-3 px-4 py-3 border-b border-outline-variant/15 last:border-b-0 hover:bg-surface-container-low transition-colors"
     >
-      <div className="relative h-32 w-full bg-surface-container">
-        {place.image && (
-          <img
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            src={place.image}
-            alt={place.name}
-          />
-        )}
-        <div className="absolute top-2 left-2 bg-secondary-container text-on-secondary-fixed font-bold text-xs px-2 py-1 rounded-md shadow">
-          {place.rank}
-        </div>
+      <span className="w-6 shrink-0 text-center font-score-display text-[15px] font-bold text-on-surface-variant">
+        {place.rank}
+      </span>
+      <div className="w-11 h-11 rounded-lg overflow-hidden bg-surface-container shrink-0">
+        {place.image && <img className="w-full h-full object-cover" src={place.image} alt={place.name} />}
       </div>
-      <div className="p-4 flex flex-col gap-2 flex-1">
-        <h3 className="font-body-md text-body-md font-bold text-on-surface truncate">{place.name}</h3>
-        <div className="flex items-center justify-between gap-2 mt-auto pt-1">
-          <div className="flex items-baseline gap-1">
-            <span className={`font-score-display text-xl font-bold ${status.text}`}>{place.score}</span>
-            <span className={`font-label-sm text-[10px] font-bold whitespace-nowrap ${status.text}`}>({tCommon(`status.${place.status}`)})</span>
-          </div>
-          {place.category && (
-            <span className="font-label-sm text-[10px] text-outline px-2 py-1 bg-surface-container rounded-full shrink-0 truncate">
-              {place.category}
-            </span>
-          )}
-        </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-body-md text-[14.5px] font-bold text-on-surface truncate">{place.name}</h3>
+        {place.category && (
+          <span className="font-label-sm text-[11px] text-outline truncate">{place.category}</span>
+        )}
+      </div>
+      <div className="flex items-baseline gap-1 shrink-0">
+        <span className={`font-score-display text-lg font-bold ${status.text}`}>{place.score}</span>
+        <span className={`font-label-sm text-[10px] font-bold whitespace-nowrap ${status.text}`}>({tCommon(`status.${place.status}`)})</span>
       </div>
     </Link>
   )
