@@ -84,7 +84,9 @@ export default function MapView() {
   }
 
   // 점수 없는 장소(음식점 등, is_env_target=false)는 애초에 안전도 평가 대상이 아니라서
-  // 범위·위험 필터와 무관하게 항상 통과시킨다 — "왜 식당이 사라지지?"를 피하기 위함.
+  // 범위 필터와는 무관하게 항상 통과시킨다 — "왜 식당이 사라지지?"를 피하기 위함.
+  // 다만 "위험 관광지만 보기"는 문자 그대로 위험한 곳만 남겨야 의미가 있어서, 이 경우엔
+  // 점수 없는 장소도 같이 뺀다("빼고 보기"는 반대로 위험한 것만 없으면 되니 그대로 통과).
   const filteredPlaces = useMemo(() => {
     const [scoreMin, scoreMax] = scoreRange
     return places.filter((p) => {
@@ -92,8 +94,7 @@ export default function MapView() {
       const scoreMatch = p.score == null || (p.score >= scoreMin && p.score <= scoreMax)
       const dangerMatch =
         dangerFilter === "all" ||
-        p.status == null ||
-        (dangerFilter === "onlyDanger" ? p.status === "danger" : p.status !== "danger")
+        (dangerFilter === "onlyDanger" ? p.status === "danger" : p.status == null || p.status !== "danger")
       return groupMatch && scoreMatch && dangerMatch
     })
   }, [places, activeGroups, scoreRange, dangerFilter])
