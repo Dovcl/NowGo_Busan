@@ -31,16 +31,15 @@ export default function MapView() {
   // 범위·정렬·위험 필터가 아예 화면에 없어서 "작동 안 한다"는 오해로 이어졌음 —
   // 모바일에서는 오버레이(바텀시트)로 같은 사이드바를 열고 닫는 토글.
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  // "all" | "onlyDanger" | "excludeDanger" — 체크박스 두 개가 각각 독립 상태였던 걸
+  // "all" | "onlyCaution" | "excludeCaution" — 체크박스 두 개가 각각 독립 상태였던 걸
   // 하나로 합쳐 상호 배타적으로 만든다(둘 다 동시에 켜지는 건 의미가 없어서).
-  const [dangerFilter, setDangerFilter] = useState("all")
+  // "위험(danger)" 대신 "주의(caution)" 기준 — 지금 실제 점수 분포에서 danger가 거의
+  // 안 나와서(안전 기준 상향 후 대부분 caution) 위험 필터는 체크해도 항상 0건이었음.
+  const [cautionFilter, setCautionFilter] = useState("all")
   const mapRef = useRef(null)
 
-  // 실내는 NowGo Score 대상이 아니라(is_env_target=false, 항상 score=null) 점수 범위
-  // 필터가 걸려도 항상 통과해버려서 "범위를 좁혀도 안 줄어든다"는 오해를 줬음 — 지도
-  // 자체가 NowGo Score 기반 화면이라 아예 지도에서 빼기로 결정(사용자 확인).
   useEffect(() => {
-    fetchPlaces().then((data) => setPlaces(data.filter((p) => p.mapGroup !== "실내")))
+    fetchPlaces().then(setPlaces)
   }, [i18n.language])
 
   // 상세 패널이 열려있을 때 Esc로 닫기 — 패널이 사이드바 자리를 차지하고 있어서
@@ -86,25 +85,28 @@ export default function MapView() {
     setExpandedListId((prev) => (prev === listId ? null : listId))
   }
 
-  // 점수 없는 장소(음식점 등, is_env_target=false)는 애초에 안전도 평가 대상이 아니라서
-  // 범위 필터와는 무관하게 항상 통과시킨다 — "왜 식당이 사라지지?"를 피하기 위함.
-  // 다만 "위험 관광지만 보기"는 문자 그대로 위험한 곳만 남겨야 의미가 있어서, 이 경우엔
-  // 점수 없는 장소도 같이 뺀다("빼고 보기"는 반대로 위험한 것만 없으면 되니 그대로 통과).
+  // 점수 없는 장소(음식점·실내 등, is_env_target=false)는 기본 범위(0~100, "전체")일
+  // 땐 그냥 다 보여주지만, 사용자가 NowGo Score 바를 실제로 움직이면 그 순간부터는
+  // "점수로 걸러보겠다"는 의도가 분명해지므로 같이 걸러낸다(계속 남아있으면
+  // "범위를 좁혀도 안 줄어든다"는 오해를 줌).
+  // "주의 관광지만 보기"도 같은 원칙 — 점수 없는 장소는 주의 여부 자체를 평가할 수
+  // 없으니 "빼고 보기"(주의만 없으면 됨)는 통과, "만 보기"(주의만 남겨야 함)는 제외.
   const filteredPlaces = useMemo(() => {
     const [scoreMin, scoreMax] = scoreRange
+    const isDefaultRange = scoreMin === 0 && scoreMax === 100
     return places.filter((p) => {
       const groupMatch = activeGroups.size === ALL_GROUPS.length || activeGroups.has(p.mapGroup)
-      const scoreMatch = p.score == null || (p.score >= scoreMin && p.score <= scoreMax)
-      const dangerMatch =
-        dangerFilter === "all" ||
-        (dangerFilter === "onlyDanger" ? p.status === "danger" : p.status == null || p.status !== "danger")
-      return groupMatch && scoreMatch && dangerMatch
+      const scoreMatch = p.score == null ? isDefaultRange : p.score >= scoreMin && p.score <= scoreMax
+      const cautionMatch =
+        cautionFilter === "all" ||
+        (cautionFilter === "onlyCaution" ? p.status === "caution" : p.status == null || p.status !== "caution")
+      return groupMatch && scoreMatch && cautionMatch
     })
-  }, [places, activeGroups, scoreRange, dangerFilter])
+  }, [places, activeGroups, scoreRange, cautionFilter])
 
   // 모바일 필터 버튼에 "지금 뭔가 켜져 있다" 표시용.
   const hasActiveFilters =
-    activeGroups.size !== ALL_GROUPS.length || scoreRange[0] !== 0 || scoreRange[1] !== 100 || dangerFilter !== "all"
+    activeGroups.size !== ALL_GROUPS.length || scoreRange[0] !== 0 || scoreRange[1] !== 100 || cautionFilter !== "all"
 
   // 사이드바 체크박스용 — 단순 토글(누른 것만 켜지거나 꺼지고 나머지는 그대로).
   const toggleGroup = (group) => {
@@ -347,22 +349,22 @@ export default function MapView() {
           </div>
         )}
         <div className="p-5">
-          <h3 className="font-body-md text-body-md font-bold mb-3">{t("dangerFilterTitle")}</h3>
+          <h3 className="font-body-md text-body-md font-bold mb-3">{t("cautionFilterTitle")}</h3>
           <div className="flex flex-col gap-3">
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-on-surface font-body-md text-body-md">{t("dangerOnly")}</span>
+              <span className="text-on-surface font-body-md text-body-md">{t("cautionOnly")}</span>
               <input
-                checked={dangerFilter === "onlyDanger"}
-                onChange={() => setDangerFilter((prev) => (prev === "onlyDanger" ? "all" : "onlyDanger"))}
+                checked={cautionFilter === "onlyCaution"}
+                onChange={() => setCautionFilter((prev) => (prev === "onlyCaution" ? "all" : "onlyCaution"))}
                 className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary"
                 type="checkbox"
               />
             </label>
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-on-surface font-body-md text-body-md">{t("excludeDanger")}</span>
+              <span className="text-on-surface font-body-md text-body-md">{t("excludeCaution")}</span>
               <input
-                checked={dangerFilter === "excludeDanger"}
-                onChange={() => setDangerFilter((prev) => (prev === "excludeDanger" ? "all" : "excludeDanger"))}
+                checked={cautionFilter === "excludeCaution"}
+                onChange={() => setCautionFilter((prev) => (prev === "excludeCaution" ? "all" : "excludeCaution"))}
                 className="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary"
                 type="checkbox"
               />

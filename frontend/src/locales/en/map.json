@@ -23,8 +23,8 @@
   "savedListsTitle": "Saved Lists",
   "emptyList": "No spots saved yet.",
   "backToNormalMap": "Back to Normal Map",
-  "dangerFilterTitle": "Risky Spots",
-  "dangerOnly": "Show risky spots only",
-  "excludeDanger": "Hide risky spots",
+  "cautionFilterTitle": "Caution Spots",
+  "cautionOnly": "Show caution spots only",
+  "excludeCaution": "Hide caution spots",
   "viewingRoute": "Viewing route: {{name}}"
 }

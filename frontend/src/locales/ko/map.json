@@ -23,8 +23,8 @@
   "savedListsTitle": "보관함",
   "emptyList": "아직 담긴 관광지가 없어요.",
   "backToNormalMap": "일반 지도로 돌아가기",
-  "dangerFilterTitle": "위험 관광지",
-  "dangerOnly": "위험 관광지만 보기",
-  "excludeDanger": "위험 관광지 빼고 보기",
+  "cautionFilterTitle": "주의 관광지",
+  "cautionOnly": "주의 관광지만 보기",
+  "excludeCaution": "주의 관광지 빼고 보기",
   "viewingRoute": "{{name}} 경로 보는 중"
 }
