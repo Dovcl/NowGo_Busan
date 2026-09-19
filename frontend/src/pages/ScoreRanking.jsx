@@ -94,7 +94,7 @@ function RankedPlaceCard({ place }) {
         <div className="flex items-center justify-between gap-2 mt-auto pt-1">
           <div className="flex items-baseline gap-1">
             <span className={`font-score-display text-xl font-bold ${status.text}`}>{place.score}</span>
-            <span className={`font-label-sm text-[10px] font-bold ${status.text}`}>({tCommon(`status.${place.status}`)})</span>
+            <span className={`font-label-sm text-[10px] font-bold whitespace-nowrap ${status.text}`}>({tCommon(`status.${place.status}`)})</span>
           </div>
           {place.category && (
             <span className="font-label-sm text-[10px] text-outline px-2 py-1 bg-surface-container rounded-full shrink-0 truncate">
