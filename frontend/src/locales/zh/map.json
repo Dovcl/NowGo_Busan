@@ -23,13 +23,7 @@
   "savedListsTitle": "收藏夹",
   "emptyList": "还没有收藏的景点。",
   "backToNormalMap": "返回普通地图",
-  "sortTitle": "排序方式",
-  "sortOptions": {
-    "score": "NowGo指数排序",
-    "distance": "距离排序",
-    "crowd": "拥挤度排序",
-    "name": "名称排序"
-  },
+  "dangerFilterTitle": "风险景点",
   "dangerOnly": "仅显示风险景点",
   "excludeDanger": "排除风险景点",
   "viewingRoute": "正在查看路线: {{name}}"

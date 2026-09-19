@@ -23,13 +23,7 @@
   "savedListsTitle": "Saved Lists",
   "emptyList": "No spots saved yet.",
   "backToNormalMap": "Back to Normal Map",
-  "sortTitle": "Sort By",
-  "sortOptions": {
-    "score": "NowGo Score",
-    "distance": "Distance",
-    "crowd": "Crowd Level",
-    "name": "Name"
-  },
+  "dangerFilterTitle": "Risky Spots",
   "dangerOnly": "Show risky spots only",
   "excludeDanger": "Hide risky spots",
   "viewingRoute": "Viewing route: {{name}}"

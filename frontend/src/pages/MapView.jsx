@@ -341,16 +341,8 @@ export default function MapView() {
           </div>
         )}
         <div className="p-5">
-          <h3 className="font-body-md text-body-md font-bold mb-3">{t("sortTitle")}</h3>
+          <h3 className="font-body-md text-body-md font-bold mb-3">{t("dangerFilterTitle")}</h3>
           <div className="flex flex-col gap-3">
-            {["score", "distance", "crowd", "name"].map((key, i) => (
-              <label key={key} className="flex items-center gap-3 cursor-pointer group">
-                <input defaultChecked={i === 0} className="w-5 h-5 border-outline-variant text-primary focus:ring-primary" name="sort" type="radio" />
-                <span className="text-on-surface font-body-md text-body-md group-hover:text-primary">{t(`sortOptions.${key}`)}</span>
-              </label>
-            ))}
-          </div>
-          <div className="mt-6 pt-6 border-t border-outline-variant flex flex-col gap-3">
             <label className="flex items-center justify-between cursor-pointer">
               <span className="text-on-surface font-body-md text-body-md">{t("dangerOnly")}</span>
               <input
