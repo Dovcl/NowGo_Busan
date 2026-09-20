@@ -12,7 +12,7 @@
   "adminUsers": "会员管理",
   "adminData": "数据",
   "dataSource": "数据来源",
-  "dataSourceValue": "TourAPI · 基于旅游大数据",
+  "dataSourceValue": "来源: ⓒ韩国观光公社",
   "appVersion": "应用版本",
   "appVersionValue": "v0.1.0(最新版本)",
   "logout": "退出登录",

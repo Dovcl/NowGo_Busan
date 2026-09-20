@@ -178,7 +178,7 @@
       },
       {
         "name": "Regional visitor counts",
-        "provider": "KTO Big Data",
+        "provider": "Korea Tourism Organization Big Data",
         "usage": "Fallback baseline when live congestion (s_traffic) data is insufficient"
       },
       {

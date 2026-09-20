@@ -26,7 +26,6 @@
     "songjeong": "Songjeong",
     "imrang": "Imrang"
   },
-  "myLocation": "Near you",
   "busanCityHall": "Near Busan City Hall",
   "crowdLevel": {
     "low": "Smooth",
@@ -35,7 +34,5 @@
   },
   "crowdCollecting": "Collecting data",
   "currentSpeed": "Now {{value}}km/h avg",
-  "baselineSpeed": "Usually {{value}}km/h",
-  "defaultRipNote": "Allow location to switch to the nearest beach (default: Haeundae)",
-  "defaultCrowdNote": "Allow location to show your area (default: Busan City Hall)"
+  "baselineSpeed": "Usually {{value}}km/h"
 }

@@ -26,7 +26,6 @@
     "songjeong": "松亭",
     "imrang": "林浪"
   },
-  "myLocation": "我的位置附近",
   "busanCityHall": "釜山市政府附近",
   "crowdLevel": {
     "low": "畅通",
@@ -35,7 +34,5 @@
   },
   "crowdCollecting": "数据收集中",
   "currentSpeed": "当前平均 {{value}}km/h",
-  "baselineSpeed": "平时 {{value}}km/h",
-  "defaultRipNote": "允许定位后将显示最近的海滩(默认:海云台)",
-  "defaultCrowdNote": "允许定位后将显示您周边(默认:釜山市政府)"
+  "baselineSpeed": "平时 {{value}}km/h"
 }

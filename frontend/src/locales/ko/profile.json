@@ -12,7 +12,7 @@
   "adminUsers": "회원 관리",
   "adminData": "데이터",
   "dataSource": "데이터 출처",
-  "dataSourceValue": "TourAPI · 관광 빅데이터 기반",
+  "dataSourceValue": "출처: ⓒ한국관광공사",
   "appVersion": "앱 버전",
   "appVersionValue": "v0.1.0 (최신 버전)",
   "logout": "로그아웃",

@@ -6,7 +6,7 @@ import { fetchTopPlaces } from "../services/placesService"
 import { fetchEnvironment } from "../services/environmentService"
 import { STATUS, scoreToStatus, pmGradeToStatus, uvToLevel, ripLevelToStatus } from "../lib/status"
 import { weatherCondition } from "../lib/weather"
-import { nearestRipBeach } from "../lib/ripBeaches"
+import { RIP_BEACHES } from "../lib/ripBeaches"
 
 // 부산시청 좌표 — 홈 화면 "지금 부산 날씨"는 관광지 하나가 아니라 도시 전체 요약이라
 // 대표 지점 하나를 기준으로 조회한다(대기질은 이 근처 최근접 측정소로 매칭됨).
@@ -30,9 +30,7 @@ export default function Home() {
   const navigate = useNavigate()
   const [summary, setSummary] = useState(null)
   const [environment, setEnvironment] = useState(null)
-  const [location, setLocation] = useState(null) // GPS 위치(거부·실패 시 null -> 해운대/시청 기본값)
-  const [ripEnv, setRipEnv] = useState(null)
-  const [crowdEnv, setCrowdEnv] = useState(null)
+  const [ripEnvs, setRipEnvs] = useState({}) // 해변 key -> 환경 응답
   const [places, setPlaces] = useState([])
   const [searchInput, setSearchInput] = useState("")
 
@@ -46,20 +44,8 @@ export default function Home() {
     fetchHomeSummary().then(setSummary)
     fetchTopPlaces().then(setPlaces)
     fetchEnvironment(BUSAN_CITY_HALL.lat, BUSAN_CITY_HALL.lng).then(setEnvironment)
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {}, // 거부·실패하면 기본값 그대로 표시
-    )
+    RIP_BEACHES.forEach((b) => fetchEnvironment(b.lat, b.lng).then((env) => setRipEnvs((prev) => ({ ...prev, [b.key]: env }))))
   }, [])
-
-  // 이안류: GPS에서 가장 가까운 해변 / 혼잡도: GPS 지점 주변 (위치가 바뀌면 다시 조회)
-  const beach = nearestRipBeach(location)
-  useEffect(() => {
-    let stale = false // 위치가 바뀐 뒤 늦게 도착한 이전 응답이 덮어쓰지 않도록
-    fetchEnvironment(beach.lat, beach.lng).then((env) => !stale && setRipEnv(env))
-    fetchEnvironment(location?.lat ?? BUSAN_CITY_HALL.lat, location?.lng ?? BUSAN_CITY_HALL.lng).then((env) => !stale && setCrowdEnv(env))
-    return () => { stale = true }
-  }, [location, beach.lat, beach.lng])
 
   return (
     <div className="h-full overflow-y-auto">
@@ -112,9 +98,7 @@ export default function Home() {
           const uvStatus = STATUS[uv.status]
           // 비시즌(10~5월)엔 API 자체가 값을 안 줘서 rip가 null일 수 있음 — 그때는
           // 색상 없이 "정보 없음"으로 표시(멀쩡한 status를 억지로 끼워맞추지 않음).
-          const rip = ripEnv?.ripCurrent
-          const ripStatus = rip ? STATUS[ripLevelToStatus(rip.riskLevel)] : null
-          const traffic = crowdEnv?.trafficCongestion
+          const traffic = environment?.trafficCongestion
           const crowd = crowdLevel(traffic)
           const crowdStatus = crowd ? STATUS[crowd.status] : null
 
@@ -156,22 +140,37 @@ export default function Home() {
               </div>
             </StatCard>
 
-            <StatCard label={t("ripLabel")} sub={`(${t(`beaches.${beach.key}`)})`} icon="waves" iconClass={ripStatus ? ripStatus.text : "text-primary"}>
-              <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none mb-1 ${ripStatus ? ripStatus.text : "text-on-surface-variant"}`}>
-                {rip ? tCommon(`ripLevel.${rip.riskLevel}`) : t("noInfo")}
-              </span>
-              {ripStatus && <span className={`w-2 h-2 rounded-full ${ripStatus.bg} inline-block`} />}
-              <div className="mt-2 pt-2 border-t border-outline-variant/30">
-                <span className="font-label-sm text-xs text-outline-variant">
-                  {rip ? t("waveInfo", { height: rip.waveHeight, temp: rip.waterTemp ?? "-" }) : t("seasonOnly")}
-                </span>
-                {!location && <DefaultNote text={t("defaultRipNote")} />}
+            <StatCard label={t("ripLabel")} icon="waves" iconClass="text-primary">
+              {/* 해변별 이안류를 좌우 스크롤로 넘겨 본다 */}
+              <div className="flex overflow-x-auto snap-x snap-mandatory">
+                {RIP_BEACHES.map((b, i) => {
+                  const rip = ripEnvs[b.key]?.ripCurrent
+                  const ripStatus = rip ? STATUS[ripLevelToStatus(rip.riskLevel)] : null
+                  return (
+                    <div key={b.key} className="shrink-0 w-full snap-start">
+                      <span className="font-label-sm text-xs text-on-surface-variant">
+                        {t(`beaches.${b.key}`)} ({i + 1}/{RIP_BEACHES.length})
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none ${ripStatus ? ripStatus.text : "text-on-surface-variant"}`}>
+                          {rip ? tCommon(`ripLevel.${rip.riskLevel}`) : t("noInfo")}
+                        </span>
+                        {ripStatus && <span className={`w-2 h-2 rounded-full ${ripStatus.bg} inline-block`} />}
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-outline-variant/30">
+                        <span className="font-label-sm text-xs text-outline-variant">
+                          {rip ? t("waveInfo", { height: rip.waveHeight, temp: rip.waterTemp ?? "-" }) : t("seasonOnly")}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </StatCard>
 
             <StatCard
               label={t("crowdLabel")}
-              sub={`(${location ? t("myLocation") : t("busanCityHall")})`}
+              sub={`(${t("busanCityHall")})`}
               icon="groups"
               iconClass={crowdStatus ? crowdStatus.text : "text-primary"}
               className="hidden lg:flex"
@@ -185,7 +184,6 @@ export default function Home() {
                   single={[t("currentSpeed", { value: traffic.currentSpeed.toFixed(0) }), t("baselineSpeed", { value: traffic.baselineSpeed?.toFixed(0) ?? "-" })]}
                 />
               )}
-              {!location && <DefaultNote text={t("defaultCrowdNote")} />}
             </StatCard>
           </section>
           )
@@ -258,17 +256,13 @@ function StatCard({ label, sub, icon, iconClass, children, className = "" }) {
       </div>
       <div className="flex items-center gap-3 my-2">
         <span className={`material-symbols-outlined text-4xl filled-icon ${iconClass}`}>{icon}</span>
-        <div className="flex flex-col">{children}</div>
+        <div className="flex flex-col flex-1 min-w-0">{children}</div>
       </div>
     </div>
   )
 }
 
 // 위치를 못 받았을 때(기본값 표시 중) 카드 아래에 붙는 안내 한 줄
-function DefaultNote({ text }) {
-  return <span className="block font-label-sm text-[10px] text-outline mt-1">{text}</span>
-}
-
 function StatFooter({ left, right, single }) {
   if (single) {
     return (
