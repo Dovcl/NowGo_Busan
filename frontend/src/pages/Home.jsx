@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { fetchHomeSummary } from "../services/scoreService"
 import { fetchTopPlaces } from "../services/placesService"
 import { fetchEnvironment } from "../services/environmentService"
 import { STATUS, scoreToStatus, pmGradeToStatus, uvToLevel, ripLevelToStatus } from "../lib/status"
@@ -49,7 +48,6 @@ export default function Home() {
   const { t } = useTranslation("home")
   const { t: tCommon } = useTranslation("common")
   const navigate = useNavigate()
-  const [summary, setSummary] = useState(null)
   const [environment, setEnvironment] = useState(null)
   const [ripKey, setRipKey] = useState(RIP_BEACHES[0].key)
   const [crowdKey, setCrowdKey] = useState(CROWD_SPOTS[0].key)
@@ -65,7 +63,6 @@ export default function Home() {
   }
 
   useEffect(() => {
-    fetchHomeSummary().then(setSummary)
     fetchTopPlaces().then(setPlaces)
     fetchEnvironment(BUSAN_CITY_HALL.lat, BUSAN_CITY_HALL.lng).then(setEnvironment)
   }, [])
@@ -113,7 +110,7 @@ export default function Home() {
         </section>
 
         {/* Status cards */}
-        {summary && environment && (() => {
+        {environment && (() => {
           const condition = weatherCondition(environment.weather?.sky, environment.weather?.precipitationType)
           const pmGrade = Math.max(environment.airQuality?.pm10Grade ?? 0, environment.airQuality?.pm25Grade ?? 0) || null
           const pmStatus = STATUS[pmGradeToStatus(pmGrade)]
