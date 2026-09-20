@@ -22,13 +22,7 @@ from db.schema_migrations import ensure_schema
 from db.session import SessionLocal
 from etl.seed_tour_spots import upsert
 from services.environment.air_score import air_score
-from services.environment.marine_score import (
-    SURF_CONTENTIDS,
-    SWIM_CONTENTIDS,
-    sea_trip_score,
-    surf_score,
-    swim_score,
-)
+from services.environment.marine_score import marine_support, sea_trip_score, surf_score, swim_score
 from services.environment.nowgo_score import compute_nowgo_score, generate_tips
 from db.models import UvIndexCache
 from services.environment.uv_score import uv_score_for_address
@@ -37,15 +31,9 @@ from services.environment.weather_score import weather_score
 logger = logging.getLogger(__name__)
 
 
-def _target_spots(session) -> list[tuple[int, float, float, str | None, str]]:
+def _target_spots(session) -> list[tuple[int, float, float, str | None]]:
     rows = (
-        session.query(
-            TourSpot.contentid,
-            func.ST_Y(TourSpot.geom),
-            func.ST_X(TourSpot.geom),
-            TourSpot.addr1,
-            TourSpotEnvClassification.env_group4,
-        )
+        session.query(TourSpot.contentid, func.ST_Y(TourSpot.geom), func.ST_X(TourSpot.geom), TourSpot.addr1)
         .join(TourSpotEnvClassification, TourSpotEnvClassification.contentid == TourSpot.contentid)
         .filter(TourSpotEnvClassification.is_env_target.is_(True))
         .filter(TourSpot.geom.isnot(None))
@@ -69,26 +57,25 @@ def main() -> None:
 
         now = datetime.now()
         records = []
-        for contentid, lat, lon, addr1, env_group4 in spots:
+        for contentid, lat, lon, addr1 in spots:
             uv = uv_score_for_address(uv_by_area, addr1)
             air = air_score(session, lat, lon)
             weather = weather_score(session, lat, lon)
-            # 지원하는 활동만 넣는다(현재 점수가 없어도 지원이면 포함) — 해수욕/서핑은 지정 해변,
-            # 바다여행은 해변 관광지만(노트북 marine_score_tour 기준)
+            # 지원하는 활동만 넣는다(현재 점수가 없어도 지원이면 포함) — 지원표는 marine_score_tour.csv
+            support = marine_support(contentid)
             rip = nearest_rip_current_station(session, lat, lon)
             rip_level = rip.risk_level if rip else None
             marine_scores, marine_risk = {}, {}  # 점수, (해양 등급, 이안류 등급) — 위험 상한용
-            if contentid in SWIM_CONTENTIDS:
+            if "swim" in support:
                 swim = swim_score(session, lat, lon)
                 marine_scores["swim_score"], marine_risk["swim_score"] = swim["swim_score"], (swim["level"], rip_level)
-            if contentid in SURF_CONTENTIDS:
+            if "surf" in support:
                 surf = surf_score(session, lat, lon)
                 marine_scores["surf_score"], marine_risk["surf_score"] = surf["surf_score"], (surf["level"], rip_level)
-            if env_group4 == "해변":
+            if "marine_trip" in support:
                 trip = sea_trip_score(session, lat, lon)
-                if trip["supported"]:
-                    marine_scores["marine_trip_score"] = trip["sea_trip_score"]
-                    marine_risk["marine_trip_score"] = (trip["level"], None)  # 바다여행은 이안류 상한 없음
+                marine_scores["marine_trip_score"] = trip["sea_trip_score"]
+                marine_risk["marine_trip_score"] = (trip["level"], None)  # 바다여행은 이안류 상한 없음
 
             result = compute_nowgo_score(
                 air["air_score"], weather["temp_score"], weather["rain_score"], uv["uv_score"], marine_scores,

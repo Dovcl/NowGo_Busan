@@ -16,6 +16,10 @@ compose(유형별 가중합·신호등 판정)는 아직 미정이라 이 모듈
 (harness/DECISIONS.md 참고).
 """
 
+import csv
+from functools import lru_cache
+from pathlib import Path
+
 from sqlalchemy.orm import Session
 
 from db.environment_queries import (
@@ -43,10 +47,25 @@ _SIGUNGU_TO_TRIP_REGION = {
     14: "부산남서",  # 영도구
 }
 
-# 해수욕/서핑 활동 지원 관광지(노트북 SWIM_CODE_MAP/SURF_CODE_MAP의 contentid). 좌표 근접만으로
-# 판정하면 해변 근처의 다른 관광지(93m 거리 등)까지 잡혀서, 노트북처럼 지정 목록으로 못 박는다.
-SWIM_CONTENTIDS = {126081, 126078, 126122, 126080, 126079, 126098, 1939570}  # 해운대/광안리/송도/송정/다대포/일광/임랑
-SURF_CONTENTIDS = {126080, 126079}  # 송정/다대포
+# 관광지별 지원 해양활동 표(노트북 marine_score_tour.csv 그대로). 좌표 근접이나 구·군만으로
+# 판정하면 해변 근처 다른 관광지까지 잡혀서 노트북처럼 지정 목록을 쓴다.
+_SUPPORT_CSV = Path(__file__).resolve().parents[2] / "etl" / "seed_data" / "marine_score_tour.csv"
+
+
+@lru_cache(maxsize=1)
+def _support_table() -> dict[int, set[str]]:
+    """{contentid: {"swim", "surf", "marine_trip"} 중 지원하는 활동}."""
+    with open(_SUPPORT_CSV, encoding="utf-8-sig") as f:
+        return {
+            int(row["contentid"]): {a for a in ("swim", "surf", "marine_trip") if row[f"{a}_available"] == "True"}
+            for row in csv.DictReader(f)
+        }
+
+
+def marine_support(contentid: int) -> set[str]:
+    """이 관광지가 지원하는 해양활동. 표에 없으면 빈 집합(도심 취급)."""
+    return _support_table().get(contentid, set())
+
 
 # 해수욕/서핑 5단계 텍스트 등급 -> 0~100 점수. API 원문 표기가 공백 유무를 오가서
 # ("매우나쁨" vs "매우 나쁨") 공백을 제거하고 비교한다.
@@ -100,7 +119,7 @@ def _rip_adjusted(base_score: float | None, rip) -> float | None:
 
 def swim_score(session: Session, lat: float, lon: float) -> dict:
     """해수욕지수 -> 0~100 점수. 이안류 관측이 있는 해변(해운대/송정/임랑)이면 이안류를
-    반영한다(_rip_adjusted). 해수욕 대상 관광지인지는 호출부가 SWIM_CONTENTIDS로 판정."""
+    반영한다(_rip_adjusted). 해수욕 대상인지는 호출부가 marine_support()로 판정."""
     beach = nearest_beach_index(session, lat, lon)
     rip = nearest_rip_current_station(session, lat, lon)
 
@@ -115,7 +134,7 @@ def swim_score(session: Session, lat: float, lon: float) -> dict:
 def surf_score(session: Session, lat: float, lon: float) -> dict:
     """서핑지수 -> 0~100 점수. surf_index_cache는 이미 초급/중급/상급 중 가장 높은
     등급 1건만 저장돼 있어(etl/fetch_surf_index.py) 변환 후 해수욕과 같은 이안류 반영만
-    하면 된다. 서핑 대상 관광지인지는 호출부가 SURF_CONTENTIDS로 판정."""
+    하면 된다. 서핑 대상인지는 호출부가 marine_support()로 판정."""
     surf = nearest_surf_index(session, lat, lon)
     rip = nearest_rip_current_station(session, lat, lon)
 
@@ -131,19 +150,17 @@ def sea_trip_score(session: Session, lat: float, lon: float) -> dict:
     """바다여행지수 -> 0~100 점수. 좌표가 속한 구·군을 먼저 찾고(nearest_sigungu_code),
     그 구·군이 속한 권역(부산북동/부산남서)의 캐시를 조회한다. 내륙 구·군(예: 부산진구)은
     두 권역 어디에도 안 묶여 있어 None — 바다여행지수 자체가 해안 구·군 전용이라 정상.
-    supported는 권역에 속하는지(현재 지수가 없어도 True). 해변 관광지만 대상이라는 제한은
-    env_group4를 아는 호출부(etl/compute_nowgo_scores.py)가 건다."""
+    바다여행 대상인지는 호출부가 marine_support()로 판정."""
     sigungu = nearest_sigungu_code(session, lat, lon)
     region_name = _SIGUNGU_TO_TRIP_REGION.get(sigungu)
     if region_name is None:
-        return {"supported": False, "fetched_at": None, "level": None, "region_name": None, "sea_trip_score": None}
+        return {"fetched_at": None, "level": None, "region_name": None, "sea_trip_score": None}
 
     trip = session.get(SeaTripIndexCache, region_name)
     if trip is None:
-        return {"supported": True, "fetched_at": None, "level": None, "region_name": region_name, "sea_trip_score": None}
+        return {"fetched_at": None, "level": None, "region_name": region_name, "sea_trip_score": None}
 
     return {
-        "supported": True,
         "fetched_at": trip.fetched_at,
         "level": trip.total_index,
         "region_name": trip.region_name,
