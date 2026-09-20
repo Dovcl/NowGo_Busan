@@ -43,6 +43,11 @@ _SIGUNGU_TO_TRIP_REGION = {
     14: "부산남서",  # 영도구
 }
 
+# 해수욕/서핑 활동 지원 관광지(노트북 SWIM_CODE_MAP/SURF_CODE_MAP의 contentid). 좌표 근접만으로
+# 판정하면 해변 근처의 다른 관광지(93m 거리 등)까지 잡혀서, 노트북처럼 지정 목록으로 못 박는다.
+SWIM_CONTENTIDS = {126081, 126078, 126122, 126080, 126079, 126098, 1939570}  # 해운대/광안리/송도/송정/다대포/일광/임랑
+SURF_CONTENTIDS = {126080, 126079}  # 송정/다대포
+
 # 해수욕/서핑 5단계 텍스트 등급 -> 0~100 점수. API 원문 표기가 공백 유무를 오가서
 # ("매우나쁨" vs "매우 나쁨") 공백을 제거하고 비교한다.
 _LEVEL_SCORE_MAP = {
@@ -53,8 +58,11 @@ _LEVEL_SCORE_MAP = {
     "매우나쁨": 0.0,
 }
 
-# 이안류 4단계 -> 해수욕 점수에 곱하는 안전보정 계수(독립 점수가 아니라 배율).
+# 이안류 4단계 -> 해수욕/서핑 점수에 곱하는 안전보정 계수(독립 점수가 아니라 배율).
 _RIP_FACTOR_MAP = {"관심": 1.0, "주의": 0.8, "경계": 0.4, "위험": 0.0}
+
+# 해수욕/서핑 지수 자체가 결측일 때만 쓰는 이안류 단독 점수(노트북 RIP_SCORE_MAP).
+_RIP_SCORE_MAP = {"관심": 80.0, "주의": 60.0, "경계": 20.0, "위험": 0.0}
 
 
 def level_to_score(text: str | None) -> float | None:
@@ -68,66 +76,74 @@ def level_to_score(text: str | None) -> float | None:
     return None
 
 
-def _rip_factor(risk_level: str | None) -> float | None:
-    if not risk_level:
-        return None
-    for level, factor in _RIP_FACTOR_MAP.items():
-        if level in risk_level:
-            return factor
+def _rip_level(text: str | None) -> str | None:
+    """이안류 문구 -> 표준 단계. 여러 단계가 섞여 있으면 노트북처럼 위험한 쪽을 우선한다."""
+    for level in ("위험", "경계", "주의", "관심"):
+        if text and level in text:
+            return level
     return None
 
 
+def _rip_adjusted(base_score: float | None, rip) -> float | None:
+    """활동 기본점수에 이안류를 반영(노트북 MarineScoreCalculator 규칙).
+    - 이안류 관측 지점이 아님: 기본점수 그대로
+    - 기본점수 + 이안류 단계 둘 다 있음: 기본점수 × 보정계수
+    - 기본점수가 없고 이안류 단계만 있음: 이안류 단독 점수로 대체
+    - 관측 지점인데 이안류 단계가 없음: None (위험도를 모르는 채로 점수를 내지 않음)"""
+    level = _rip_level(rip.risk_level) if rip else None
+    if base_score is None:
+        return _RIP_SCORE_MAP[level] if level else None
+    if rip is None:
+        return base_score
+    return base_score * _RIP_FACTOR_MAP[level] if level else None
+
+
 def swim_score(session: Session, lat: float, lon: float) -> dict:
-    """해수욕지수 -> 0~100 점수. 이안류 관측이 있는 해변(해운대/송정/임랑)이면 그
-    안전보정 계수를 곱해서 반영하고, 없는 해변은 해수욕지수 점수를 그대로 쓴다."""
+    """해수욕지수 -> 0~100 점수. 이안류 관측이 있는 해변(해운대/송정/임랑)이면 이안류를
+    반영한다(_rip_adjusted). 해수욕 대상 관광지인지는 호출부가 SWIM_CONTENTIDS로 판정."""
     beach = nearest_beach_index(session, lat, lon)
-    if beach is None:
-        return {"fetched_at": None, "level": None, "rip_level": None, "swim_score": None}
-
-    base_score = level_to_score(beach.total_index)
     rip = nearest_rip_current_station(session, lat, lon)
-    rip_level = rip.risk_level if rip else None
-    factor = _rip_factor(rip_level)
-
-    score = base_score * factor if base_score is not None and factor is not None else base_score
 
     return {
-        "fetched_at": beach.fetched_at,
-        "level": beach.total_index,
-        "rip_level": rip_level,
-        "swim_score": score,
+        "fetched_at": beach.fetched_at if beach else None,
+        "level": beach.total_index if beach else None,
+        "rip_level": rip.risk_level if rip else None,
+        "swim_score": _rip_adjusted(level_to_score(beach.total_index) if beach else None, rip),
     }
 
 
 def surf_score(session: Session, lat: float, lon: float) -> dict:
     """서핑지수 -> 0~100 점수. surf_index_cache는 이미 초급/중급/상급 중 가장 높은
-    등급 1건만 저장돼 있어(etl/fetch_surf_index.py) 여기서는 변환만 하면 된다."""
+    등급 1건만 저장돼 있어(etl/fetch_surf_index.py) 변환 후 해수욕과 같은 이안류 반영만
+    하면 된다. 서핑 대상 관광지인지는 호출부가 SURF_CONTENTIDS로 판정."""
     surf = nearest_surf_index(session, lat, lon)
-    if surf is None:
-        return {"fetched_at": None, "level": None, "skill_grade": None, "surf_score": None}
+    rip = nearest_rip_current_station(session, lat, lon)
 
     return {
-        "fetched_at": surf.fetched_at,
-        "level": surf.total_index,
-        "skill_grade": surf.skill_grade,
-        "surf_score": level_to_score(surf.total_index),
+        "fetched_at": surf.fetched_at if surf else None,
+        "level": surf.total_index if surf else None,
+        "skill_grade": surf.skill_grade if surf else None,
+        "surf_score": _rip_adjusted(level_to_score(surf.total_index) if surf else None, rip),
     }
 
 
 def sea_trip_score(session: Session, lat: float, lon: float) -> dict:
     """바다여행지수 -> 0~100 점수. 좌표가 속한 구·군을 먼저 찾고(nearest_sigungu_code),
     그 구·군이 속한 권역(부산북동/부산남서)의 캐시를 조회한다. 내륙 구·군(예: 부산진구)은
-    두 권역 어디에도 안 묶여 있어 None — 바다여행지수 자체가 해안 구·군 전용이라 정상."""
+    두 권역 어디에도 안 묶여 있어 None — 바다여행지수 자체가 해안 구·군 전용이라 정상.
+    supported는 권역에 속하는지(현재 지수가 없어도 True). 해변 관광지만 대상이라는 제한은
+    env_group4를 아는 호출부(etl/compute_nowgo_scores.py)가 건다."""
     sigungu = nearest_sigungu_code(session, lat, lon)
     region_name = _SIGUNGU_TO_TRIP_REGION.get(sigungu)
     if region_name is None:
-        return {"fetched_at": None, "level": None, "region_name": None, "sea_trip_score": None}
+        return {"supported": False, "fetched_at": None, "level": None, "region_name": None, "sea_trip_score": None}
 
     trip = session.get(SeaTripIndexCache, region_name)
     if trip is None:
-        return {"fetched_at": None, "level": None, "region_name": region_name, "sea_trip_score": None}
+        return {"supported": True, "fetched_at": None, "level": None, "region_name": region_name, "sea_trip_score": None}
 
     return {
+        "supported": True,
         "fetched_at": trip.fetched_at,
         "level": trip.total_index,
         "region_name": trip.region_name,

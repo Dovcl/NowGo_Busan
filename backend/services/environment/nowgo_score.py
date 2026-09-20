@@ -1,4 +1,4 @@
-"""NowGo Score 최종 합성 — 팀 제공 노트북(notebooks/점수산정.ipynb,
+"""NowGo Score 최종 합성 — 팀 제공 노트북(점수 전처리 (2).ipynb 2026-09-20 보강본,
 `make_nowscore_dataframe`) 그대로 이식.
 
 원본은 `tour_final` 전체를 pandas로 한 번에 처리하는 배치 함수였다. 여기서는 이미
@@ -8,14 +8,21 @@ uv_score/marine_score)에 맞춰, 관광지 하나의 부분 점수를 받아 �
 결과가 나온다.
 
 핵심 로직(원본 그대로):
-- 해양활동 점수(swim/surf/marine_trip) 중 하나라도 있으면 "해안"(coastal), 전부
-  없으면 "도심"(urban)으로 분류 — env_group4가 아니라 실측 데이터 유무로 판정한다
-- 도심: 대기·기온·강수·자외선 4개를 동일 가중치(0.25)로 가중합
-- 해안: 위 4개(각 0.20) + 보유한 해양활동 점수 "각각"을 0.20으로 따로 가중합 —
+- 지원되는 해양활동(swim/surf/marine_trip)이 하나라도 있으면 "해안"(coastal), 없으면
+  "도심"(urban) — 지원 여부는 점수가 아니라 대상인지(marine_scores의 키 존재)로 판정하므로
+  현재 점수가 None이어도 그 활동 행은 유지된다
+- 도심: 대기·기온·강수·자외선 동일 가중치(각 0.25) — 항목별 중요도 근거가 없어 균등
+- 해안: 위 4개(각 0.20) + 지원되는 해양활동 "각각"을 0.20으로 따로 가중합 —
   해수욕·서핑을 모두 제공하는 해변이면 활동별로 서로 다른 nowscore가 여러 개 나온다
   (원본의 wide->long melt와 동일한 개념 — activities 리스트로 표현)
-- 필요한 점수 중 하나라도 없으면 그 nowscore는 None — 부분 가중치 재분배 안 함
-  (다른 environment 데이터의 "결측이면 숨김" 원칙과 동일)
+- 위험 상한(2026-09-20 노트북 D안): 원자료가 위험 기준이면 nowscore = min(가중합, 상한).
+  공통(CAI>100/체감온도 ≥34·≤0/60분강수 ≥15/UV ≥8): 위험 1개 69, 2개 이상 59,
+  심한 위험(CAI>250/체감 ≥36·≤-6/강수 ≥30/UV ≥11) 39. 해양: 등급 나쁨·이안류 경계 69,
+  매우나쁨·이안류 위험 39. 위험 기준은 공식 특보가 아닌 프로젝트 자체 기준.
+- 결측 정책: 하나라도 결측이면 재정규화 없이 nowscore None(위험 여부를 확인할 수 없으므로).
+  단 UV만 결측(주소가 없어 지역 UV를 못 찾는 관광지)이면 남은 축으로 재정규화해 점수를 낸다.
+  결측 축 이름은 각 활동의 nan_score 리스트로 알려준다
+  ("OO 점수가 반영되지 않은 점수입니다" 문구용, 원본과 동일하게 활동은 activity_type 이름)
 
 **주의**: `harness/skills/score-algorithm.md`에 적혀 있던 기존 4유형(해변/산/도심/실내)
 가중치·s_crowd 포함 방식과 이 코드는 다르다. 이 노트북이 팀원이 실제로 완성해서
@@ -69,20 +76,47 @@ def _status(nowscore: float | None) -> str | None:
     return "danger"
 
 
-def _weighted_sum(scores: dict, weights: dict) -> float | None:
-    """가중합. weights의 키 중 하나라도 scores에 없으면(None 포함) 전체가 None —
-    부분 점수만으로 가중치를 재분배하지 않는다(원본과 동일)."""
-    total = 0.0
-    for key, weight in weights.items():
-        value = scores.get(key)
-        if value is None:
-            return None
-        total += value * weight
-    return round(total, 2)
+def _weighted_sum(scores: dict, weights: dict) -> tuple[float | None, list[str]]:
+    """가중합과 결측 축 키 목록. UV만 결측이면 남은 가중치로 재정규화하고, 그 외 결측은
+    점수를 내지 않는다(위험 여부를 확인할 수 없으므로)."""
+    missing = [key for key in weights if scores.get(key) is None]
+    if set(missing) - {"uv_score"}:
+        return None, missing
+    used = {key: weight for key, weight in weights.items() if key not in missing}
+    return round(sum(scores[key] * weight for key, weight in used.items()) / sum(used.values()), 2), missing
+
+
+# 해양 등급/이안류 문구 -> 상한. 더 위험한 단어를 먼저 검사한다("매우나쁨"이 "나쁨"을 포함).
+_LEVEL_CAPS = {"매우나쁨": 39.0, "나쁨": 69.0}
+_RIP_CAPS = {"위험": 39.0, "경계": 69.0}
+
+
+def _common_cap(cai, temperature, rainfall_60m, uv_index) -> float | None:
+    """공통 4개 원자료의 위험 상한. UV 외에 하나라도 없으면 위험 여부를 알 수 없어 None
+    (UV가 없으면 UV 위험은 없는 것으로 보고 나머지로 판정)."""
+    if None in (cai, temperature, rainfall_60m):
+        return None
+    uv_index = uv_index or 0
+    if cai > 250 or temperature >= 36 or temperature <= -6 or rainfall_60m >= 30 or uv_index >= 11:
+        return 39.0
+    risks = sum([cai > 100, temperature >= 34 or temperature <= 0, rainfall_60m >= 15, uv_index >= 8])
+    return {0: 100.0, 1: 69.0}.get(risks, 59.0)
+
+
+def _text_cap(text: str | None, caps: dict) -> float:
+    return next((cap for word, cap in caps.items() if text and word in text), 100.0)
+
+
+def _marine_cap(level: str | None, rip_level: str | None) -> float | None:
+    """해양활동 위험 상한. 해양 등급이 없으면 None(평가 불가). rip_level은 이안류 관측
+    대상(해수욕·서핑)만 넘기고, 바다여행은 None."""
+    if not level:
+        return None
+    return min(_text_cap(level.replace(" ", ""), _LEVEL_CAPS), _text_cap(rip_level, _RIP_CAPS))
 
 
 def _best_worst_axes(scores: dict) -> dict:
-    """scores(가중합에 실제로 들어간 축들)에서 가장 높은/낮은 축 하나씩."""
+    """scores(가중합에 실제로 들어간 축들, 결측 제외)에서 가장 높은/낮은 축 하나씩."""
     ranked = sorted(((_AXIS_LABEL.get(k, "activity"), v) for k, v in scores.items()), key=lambda kv: kv[1])
     worst_axis, worst_score = ranked[0]
     best_axis, best_score = ranked[-1]
@@ -92,62 +126,78 @@ def _best_worst_axes(scores: dict) -> dict:
 _NO_AXES = {"best_axis": None, "best_score": None, "worst_axis": None, "worst_score": None}
 
 
+def _activity(
+    activity_type: str, activity_name: str, activity_score: float | None, scores: dict, weights: dict, cap: float | None
+) -> dict:
+    """활동 하나의 nowscore(가중합과 위험 상한 중 낮은 값)/신호등/설명용 축/결측 축(nan_score)."""
+    nowscore, missing = _weighted_sum(scores, weights)
+    nowscore = None if nowscore is None or cap is None else round(min(nowscore, cap), 2)
+    used = {k: v for k, v in scores.items() if v is not None}
+    axes = _best_worst_axes(used) if nowscore is not None else _NO_AXES
+    return {
+        "activity_type": activity_type,
+        "activity_name": activity_name,
+        "activity_score": activity_score,
+        "nowscore": nowscore,
+        "status": _status(nowscore),
+        **axes,
+        "nan_score": [_AXIS_LABEL.get(k, activity_type) for k in missing],
+    }
+
+
 def compute_nowgo_score(
     air_score: float | None,
     temp_score: float | None,
     rain_score: float | None,
     uv_score: float | None,
     marine_scores: dict,
+    *,
+    cai: float | None,
+    temperature: float | None,
+    rainfall_60m: float | None,
+    uv_index: float | None,
+    marine_risk: dict,
 ) -> dict:
     """관광지 하나의 NowGo Score.
 
+    cai/temperature(체감)/rainfall_60m/uv_index: 위험 상한 판정용 원자료.
+    marine_risk: {"swim_score": (해양 등급, 이안류 등급), ...} — 이안류는 관측 대상
+        (해수욕·서핑)만 값을 넣고 바다여행은 None. 해양 등급이 없으면 그 활동은 평가 불가.
+
     marine_scores: {"swim_score": .., "surf_score": .., "marine_trip_score": ..} —
-        관광지가 실제로 보유한 축만 넣는다(코드가 아예 없는 축은 키를 빼거나 None).
+        관광지가 "지원하는" 활동만 키로 넣는다(값이 None이면 지원은 하지만 현재 점수가
+        없다는 뜻이라 그 활동 행은 남기고 결측으로 처리, 아예 지원 안 하면 키를 뺀다).
 
     반환: {"tour_type", "air_score"/"temp_score"/"rain_score"/"uv_score"(공통 4축
     원점수 — 항목별 배점 표시용), "activities": [{"activity_type", "activity_name",
     "activity_score", "nowscore", "status", "best_axis", "best_score", "worst_axis",
-    "worst_score"}, ...]}. urban은 activities가 activity_type="general" 1개짜리 리스트.
+    "worst_score", "nan_score"}, ...]}. urban은 activities가 activity_type="general"
+    1개짜리 리스트.
     """
     base_scores = {"air_score": air_score, "temp_score": temp_score, "rain_score": rain_score, "uv_score": uv_score}
-    present_marine = {k: v for k, v in marine_scores.items() if v is not None}
 
-    if not present_marine:
-        nowscore = _weighted_sum(base_scores, _URBAN_WEIGHTS)
-        axes = _best_worst_axes(base_scores) if nowscore is not None else _NO_AXES
-        return {
-            "tour_type": "urban",
-            "air_score": air_score,
-            "temp_score": temp_score,
-            "rain_score": rain_score,
-            "uv_score": uv_score,
-            "activities": [{
-                "activity_type": "general",
-                "activity_name": "일반 관광",
-                "activity_score": None,
-                "nowscore": nowscore,
-                "status": _status(nowscore),
-                **axes,
-            }],
-        }
+    common_cap = _common_cap(cai, temperature, rainfall_60m, uv_index)
 
-    activities = []
-    for key, score in present_marine.items():
-        weights = {**_COASTAL_BASE_WEIGHTS, key: _COASTAL_ACTIVITY_WEIGHT}
-        scores = {**base_scores, key: score}
-        nowscore = _weighted_sum(scores, weights)
-        axes = _best_worst_axes(scores) if nowscore is not None else _NO_AXES
-        activities.append({
-            "activity_type": _ACTIVITY_TYPE[key],
-            "activity_name": _ACTIVITY_NAME[key],
-            "activity_score": score,
-            "nowscore": nowscore,
-            "status": _status(nowscore),
-            **axes,
-        })
+    if not marine_scores:
+        activities = [_activity("general", "일반 관광", None, base_scores, _URBAN_WEIGHTS, common_cap)]
+    else:
+        activities = []
+        for key, score in marine_scores.items():
+            marine_cap = _marine_cap(*marine_risk.get(key, (None, None)))
+            if marine_cap is None:
+                score = None  # 해양 등급이 없으면 위험 여부를 알 수 없어 결측 처리
+            cap = None if common_cap is None or marine_cap is None else min(common_cap, marine_cap)
+            activities.append(_activity(
+                _ACTIVITY_TYPE[key],
+                _ACTIVITY_NAME[key],
+                score,
+                {**base_scores, key: score},
+                {**_COASTAL_BASE_WEIGHTS, key: _COASTAL_ACTIVITY_WEIGHT},
+                cap,
+            ))
 
     return {
-        "tour_type": "coastal",
+        "tour_type": "coastal" if marine_scores else "urban",
         "air_score": air_score,
         "temp_score": temp_score,
         "rain_score": rain_score,

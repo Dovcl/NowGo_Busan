@@ -25,6 +25,9 @@ in-process 스케줄러에서만 15분마다 돌아서 서비스가 슬립 중�
 실행: backend/ 디렉토리에서 `python -m etl.fetch_environment_batch`
 """
 
+import logging
+import re
+
 from etl import (
     compute_nowgo_scores,
     fetch_air_quality,
@@ -38,6 +41,21 @@ from etl import (
     fetch_weather_observation,
     fetch_weather_warning,
 )
+
+# requests 오류 메시지에 요청 URL이 그대로 들어와 authKey/serviceKey가 로그에 노출되므로 값만 가린다
+_KEY_PARAM = re.compile(r"(?i)(\w*key)=[^&\s'\"]+")
+
+
+def _redact(text: str) -> str:
+    return _KEY_PARAM.sub(r"\1=***", text)
+
+
+class _RedactFormatter(logging.Formatter):
+    """각 ETL의 logger.error(트레이스백 포함) 출력도 같은 규칙으로 가린다."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        return _redact(super().format(record))
+
 
 _JOBS = [
     ("weather", fetch_weather.main),
@@ -55,13 +73,16 @@ _JOBS = [
 
 
 def main() -> None:
+    handler = logging.StreamHandler()
+    handler.setFormatter(_RedactFormatter("%(message)s"))
+    logging.basicConfig(handlers=[handler])
     failed = []
     for name, job in _JOBS:
         try:
             job()
         except Exception as e:  # noqa: BLE001 — 하나 실패해도 나머지는 계속 돌려야 함
             failed.append(name)
-            print(f"[{name}] 실패: {e}")
+            print(f"[{name}] 실패: {_redact(str(e))}")
 
     if failed:
         print(f"완료 (실패: {', '.join(failed)})")
