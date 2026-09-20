@@ -20,6 +20,17 @@ from db.environment_queries import nearest_road_links, nearest_sigungu_code
 from db.models import DistrictVisitorBaseline, RoadLinkBaseline, RoadLinkTrafficCache, RoadLinkTrafficHistory
 from services.traffic.calendar import effective_dow
 
+MIN_BASELINE_SAMPLES = 3  # baseline으로 인정할 최소 관측 횟수(같은 요일·시간대 3주, 이번 관측 포함)
+
+
+def _without_current(baseline: RoadLinkBaseline, current_speed: float | None, obs_date) -> tuple[float, int]:
+    """(평소 평균 속도, 표본 수). 수집 시 이번 관측이 baseline에 이미 합산되므로(같은 날짜로 갱신됨),
+    그대로 비교하면 자기 자신과 비교해 비율이 1.0 쪽으로 쏠린다 — 이번 관측을 빼서 직전까지의 평소만 남긴다."""
+    n = baseline.sample_count
+    if baseline.last_sample_date == obs_date and current_speed is not None and n > 1:
+        return (baseline.avg_speed * n - current_speed) / (n - 1), n - 1
+    return baseline.avg_speed, n
+
 
 def calculate_traffic_congestion(
     session: Session, lat: float, lon: float, link_limit: int = 10, radius_m: int = 500
@@ -47,10 +58,8 @@ def calculate_traffic_congestion(
     if not nearby_links:
         return None, None, None, None, None  # 반경 내 링크 없음 (산, 도서 지역 등) — 구·군 대체도 안 씀
 
-    # 현재 시간대의 baseline 기준값 준비 (공휴일이면 일요일 패턴으로 대체)
-    now = datetime.now()
-    current_dow = effective_dow(session, now.date())
-    current_hour = now.hour
+    # 구·군 대체 신호용 요일 (공휴일이면 일요일 패턴으로 대체)
+    current_dow = effective_dow(session, datetime.now().date())
 
     traffic_scores = []
     current_speeds = []
@@ -72,22 +81,26 @@ def calculate_traffic_congestion(
         if not current_traffic or current_traffic.current_speed is None:
             continue  # 이 링크의 현재 데이터 없음
 
-        # 해당 요일/시간대의 baseline 조회
+        # 이 속도가 관측된 시각(원본 statsDt, 현재보다 1시간 이상 이전)의 요일·시간대 baseline과 비교
+        obs = current_traffic.observed_at
         baseline = (
             session.query(RoadLinkBaseline)
-            .filter_by(link_id=link_id, dow=current_dow, hour=current_hour)
+            .filter_by(link_id=link_id, dow=effective_dow(session, obs.date()), hour=obs.hour)
             .first()
         )
 
-        if not baseline or baseline.avg_speed is None or baseline.sample_count < 3:
-            # baseline 데이터 부족 (최소 3주 필요)
+        if not baseline or baseline.avg_speed is None or baseline.sample_count < MIN_BASELINE_SAMPLES:
+            continue  # baseline 데이터 부족 (최소 3주 필요)
+
+        usual_speed, _ = _without_current(baseline, current_traffic.current_speed, obs.date())
+        if usual_speed <= 0:
             continue
 
         # s_traffic 계산: 현재 속도 / 평상시 속도
-        s_traffic = min(max(current_traffic.current_speed / baseline.avg_speed, 0), 1)
+        s_traffic = min(max(current_traffic.current_speed / usual_speed, 0), 1)
         traffic_scores.append(s_traffic)
         current_speeds.append(current_traffic.current_speed)
-        baseline_speeds.append(baseline.avg_speed)
+        baseline_speeds.append(usual_speed)
 
         if worst_speed is None or current_traffic.current_speed < worst_speed:
             worst_speed = current_traffic.current_speed
@@ -153,9 +166,11 @@ def traffic_history_for_spot(
         .all()
     )
     speeds_by_hour: dict[int, list[float]] = defaultdict(list)
+    today_speed: dict[tuple, float] = {}
     for row in history_rows:
         if row.current_speed is not None:
             speeds_by_hour[row.observed_at.hour].append(row.current_speed)
+            today_speed[(row.link_id, row.observed_at.hour)] = row.current_speed
 
     baseline_rows = (
         session.query(RoadLinkBaseline)
@@ -165,8 +180,10 @@ def traffic_history_for_spot(
     )
     baseline_by_hour: dict[int, list[float]] = defaultdict(list)
     for b in baseline_rows:
-        if b.avg_speed is not None and b.sample_count >= 3:
-            baseline_by_hour[b.hour].append(b.avg_speed)
+        if b.avg_speed is not None and b.sample_count >= MIN_BASELINE_SAMPLES:
+            usual_speed, _ = _without_current(b, today_speed.get((b.link_id, b.hour)), now.date())
+            if usual_speed > 0:
+                baseline_by_hour[b.hour].append(usual_speed)
 
     def avg(values: list[float] | None) -> float | None:
         return sum(values) / len(values) if values else None
