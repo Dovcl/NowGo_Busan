@@ -26,7 +26,14 @@
     "songjeong": "松亭",
     "imrang": "林浪"
   },
-  "busanCityHall": "釜山市政府附近",
+  "crowdSpots": {
+    "cityHall": "市政府",
+    "haeundae": "海云台",
+    "gwangalli": "广安里",
+    "seomyeon": "西面",
+    "busanStation": "釜山站",
+    "nampo": "南浦"
+  },
   "crowdLevel": {
     "low": "畅通",
     "moderate": "一般",

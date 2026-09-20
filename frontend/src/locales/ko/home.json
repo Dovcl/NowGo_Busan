@@ -26,7 +26,14 @@
     "songjeong": "송정",
     "imrang": "임랑"
   },
-  "busanCityHall": "부산시청 주변",
+  "crowdSpots": {
+    "cityHall": "부산시청",
+    "haeundae": "해운대",
+    "gwangalli": "광안리",
+    "seomyeon": "서면",
+    "busanStation": "부산역",
+    "nampo": "남포동"
+  },
   "crowdLevel": {
     "low": "원활",
     "moderate": "보통",

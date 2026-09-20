@@ -26,7 +26,14 @@
     "songjeong": "Songjeong",
     "imrang": "Imrang"
   },
-  "busanCityHall": "Near Busan City Hall",
+  "crowdSpots": {
+    "cityHall": "City Hall",
+    "haeundae": "Haeundae",
+    "gwangalli": "Gwangalli",
+    "seomyeon": "Seomyeon",
+    "busanStation": "Busan Station",
+    "nampo": "Nampo"
+  },
   "crowdLevel": {
     "low": "Smooth",
     "moderate": "Moderate",

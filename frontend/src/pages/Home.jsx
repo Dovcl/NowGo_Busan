@@ -12,6 +12,27 @@ import { RIP_BEACHES } from "../lib/ripBeaches"
 // 대표 지점 하나를 기준으로 조회한다(대기질은 이 근처 최근접 측정소로 매칭됨).
 const BUSAN_CITY_HALL = { lat: 35.1796, lng: 129.0756 }
 
+// "주변 도로 혼잡" 카드에서 고를 수 있는 대표 지점(이름은 home.json의 crowdSpots.*)
+const CROWD_SPOTS = [
+  { key: "cityHall", ...BUSAN_CITY_HALL },
+  { key: "haeundae", lat: 35.1587, lng: 129.1604 },
+  { key: "gwangalli", lat: 35.1532, lng: 129.1187 },
+  { key: "seomyeon", lat: 35.1579, lng: 129.0595 },
+  { key: "busanStation", lat: 35.115, lng: 129.0403 },
+  { key: "nampo", lat: 35.0966, lng: 129.0306 },
+]
+
+// 선택한 지점의 환경 데이터 조회 — 응답에 지점을 같이 저장해, 지점을 바꾸면 이전 지점 값은 안 보이게 한다
+function useSpotEnv(spot) {
+  const [res, setRes] = useState(null)
+  useEffect(() => {
+    let stale = false // 지점을 바꾼 뒤 늦게 도착한 이전 응답이 덮어쓰지 않도록
+    fetchEnvironment(spot.lat, spot.lng).then((env) => !stale && setRes({ spot, env }))
+    return () => { stale = true }
+  }, [spot])
+  return res?.spot === spot ? res.env : null
+}
+
 // 혼잡도 s_traffic(1=원활, 0=정체) -> 카드 표시용 단계·신호등 (PlaceDetail 주변 혼잡도와 같은 경계값)
 function crowdLevel(traffic) {
   if (!traffic || traffic.status === "data_collecting") return null
@@ -30,7 +51,10 @@ export default function Home() {
   const navigate = useNavigate()
   const [summary, setSummary] = useState(null)
   const [environment, setEnvironment] = useState(null)
-  const [ripEnvs, setRipEnvs] = useState({}) // 해변 key -> 환경 응답
+  const [ripKey, setRipKey] = useState(RIP_BEACHES[0].key)
+  const [crowdKey, setCrowdKey] = useState(CROWD_SPOTS[0].key)
+  const ripEnv = useSpotEnv(RIP_BEACHES.find((b) => b.key === ripKey))
+  const crowdEnv = useSpotEnv(CROWD_SPOTS.find((c) => c.key === crowdKey))
   const [places, setPlaces] = useState([])
   const [searchInput, setSearchInput] = useState("")
 
@@ -44,7 +68,6 @@ export default function Home() {
     fetchHomeSummary().then(setSummary)
     fetchTopPlaces().then(setPlaces)
     fetchEnvironment(BUSAN_CITY_HALL.lat, BUSAN_CITY_HALL.lng).then(setEnvironment)
-    RIP_BEACHES.forEach((b) => fetchEnvironment(b.lat, b.lng).then((env) => setRipEnvs((prev) => ({ ...prev, [b.key]: env }))))
   }, [])
 
   return (
@@ -98,7 +121,9 @@ export default function Home() {
           const uvStatus = STATUS[uv.status]
           // 비시즌(10~5월)엔 API 자체가 값을 안 줘서 rip가 null일 수 있음 — 그때는
           // 색상 없이 "정보 없음"으로 표시(멀쩡한 status를 억지로 끼워맞추지 않음).
-          const traffic = environment?.trafficCongestion
+          const rip = ripEnv?.ripCurrent
+          const ripStatus = rip ? STATUS[ripLevelToStatus(rip.riskLevel)] : null
+          const traffic = crowdEnv?.trafficCongestion
           const crowd = crowdLevel(traffic)
           const crowdStatus = crowd ? STATUS[crowd.status] : null
 
@@ -140,41 +165,28 @@ export default function Home() {
               </div>
             </StatCard>
 
-            <StatCard label={t("ripLabel")} icon="waves" iconClass="text-primary">
-              {/* 해변별 이안류를 좌우 스크롤로 넘겨 본다 */}
-              <div className="flex overflow-x-auto snap-x snap-mandatory">
-                {RIP_BEACHES.map((b, i) => {
-                  const rip = ripEnvs[b.key]?.ripCurrent
-                  const ripStatus = rip ? STATUS[ripLevelToStatus(rip.riskLevel)] : null
-                  return (
-                    <div key={b.key} className="shrink-0 w-full snap-start">
-                      <span className="font-label-sm text-xs text-on-surface-variant">
-                        {t(`beaches.${b.key}`)} ({i + 1}/{RIP_BEACHES.length})
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none ${ripStatus ? ripStatus.text : "text-on-surface-variant"}`}>
-                          {rip ? tCommon(`ripLevel.${rip.riskLevel}`) : t("noInfo")}
-                        </span>
-                        {ripStatus && <span className={`w-2 h-2 rounded-full ${ripStatus.bg} inline-block`} />}
-                      </div>
-                      <div className="mt-2 pt-2 border-t border-outline-variant/30">
-                        <span className="font-label-sm text-xs text-outline-variant">
-                          {rip ? t("waveInfo", { height: rip.waveHeight, temp: rip.waterTemp ?? "-" }) : t("seasonOnly")}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })}
+            <StatCard label={t("ripLabel")} icon="waves" iconClass={ripStatus ? ripStatus.text : "text-primary"}>
+              <SpotSelect value={ripKey} keys={RIP_BEACHES.map((b) => b.key)} name={(k) => t(`beaches.${k}`)} onChange={setRipKey} />
+              <div className="flex items-center gap-1">
+                <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none ${ripStatus ? ripStatus.text : "text-on-surface-variant"}`}>
+                  {rip ? tCommon(`ripLevel.${rip.riskLevel}`) : t("noInfo")}
+                </span>
+                {ripStatus && <span className={`w-2 h-2 rounded-full ${ripStatus.bg} inline-block`} />}
+              </div>
+              <div className="mt-2 pt-2 border-t border-outline-variant/30">
+                <span className="font-label-sm text-xs text-outline-variant">
+                  {rip ? t("waveInfo", { height: rip.waveHeight, temp: rip.waterTemp ?? "-" }) : t("seasonOnly")}
+                </span>
               </div>
             </StatCard>
 
             <StatCard
               label={t("crowdLabel")}
-              sub={`(${t("busanCityHall")})`}
               icon="groups"
               iconClass={crowdStatus ? crowdStatus.text : "text-primary"}
               className="hidden lg:flex"
             >
+              <SpotSelect value={crowdKey} keys={CROWD_SPOTS.map((c) => c.key)} name={(k) => t(`crowdSpots.${k}`)} onChange={setCrowdKey} />
               <span className={`font-headline-lg-mobile text-headline-lg-mobile leading-none mb-1 ${crowdStatus ? crowdStatus.text : "text-on-surface-variant"}`}>
                 {crowd ? t(`crowdLevel.${crowd.key}`) : traffic ? t("crowdCollecting") : t("noInfo")}
               </span>
@@ -263,6 +275,21 @@ function StatCard({ label, sub, icon, iconClass, children, className = "" }) {
 }
 
 // 위치를 못 받았을 때(기본값 표시 중) 카드 아래에 붙는 안내 한 줄
+// 지점 선택 드롭다운(클릭하면 아래로 목록이 펼쳐짐)
+function SpotSelect({ value, keys, name, onChange }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full mb-1 bg-transparent border border-outline-variant/40 rounded-md px-1.5 py-0.5 font-label-sm text-xs text-on-surface-variant cursor-pointer"
+    >
+      {keys.map((k) => (
+        <option key={k} value={k}>{name(k)}</option>
+      ))}
+    </select>
+  )
+}
+
 function StatFooter({ left, right, single }) {
   if (single) {
     return (
