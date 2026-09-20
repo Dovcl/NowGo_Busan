@@ -165,6 +165,7 @@ export default function Home() {
                 <span className="font-label-sm text-xs text-outline-variant">
                   {rip ? t("waveInfo", { height: rip.waveHeight, temp: rip.waterTemp ?? "-" }) : t("seasonOnly")}
                 </span>
+                {!location && <DefaultNote text={t("defaultRipNote")} />}
               </div>
             </StatCard>
 
@@ -184,6 +185,7 @@ export default function Home() {
                   single={[t("currentSpeed", { value: traffic.currentSpeed.toFixed(0) }), t("baselineSpeed", { value: traffic.baselineSpeed?.toFixed(0) ?? "-" })]}
                 />
               )}
+              {!location && <DefaultNote text={t("defaultCrowdNote")} />}
             </StatCard>
           </section>
           )
@@ -260,6 +262,11 @@ function StatCard({ label, sub, icon, iconClass, children, className = "" }) {
       </div>
     </div>
   )
+}
+
+// 위치를 못 받았을 때(기본값 표시 중) 카드 아래에 붙는 안내 한 줄
+function DefaultNote({ text }) {
+  return <span className="block font-label-sm text-[10px] text-outline mt-1">{text}</span>
 }
 
 function StatFooter({ left, right, single }) {

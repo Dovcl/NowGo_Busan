@@ -35,5 +35,7 @@
   },
   "crowdCollecting": "정보 수집 중",
   "currentSpeed": "현재 평균 {{value}}km/h",
-  "baselineSpeed": "평소 {{value}}km/h"
+  "baselineSpeed": "평소 {{value}}km/h",
+  "defaultRipNote": "위치를 허용하면 가까운 해변으로 바뀌어요 (기본: 해운대)",
+  "defaultCrowdNote": "위치를 허용하면 내 주변으로 바뀌어요 (기본: 부산시청)"
 }

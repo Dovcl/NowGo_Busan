@@ -4,17 +4,9 @@
   "startTitle": "Get Started with NowGo Busan",
   "startSubtitle": "Get personalized safety alerts and save spots you're interested in.",
   "login": "Log In",
-  "personalizationTitle": "Personalization",
   "languageTitle": "Language",
   "notificationsTitle": "Notifications",
   "generalTitle": "General",
-  "personaTitle": "My Persona",
-  "personaDesc": "Pick what you're sensitive to. Factoring this into your score is coming soon.",
-  "sensitivities": {
-    "respiratory": "Respiratory-sensitive",
-    "uv": "UV/skin-sensitive",
-    "water": "Water-quality-sensitive"
-  },
   "notifWeatherWarning": "Weather warning alerts",
   "notifWeatherWarningDesc": "Get an on-screen alert as soon as a new warning is issued. Turning this off still lets you check past ones from the bell icon.",
   "adminUsers": "Manage Users",

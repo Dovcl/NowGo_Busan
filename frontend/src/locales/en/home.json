@@ -35,5 +35,7 @@
   },
   "crowdCollecting": "Collecting data",
   "currentSpeed": "Now {{value}}km/h avg",
-  "baselineSpeed": "Usually {{value}}km/h"
+  "baselineSpeed": "Usually {{value}}km/h",
+  "defaultRipNote": "Allow location to switch to the nearest beach (default: Haeundae)",
+  "defaultCrowdNote": "Allow location to show your area (default: Busan City Hall)"
 }

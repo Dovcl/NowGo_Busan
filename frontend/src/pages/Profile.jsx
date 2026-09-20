@@ -8,21 +8,7 @@ import { useWeatherWarnings } from "../context/WeatherWarningContext"
 import { fetchMyLists, fetchListItems } from "../services/listsService"
 import { fetchPlaceById } from "../services/placesService"
 
-const SENSITIVITY_KEY = "nowgo_sensitivity_profile"
-// 대기(s_air)/자외선(s_uv)/수질(s_water) 세 축 그대로 매핑 — 스코어 가중치에
-// 실제로 반영하는 건 NowGo Score 알고리즘 쪽(팀원 작업) 몫이라 여기서는 선택값을
-// 만들고 저장하는 것까지만 한다.
-const SENSITIVITIES = ["respiratory", "uv", "water"]
 const LANGUAGE_FLAGS = { ko: "🇰🇷", en: "🇺🇸", zh: "🇨🇳" }
-
-function loadSensitivities() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(SENSITIVITY_KEY))
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
 
 export default function Profile() {
   const { t } = useTranslation("profile")
@@ -30,15 +16,6 @@ export default function Profile() {
   const { user, isLoggedIn, openLoginModal, logout } = useAuth()
   const { language, setLanguage, supportedLanguages } = useLanguage()
   const { notificationsEnabled, setNotificationsEnabled } = useWeatherWarnings()
-  const [sensitivities, setSensitivities] = useState(loadSensitivities)
-
-  useEffect(() => {
-    localStorage.setItem(SENSITIVITY_KEY, JSON.stringify(sensitivities))
-  }, [sensitivities])
-
-  const toggleSensitivity = (key) => {
-    setSensitivities((prev) => (prev.includes(key) ? prev.filter((s) => s !== key) : [...prev, key]))
-  }
 
   // 리스트별로 담긴 장소를 보여준다 ("즐겨찾기" 기본 리스트뿐 아니라 유저가
   // 직접 만든 리스트도 전부 — SaveToListModal에서 만든 리스트가 여기 안 보이면 안 됨).
@@ -104,31 +81,6 @@ export default function Profile() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
           {/* Column 1 */}
           <div className="flex flex-col gap-gutter">
-            <SettingsCard icon="psychology" title={t("personalizationTitle")}>
-              <div className="flex flex-col gap-2">
-                <span className="font-body-md text-body-md font-bold text-on-surface">{t("personaTitle")}</span>
-                <span className="font-label-sm text-label-sm text-on-surface-variant mb-2">
-                  {t("personaDesc")}
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {SENSITIVITIES.map((key) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => toggleSensitivity(key)}
-                      className={`px-4 py-2 rounded-full font-label-sm text-label-sm ${
-                        sensitivities.includes(key)
-                          ? "border border-primary text-primary font-bold bg-primary-container/10"
-                          : "border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
-                      }`}
-                    >
-                      {t(`sensitivities.${key}`)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </SettingsCard>
-
             <SettingsCard icon="translate" title={t("languageTitle")}>
               <div className="flex flex-col gap-1">
                 {supportedLanguages.map((lang) => (
