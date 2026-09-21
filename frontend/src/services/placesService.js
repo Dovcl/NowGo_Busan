@@ -40,6 +40,9 @@ function worstActivity(activities) {
   return scored.reduce((worst, a) => (a.nowscore < worst.nowscore ? a : worst))
 }
 
+// 화면에는 소수점 첫째 자리까지만 — 백엔드 값(둘째 자리)은 그대로 두고 표시용으로만 반올림.
+const round1 = (value) => (value == null ? value : Math.round(value * 10) / 10)
+
 export function adaptPlace(place) {
   // usetime/restdate/parking/usefee만 /places/{contentid}(상세)에 있고
   // /places(목록)에는 없어서 전부 undefined일 수 있다 — 하나라도 있을 때만 info를 채운다.
@@ -80,11 +83,11 @@ export function adaptPlace(place) {
       : undefined,
     // 지도 마커·목록 배지처럼 장소당 색 하나만 보여줄 수 있는 자리용 대표값 —
     // 활동이 여럿이면 그중 제일 낮은 점수(worstActivity, 위 참고)를 쓴다.
-    score: representative?.nowscore ?? null,
+    score: round1(representative?.nowscore ?? null),
     status: representative?.status ?? null,
     // 상세 페이지는 이 대표값 대신 활동별로 전부 보여준다(PlaceDetail.jsx) — nowgo가
     // 없으면(is_env_target=false) undefined라 place.nowgo && ... 가드로 걸러진다.
-    nowgoActivities: place.nowgo?.activities,
+    nowgoActivities: place.nowgo?.activities?.map((a) => ({ ...a, nowscore: round1(a.nowscore) })),
     // 항목별 배점 표시용 공통 4축(활동이 여럿이어도 이 값들은 동일).
     nowgoBreakdown: place.nowgo
       ? {
