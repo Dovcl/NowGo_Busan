@@ -113,3 +113,4 @@ frontend/stitch_vite_react_web_project (1)/
 
 # 검증 스크립트 산출물 (재실행하면 다시 생성됨)
 backend/etl/kakao_coverage_report.csv
+backend/etl/traffic_source_observation.csv
