@@ -91,10 +91,10 @@ export function adaptPlace(place) {
     // 항목별 배점 표시용 공통 4축(활동이 여럿이어도 이 값들은 동일).
     nowgoBreakdown: place.nowgo
       ? {
-          air: place.nowgo.air_score,
-          temp: place.nowgo.temp_score,
-          rain: place.nowgo.rain_score,
-          uv: place.nowgo.uv_score,
+          air: round1(place.nowgo.air_score),
+          temp: round1(place.nowgo.temp_score),
+          rain: round1(place.nowgo.rain_score),
+          uv: round1(place.nowgo.uv_score),
         }
       : undefined,
     // 행동 지침 코드 목록(예: ["uv_high", "rip_current"]) — tip.<code> i18n 키로 번역.
