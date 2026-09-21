@@ -17,8 +17,13 @@
 
 </div>
 
-<!-- TODO: 서비스 링크 / 시연 영상
-[🌐 서비스 바로가기](URL) · [🎬 시연 영상](URL) -->
+<div align="center">
+
+### [🌐 서비스 바로가기 → nowgo-busan.onrender.com](https://nowgo-busan.onrender.com/)
+
+</div>
+
+<!-- TODO: 시연 영상 [🎬 시연 영상](URL) -->
 
 <img src="docs/images/home.webp" alt="NowGo Busan 홈 화면" width="100%" />
 
