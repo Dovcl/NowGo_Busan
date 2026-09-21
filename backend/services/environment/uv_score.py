@@ -30,10 +30,10 @@ def uv_score(uv_index: float) -> float:
 
 
 def uv_score_for_address(uv_by_area: dict[str, int | None], address: str | None) -> dict:
-    """관광지 주소 -> areaNo -> 그 지역 UV 지수/점수. 지역을 못 찾거나 값이 없으면 None
-    (노트북도 NaN — 그 관광지의 총점은 계산되지 않는다). uv_by_area는 배치가 한 번만
-    읽어둔 {area_no: uv_index}."""
-    uv_index = uv_by_area.get(find_area_no(address) or "")
+    """관광지 주소 -> areaNo -> 그 지역 UV 지수/점수. 주소가 없거나 지역을 못 찾는
+    "코스"형 관광지는 노트북에선 NaN이지만, 사용자 요청(2026-09-21)으로 부산 전체 대표값
+    (2600000000)을 대신 쓴다. uv_by_area는 배치가 한 번만 읽어둔 {area_no: uv_index}."""
+    uv_index = uv_by_area.get(find_area_no(address) or _BUSAN_AREA_NO)
     return {"uv_index": uv_index, "uv_score": uv_score(uv_index) if uv_index is not None else None}
 
 
