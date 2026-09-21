@@ -2,7 +2,7 @@ services:
   # Backend (FastAPI)
   - type: web
     name: nowgo-busan-backend
-    plan: free
+    plan: starter
     region: singapore
     runtime: python
     rootDir: backend
